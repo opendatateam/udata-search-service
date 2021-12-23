@@ -1,7 +1,11 @@
-from unittest import mock
+from fastapi.testclient import TestClient
+from app import app
 
 
-def test_search(app, client, single_dataset):
+client = TestClient(app)
+
+
+def test_search(client, single_dataset):
     dataset_service = mock.Mock()
     dataset_service.search.return_value = ([single_dataset], 1, 1)
 

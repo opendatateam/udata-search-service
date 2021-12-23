@@ -1,21 +1,6 @@
 import pytest
-from app import create_app
-from app.config import Testing
 from app.domain.entities import Dataset
 from app.domain.interfaces import SearchClient
-
-
-@pytest.fixture
-def app():
-    app = create_app(Testing)
-    yield app
-    app.container.unwire()
-
-
-@pytest.fixture
-def client(app):
-    with app.test_client() as client:
-        return client
 
 
 @pytest.fixture
