@@ -1,12 +1,11 @@
 import dataclasses
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl import Index, Document, Integer, Text, tokenizer, token_filter, analyzer, query, Date
 from elasticsearch_dsl.connections import connections
-from app.config import settings
 from app.domain.entities import Dataset, Organization, Reuse
+from app.config import Config
 
-CONNECTION = connections.create_connection(hosts=[settings.ELASTICSEARCH_URL])
 
 # Définition d'un analyzer français (repris ici : https://jolicode.com/blog/construire-un-bon-analyzer-francais-pour-elasticsearch)
 # Ajout dans la filtre french_synonym, des synonymes que l'on souhaite implémenter (ex : AMD / Administrateur des Données)
@@ -15,7 +14,7 @@ CONNECTION = connections.create_connection(hosts=[settings.ELASTICSEARCH_URL])
 french_elision = token_filter('french_elision', type='elision', articles_case=True, articles=["l", "m", "t", "qu", "n", "s", "j", "d", "c", "jusqu", "quoiqu", "lorsqu", "puisqu"])
 french_stop = token_filter('french_stop', type='stop', stopwords='_french_')
 french_stemmer = token_filter('french_stemmer', type='stemmer', language='light_french')
-french_synonym = token_filter('french_synonym', type='synonym', ignore_case=True, expand=True, synonyms=settings.SEARCH_SYNONYMS)
+french_synonym = token_filter('french_synonym', type='synonym', ignore_case=True, expand=True, synonyms=Config.SEARCH_SYNONYMS)
 
 
 dgv_analyzer = analyzer('french_dgv',
@@ -81,6 +80,9 @@ class SearchableDataset(Document):
 
 class ElasticClient:
 
+    def __init__(self, url: str):
+        connections.create_connection(hosts=[url])
+
     def clean_indices(self) -> None:
         if Index('dataset').exists():
             Index('dataset').delete()
@@ -101,7 +103,7 @@ class ElasticClient:
     def index_reuse(self, to_index: Reuse) -> None:
         SearchableReuse(meta={'id': to_index.id}, **dataclasses.asdict(to_index)).save(skip_empty=False)
 
-    def query_organizations(self, query_text: str, offset: int, page_size: int) -> Tuple[int, list[dict]]:
+    def query_organizations(self, query_text: str, offset: int, page_size: int) -> Tuple[int, List[dict]]:
         s = SearchableOrganization.search().query('bool', should=[
                 query.Q(
                     'function_score',
@@ -120,7 +122,7 @@ class ElasticClient:
         res = [hit.to_dict(skip_empty=False) for hit in response.hits]
         return results_number, res
 
-    def query_datasets(self, query_text: str, offset: int, page_size: int) -> Tuple[int, list[dict]]:
+    def query_datasets(self, query_text: str, offset: int, page_size: int) -> Tuple[int, List[dict]]:
         datasets_score_functions = [
             query.SF("field_value_factor", field="orga_sp", factor=8, modifier='sqrt', missing=1),
             query.SF("field_value_factor", field="dataset_views", factor=4, modifier='sqrt', missing=1),
@@ -149,7 +151,7 @@ class ElasticClient:
         res = [hit.to_dict(skip_empty=False) for hit in response.hits]
         return results_number, res
 
-    def query_reuses(self, query_text: str, offset: int, page_size: int) -> Tuple[int, list[dict]]:
+    def query_reuses(self, query_text: str, offset: int, page_size: int) -> Tuple[int, List[dict]]:
         s = SearchableReuse.search().query('bool', should=[
                 query.Q(
                     'function_score',

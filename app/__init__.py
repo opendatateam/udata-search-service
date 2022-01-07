@@ -1,34 +1,23 @@
-import asyncio
-from aiokafka import AIOKafkaConsumer
-from fastapi import FastAPI
-from app.config import settings
-from app.presentation import api
-
-from app.presentation.api.api_v1 import api_router
+from flask import Flask
+from app.config import Config
+from app.container import Container
+from app.presentation import seed, api
 
 
-async def consume():
-    await consumer.start()
-    try:
-        async for msg in consumer:
-            print("consumed: ", msg.topic, msg.partition, msg.offset,
-                  msg.key, msg.value, msg.timestamp)
-    finally:
-        await consumer.stop()
+def create_app(config: object = Config) -> Flask:
+    container = Container()
+    container.wire(modules=[api, seed])
 
-loop = asyncio.get_event_loop()
-consumer = AIOKafkaConsumer('dataset', loop=loop, bootstrap_servers='localhost:9092', group_id='elastic')
+    app: Flask = Flask(__name__)
+    app.container = container
+    app.config.from_object(config)
 
-app = FastAPI(
-    title=settings.PROJECT_NAME, openapi_url=f'{settings.API_V1_STR}/openapi.json'
-)
+    container.config.elasticsearch_url.from_value(app.config['ELASTICSEARCH_URL'])
+    container.config.search_synonyms.from_value(app.config['SEARCH_SYNONYMS'])
 
-app.include_router(api_router, prefix=settings.API_V1_STR)
+    # register the database command
+    seed.init_app(app)
 
-# @app.on_event("startup")
-# def startup_event():
-#     asyncio.create_task(consume())
-#
-# @app.on_event("shutdown")
-# def shutdown_event():
-#     asyncio.create_task(consumer.stop())
+    app.register_blueprint(api.bp)
+
+    return app

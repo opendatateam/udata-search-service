@@ -3,9 +3,12 @@ import pandas as pd
 from tempfile import NamedTemporaryFile
 
 import click
-from app.config import settings
+from dependency_injector.wiring import inject, Provide
+from flask import current_app, Flask
+from flask.cli import with_appcontext
+from app.container import Container
 from app.domain.entities import Dataset, Organization, Reuse
-from app.infrastructure.search_clients import ElasticClient
+from app.domain.interfaces import SearchClient
 from app.infrastructure.services import OrganizationService, DatasetService, ReuseService
 from app.infrastructure.utils import download_catalog
 
@@ -13,9 +16,9 @@ from app.infrastructure.utils import download_catalog
 def process_org_catalog(organization_service: OrganizationService):
     click.echo("Processing organizations data.")
     with NamedTemporaryFile(delete=False) as org_fd:
-        download_catalog(settings.ORG_CATALOG_URL, org_fd)
+        download_catalog(current_app.config['ORG_CATALOG_URL'], org_fd)
     with open(org_fd.name) as org_csvfile:
-        # Dataframe catalogue orga
+        # Dataframe catalogue org
         dfo = pd.read_csv(org_csvfile, dtype="str", sep=";")
 
         # Récupèration de l'information "service public" depuis la colonne badge.
@@ -49,9 +52,9 @@ def process_org_catalog(organization_service: OrganizationService):
 def process_dataset_catalog(dataset_service: DatasetService):
     click.echo("Processing datasets data.")
     with NamedTemporaryFile(delete=False) as dataset_fd:
-        download_catalog(settings.DATASET_CATALOG_URL, dataset_fd)
+        download_catalog(current_app.config['DATASET_CATALOG_URL'], dataset_fd)
     with NamedTemporaryFile(delete=False) as org_fd:
-        download_catalog(settings.ORG_CATALOG_URL, org_fd)
+        download_catalog(current_app.config['ORG_CATALOG_URL'], org_fd)
 
     with open(dataset_fd.name) as dataset_csvfile, open(org_fd.name) as org_csvfile:
         # Dataframe catalogue dataset
@@ -157,9 +160,9 @@ def process_dataset_catalog(dataset_service: DatasetService):
 def process_reuse_catalog(reuse_service: ReuseService):
     click.echo("Processing reuses data.")
     with NamedTemporaryFile(delete=False) as reuse_fd:
-        download_catalog(settings.REUSE_CATALOG_URL, reuse_fd)
+        download_catalog(current_app.config['REUSE_CATALOG_URL'], reuse_fd)
     with NamedTemporaryFile(delete=False) as org_fd:
-        download_catalog(settings.ORG_CATALOG_URL, org_fd)
+        download_catalog(current_app.config['ORG_CATALOG_URL'], org_fd)
     with open(reuse_fd.name) as reuse_csvfile, open(org_fd.name) as org_csvfile:
         # Dataframe catalogue reuse
         dfr = pd.read_csv(reuse_csvfile, dtype="str", sep=";")
@@ -220,12 +223,14 @@ def process_reuse_catalog(reuse_service: ReuseService):
                         reuse_service.feed(Reuse(**jdict))
 
 
-def seed_db() -> None:
+@inject
+def seed_db(
+    search_client: SearchClient = Provide[Container.search_client],
+    organization_service: OrganizationService = Provide[Container.organization_service],
+    dataset_service: DatasetService = Provide[Container.dataset_service],
+    reuse_service: ReuseService = Provide[Container.reuse_service]
+    ) -> None:
     click.echo("Cleaning indices.")
-    search_client = ElasticClient()
-    organization_service = OrganizationService(search_client=search_client)
-    dataset_service = DatasetService(search_client=search_client)
-    reuse_service = ReuseService(search_client=search_client)
     search_client.clean_indices()
     click.echo("Done.")
     process_org_catalog(organization_service)
@@ -234,5 +239,11 @@ def seed_db() -> None:
     click.echo("Done.")
 
 
-if __name__ == "__main__":
+@click.command("seed-db")
+@with_appcontext
+def seed_db_command() -> None:
     seed_db()
+
+
+def init_app(app: Flask) -> None:
+    app.cli.add_command(seed_db_command)
