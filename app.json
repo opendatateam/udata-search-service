@@ -1,0 +1,8 @@
+{
+  "cron": [
+    {
+      "command": "flash seed-db",
+      "schedule": "@daily"
+    }
+  ]
+}
