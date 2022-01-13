@@ -1,4 +1,4 @@
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 from fastapi import Depends
 from app.domain.entities import Dataset, Organization, Reuse
 from app.infrastructure.search_clients import ElasticClient
@@ -12,7 +12,7 @@ class OrganizationService:
     def feed(self, organization: Organization) -> None:
         self.search_client.index_organization(organization)
 
-    def search(self, search_text: str, page: int, page_size: int) -> Tuple[list[Organization], int, int]:
+    def search(self, search_text: str, page: int, page_size: int) -> Tuple[List[Organization], int, int]:
         if page > 1:
             offset = page_size * (page - 1)
         else:
@@ -38,7 +38,7 @@ class DatasetService:
     def feed(self, dataset: Dataset) -> None:
         self.search_client.index_dataset(dataset)
 
-    def search(self, search_text: str, page: int, page_size: int) -> Tuple[list[Dataset], int, int]:
+    def search(self, search_text: str, page: int, page_size: int) -> Tuple[List[Dataset], int, int]:
         if page > 1:
             offset = page_size * (page - 1)
         else:
@@ -64,7 +64,7 @@ class ReuseService:
     def feed(self, reuse: Reuse) -> None:
         self.search_client.index_reuse(reuse)
 
-    def search(self, search_text: str, page: int, page_size: int) -> Tuple[list[Reuse], int, int]:
+    def search(self, search_text: str, page: int, page_size: int) -> Tuple[List[Reuse], int, int]:
         if page > 1:
             offset = page_size * (page - 1)
         else:

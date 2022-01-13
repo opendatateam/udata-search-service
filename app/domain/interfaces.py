@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 from app.domain.entities import Dataset, Organization, Reuse
 
 
@@ -22,15 +22,15 @@ class SearchClient(ABC):
         pass
 
     @abstractmethod
-    def query_organizations(self, query_text: str, offset: int, page_size: int) -> Tuple[int, list[Organization]]:
+    def query_organizations(self, query_text: str, offset: int, page_size: int) -> Tuple[int, List[Organization]]:
         pass
 
     @abstractmethod
-    def query_datasets(self, query_text: str, offset: int, page_size: int) -> Tuple[int, list[Dataset]]:
+    def query_datasets(self, query_text: str, offset: int, page_size: int) -> Tuple[int, List[Dataset]]:
         pass
 
     @abstractmethod
-    def query_reuses(self, query_text: str, offset: int, page_size: int) -> Tuple[int, list[Reuse]]:
+    def query_reuses(self, query_text: str, offset: int, page_size: int) -> Tuple[int, List[Reuse]]:
         pass
 
     @abstractmethod
