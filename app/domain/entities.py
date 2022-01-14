@@ -6,12 +6,13 @@ from datetime import datetime
 class Organization:
     id: str
     name: str
+    acronym: str
     description: str
     url: str
     orga_sp: int
     created_at: str
-    orga_followers: int
-    orga_datasets: int
+    followers: int
+    datasets: int
 
     def __post_init__(self):
         if isinstance(self.created_at, datetime):
@@ -27,17 +28,17 @@ class Dataset:
     created_at: str
     orga_sp: int
     orga_followers: int
-    dataset_views: int
-    dataset_followers: int
-    dataset_reuses: int
-    dataset_featured: int
+    views: int
+    followers: int
+    reuses: int
+    featured: int
     resources_count: int
     concat_title_org: str
     organization_id: str
     temporal_coverage_start: str
     temporal_coverage_end: str
-    spatial_granularity: str
-    spatial_zones: str
+    granularity: str
+    geozones: str
     description: str
     organization: str
 
@@ -53,10 +54,10 @@ class Reuse:
     url: str
     created_at: str
     orga_followers: int
-    reuse_views: int
-    reuse_followers: int
-    reuse_datasets: int
-    reuse_featured: int
+    views: int
+    followers: int
+    datasets: int
+    featured: int
     organization_id: str
     description: str
     organization: str

@@ -1,3 +1,4 @@
+import dataclasses
 import datetime
 import json
 import logging
@@ -49,87 +50,104 @@ def create_kafka_consumer():
     logging.info('Kafka Consumer created')
     return consumer
 
+@dataclasses.dataclass
+class Base():
 
-class Deserializer():
+    @classmethod
+    def load_fields(cls, raw_data):
+        data = json.loads(raw_data)
+        fields = [f.name for f in dataclasses.fields(cls)]
+        return {key: data[key] for key in data if key in fields}
 
-    mask_keys = []
+    def to_dict(self):
+        return dataclasses.asdict(self)
 
-    def get_masked_keys(self, data):
-        return {key: data.get(key) for key in self.mask_keys}
 
-    def deserialize(self, data):
-        raise NotImplementedError
+@dataclasses.dataclass
+class Dataset(Base):
+    id: str
+    title: str
+    acronym: str
+    url: str
+    created_at: datetime
+    views: int
+    followers: int
+    reuses: int
+    featured: int
+    resources_count: int
+    description: str    
+    organization: str
 
-class DatasetDeserializer(Deserializer):
-    mask_keys = [
-        'id',
-        'title',
-        'acronym',
-        'url',
-        'description',
-        'resources_count',
-        'temporal_coverage_start',
-        'temporal_coverage_end'
-    ]
+    geozones: str = None
+    granularity: str = None
+    temporal_coverage_start: datetime = None
+    temporal_coverage_end: datetime = None
 
-    def deserialize(self, data):
-        data = json.loads(data)
-        result = self.get_masked_keys(data)
-        result['created_at'] = datetime.datetime.fromisoformat(data['created_at'])
-        result['organization_id'] = data['organization'].get('id') if data.get('organization') else None
-        result['organization'] = data['organization'].get('name') if data.get('organization') else None
-        result['orga_sp'] = data['organization'].get('public_service') if data.get('organization') else None
-        result['orga_followers'] = data['organization'].get('followers') if data.get('organization') else None
-        result['concat_title_org'] = data.get('description') + ' ' + str(result['organization'])
-        result['dataset_reuses'] = data.get('reuses', 0)
-        result['dataset_featured'] = data.get('featured', 0)
-        result['dataset_views'] = data.get('views', 0)
-        result['dataset_followers'] = data.get('followers', 0)
-        result['spatial_granularity'] = data.get('granularity', 0)
+    orga_sp: int = 0
+    orga_followers: int = 0
+    organization_id: str = None
 
-        result['spatial_zones'] = 0 # TODO
+    concat_title_org: str = None
 
-        return result
+    def __post_init__(self):
+        # We need to get value from nested organization dict and then set it to str
+        self.organization_id = self.organization.get('id') if self.organization else None
+        self.orga_sp = self.organization.get('public_service') if self.organization else None
+        self.orga_followers = self.organization.get('followers') if self.organization else None
+        self.organization = self.organization.get('name') if self.organization else None
 
-class ReuseDeserializer(Deserializer):
-    mask_keys = [
-        'id',
-        'title',
-        'url',
-        'description'
-    ]
+        self.concat_title_org = self.title + (' ' + self.organization if self.organization else '')
+        self.geozones = '' # TODO
+        
+        self.created_at = datetime.datetime.fromisoformat(self.created_at)
+        if isinstance(self.temporal_coverage_start, str):
+            self.temporal_coverage_start = datetime.datetime.fromisoformat(self.temporal_coverage_start)
+        if isinstance(self.temporal_coverage_end, str):
+            self.temporal_coverage_end = datetime.datetime.fromisoformat(self.temporal_coverage_end)
 
-    def deserialize(self, data):
-        data = json.loads(data)
-        result = self.get_masked_keys(data)
-        result['created_at'] = datetime.datetime.fromisoformat(data['created_at'])
-        result['organization_id'] = data['organization'].get('id') if data.get('organization') else None
-        result['organization'] = data['organization'].get('name') if data.get('organization') else None
-        result['orga_followers'] = data['organization'].get('followers') if data.get('organization') else None
-        result['reuse_datasets'] = data.get('datasets', 0)
-        result['reuse_featured'] = data.get('featured', 0)
-        result['reuse_views'] = data.get('views', 0)
-        result['reuse_followers'] = data.get('followers', 0)
 
-        return result
 
-class OrganizationDeserializer(Deserializer):
-    mask_keys = [
-        'id',
-        'name',
-        'url',
-        'description',
-    ]
 
-    def deserialize(self, data):
-        data = json.loads(data)
-        result = self.get_masked_keys(data)
-        result['created_at'] = datetime.datetime.fromisoformat(data['created_at'])
-        result['orga_sp'] = data.get('public_service')
-        result['orga_followers'] = data.get('followers')
-        result['orga_datasets'] = data.get('datasets', 0)
+@dataclasses.dataclass
+class Reuse(Base):
+    id: str
+    title: str
+    url: str
+    created_at: datetime
+    views: int
+    followers: int
+    featured: int
+    datasets: int
+    description: str
+    organization: str
 
-        return result
+    orga_followers: int = 0
+    organization_id: str = None
+
+    def __post_init__(self):
+        # We need to get value from nested organization dict and then set it to str
+        self.organization_id = self.organization.get('id') if self.organization else None
+        self.orga_followers = self.organization.get('followers') if self.organization else None
+        self.organization = self.organization.get('name') if self.organization else None
+
+        self.created_at = datetime.datetime.fromisoformat(self.created_at)
+
+
+
+@dataclasses.dataclass
+class Organization(Base):
+    id: str
+    acronym: str
+    name: str
+    description: str
+    url: str
+    created_at: datetime
+    followers: int
+    datasets: int
+    orga_sp: int
+
+    def __post_init__(self):
+        self.created_at = datetime.datetime.fromisoformat(self.created_at)
 
 
 def consume_messages(consumer, es):
@@ -145,15 +163,16 @@ def consume_messages(consumer, es):
 
         if(val_utf8 != 'null'):
             if index == 'dataset':
-                deserializer = DatasetDeserializer()
+                dataclass = Dataset
             elif index == 'reuse':
-                deserializer = ReuseDeserializer()
+                dataclass = Reuse
             elif index == 'organization':
-                deserializer = OrganizationDeserializer()
+                dataclass = Organization
             else:
                 logging.error(f'Model Deserializer not implemented for index: {index}')
                 continue
-            data = deserializer.deserialize(val_utf8)
+            data = dataclass.load_fields(val_utf8)
+            data = dataclass(**data).to_dict()
             try:
                 es.index(index=index, id=key.decode('utf-8'), document=data)
             except ConnectionError as e:
