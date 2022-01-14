@@ -76,11 +76,11 @@ class DatasetDeserializer(Deserializer):
         data = json.loads(data)
         result = self.get_masked_keys(data)
         result['created_at'] = datetime.datetime.fromisoformat(data['created_at'])
-        result['organization_id'] = data.get('organization', {}).get('id')
-        result['organization'] = data.get('organization', {}).get('name')
-        result['orga_sp'] = data.get('organization', {}).get('public_service')
-        result['orga_followers'] = data.get('organization', {}).get('followers')
-        result['concat_title_org'] = data.get('description') + ' ' + data.get('organization', {}).get('name')
+        result['organization_id'] = data['organization'].get('id') if data.get('organization') else None
+        result['organization'] = data['organization'].get('name') if data.get('organization') else None
+        result['orga_sp'] = data['organization'].get('public_service') if data.get('organization') else None
+        result['orga_followers'] = data['organization'].get('followers') if data.get('organization') else None
+        result['concat_title_org'] = data.get('description') + ' ' + str(result['organization'])
         result['dataset_reuses'] = data.get('reuses', 0)
         result['dataset_featured'] = data.get('featured', 0)
         result['dataset_views'] = data.get('views', 0)
@@ -103,9 +103,9 @@ class ReuseDeserializer(Deserializer):
         data = json.loads(data)
         result = self.get_masked_keys(data)
         result['created_at'] = datetime.datetime.fromisoformat(data['created_at'])
-        result['organization_id'] = data.get('organization', {}).get('id')
-        result['organization'] = data.get('organization', {}).get('name')
-        result['orga_followers'] = data.get('organization', {}).get('followers')
+        result['organization_id'] = data['organization'].get('id') if data.get('organization') else None
+        result['organization'] = data['organization'].get('name') if data.get('organization') else None
+        result['orga_followers'] = data['organization'].get('followers') if data.get('organization') else None
         result['reuse_datasets'] = data.get('datasets', 0)
         result['reuse_featured'] = data.get('featured', 0)
         result['reuse_views'] = data.get('views', 0)
@@ -126,7 +126,7 @@ class OrganizationDeserializer(Deserializer):
         result = self.get_masked_keys(data)
         result['created_at'] = datetime.datetime.fromisoformat(data['created_at'])
         result['orga_sp'] = data.get('public_service')
-        result['orga_followers'] = data.get('organization', {}).get('followers')
+        result['orga_followers'] = data.get('followers')
         result['orga_datasets'] = data.get('datasets', 0)
 
         return result
@@ -150,6 +150,9 @@ def consume_messages(consumer, es):
                 deserializer = ReuseDeserializer()
             elif index == 'organization':
                 deserializer = OrganizationDeserializer()
+            else:
+                logging.error(f'Model Deserializer not implemented for index: {index}')
+                continue
             data = deserializer.deserialize(val_utf8)
             try:
                 es.index(index=index, id=key.decode('utf-8'), document=data)
