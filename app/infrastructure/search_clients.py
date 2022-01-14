@@ -98,52 +98,25 @@ class ElasticClient:
         SearchableOrganization(meta={'id': to_index.id}, **dataclasses.asdict(to_index)).save(skip_empty=False)
 
     def index_dataset(self, to_index: Dataset) -> None:
-        SearchableDataset(meta={'id': to_index.id}, **dataclasses.asdict(to_index)).save(skip_empty=False)
+        print(SearchableDataset(meta={'id': to_index.id}, **dataclasses.asdict(to_index)).save(skip_empty=False))
 
     def index_reuse(self, to_index: Reuse) -> None:
         SearchableReuse(meta={'id': to_index.id}, **dataclasses.asdict(to_index)).save(skip_empty=False)
 
-    def query_organizations(self, query_text: str, offset: int, page_size: int) -> Tuple[int, List[dict]]:
-        s = SearchableOrganization.search().query('bool', should=[
-                query.Q(
-                    'function_score',
-                    query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['title^15','description^8'])]),
-                    functions=[
-                        query.SF("field_value_factor", field="orga_sp", factor=8, modifier='sqrt', missing=1),
-                        query.SF("field_value_factor", field="orga_followers", factor=4, modifier='sqrt', missing=1),
-                        query.SF("field_value_factor", field="orga_datasets", factor=1, modifier='sqrt', missing=1),
-                    ],
-                ),
-            query.Match(title={"query": query_text, 'fuzziness': 'AUTO'})
-        ])
-        s = s[offset:(offset + page_size)]
-        response = s.execute()
-        results_number = response.hits.total.value
-        res = [hit.to_dict(skip_empty=False) for hit in response.hits]
-        return results_number, res
-
-    def query_datasets(self, query_text: str, offset: int, page_size: int) -> Tuple[int, List[dict]]:
-        datasets_score_functions = [
-            query.SF("field_value_factor", field="orga_sp", factor=8, modifier='sqrt', missing=1),
-            query.SF("field_value_factor", field="dataset_views", factor=4, modifier='sqrt', missing=1),
-            query.SF("field_value_factor", field="dataset_followers", factor=4, modifier='sqrt', missing=1),
-            query.SF("field_value_factor", field="orga_followers", factor=1, modifier='sqrt', missing=1),
-            query.SF("field_value_factor", field="dataset_featured", factor=1, modifier='sqrt', missing=1),
-        ]
-        s = SearchableDataset.search().query(
-            'bool',
-            should=[
-                query.Q(
-                    'function_score',
-                    query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['title^15','acronym^15','description^8','organization^8'])]),
-                    functions=datasets_score_functions,
-                ),
-                query.Q(
-                    'function_score',
-                    query=query.Bool(must=[query.Match(concat_title_org={"query": query_text, "operator": "and", "boost": 8})]),
-                    functions=datasets_score_functions,
-                ),
-                query.MultiMatch(query=query_text, type='most_fields', fields=['title', 'organization'], fuzziness='AUTO')
+    def query_organizations(self, query_text: str, offset: int, page_size: int, filters: dict) -> Tuple[int, List[dict]]:
+        s = SearchableOrganization.search()
+        if query_text:
+            s = s.query('bool', should=[
+                    query.Q(
+                        'function_score',
+                        query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['name^15','description^8'])]),
+                        functions=[
+                            query.SF("field_value_factor", field="orga_sp", factor=8, modifier='sqrt', missing=1),
+                            query.SF("field_value_factor", field="orga_followers", factor=4, modifier='sqrt', missing=1),
+                            query.SF("field_value_factor", field="orga_datasets", factor=1, modifier='sqrt', missing=1),
+                        ],
+                    ),
+                query.Match(title={"query": query_text, 'fuzziness': 'AUTO'})
             ])
         s = s[offset:(offset + page_size)]
         response = s.execute()
@@ -151,20 +124,53 @@ class ElasticClient:
         res = [hit.to_dict(skip_empty=False) for hit in response.hits]
         return results_number, res
 
-    def query_reuses(self, query_text: str, offset: int, page_size: int) -> Tuple[int, List[dict]]:
-        s = SearchableReuse.search().query('bool', should=[
-                query.Q(
-                    'function_score',
-                    query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['title^15','description^8','organization^8'])]),
-                    functions=[
-                        query.SF("field_value_factor", field="reuse_views", factor=4, modifier='sqrt', missing=1),
-                        query.SF("field_value_factor", field="reuse_followers", factor=4, modifier='sqrt', missing=1),
-                        query.SF("field_value_factor", field="orga_followers", factor=1, modifier='sqrt', missing=1),
-                        query.SF("field_value_factor", field="reuse_featured", factor=1, modifier='sqrt', missing=1),
-                    ],
-                ),
-                query.MultiMatch(query=query_text, type='most_fields', fields=['title', 'organization'], fuzziness='AUTO')
-            ])
+    def query_datasets(self, query_text: str, offset: int, page_size: int, filters: dict) -> Tuple[int, List[dict]]:
+        s = SearchableDataset.search()
+        if query_text:
+            datasets_score_functions = [
+                query.SF("field_value_factor", field="orga_sp", factor=8, modifier='sqrt', missing=1),
+                query.SF("field_value_factor", field="dataset_views", factor=4, modifier='sqrt', missing=1),
+                query.SF("field_value_factor", field="dataset_followers", factor=4, modifier='sqrt', missing=1),
+                query.SF("field_value_factor", field="orga_followers", factor=1, modifier='sqrt', missing=1),
+                query.SF("field_value_factor", field="dataset_featured", factor=1, modifier='sqrt', missing=1),
+            ]
+            s = s.query(
+                'bool',
+                should=[
+                    query.Q(
+                        'function_score',
+                        query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['title^15','acronym^15','description^8','organization^8'])]),
+                        functions=datasets_score_functions,
+                    ),
+                    query.Q(
+                        'function_score',
+                        query=query.Bool(must=[query.Match(concat_title_org={"query": query_text, "operator": "and", "boost": 8})]),
+                        functions=datasets_score_functions,
+                    ),
+                    query.MultiMatch(query=query_text, type='most_fields', fields=['title', 'organization'], fuzziness='AUTO')
+                ])
+        s = s[offset:(offset + page_size)]
+        response = s.execute()
+        results_number = response.hits.total.value
+        res = [hit.to_dict(skip_empty=False) for hit in response.hits]
+        return results_number, res
+
+    def query_reuses(self, query_text: str, offset: int, page_size: int, filters: dict) -> Tuple[int, List[dict]]:
+        s = SearchableReuse.search()
+        if query_text:
+            s = s.query('bool', should=[
+                    query.Q(
+                        'function_score',
+                        query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['title^15','description^8','organization^8'])]),
+                        functions=[
+                            query.SF("field_value_factor", field="reuse_views", factor=4, modifier='sqrt', missing=1),
+                            query.SF("field_value_factor", field="reuse_followers", factor=4, modifier='sqrt', missing=1),
+                            query.SF("field_value_factor", field="orga_followers", factor=1, modifier='sqrt', missing=1),
+                            query.SF("field_value_factor", field="reuse_featured", factor=1, modifier='sqrt', missing=1),
+                        ],
+                    ),
+                    query.MultiMatch(query=query_text, type='most_fields', fields=['title', 'organization'], fuzziness='AUTO')
+                ])
         s = s[offset:(offset + page_size)]
         response = s.execute()
         results_number = response.hits.total.value
