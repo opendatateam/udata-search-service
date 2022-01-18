@@ -30,14 +30,14 @@ def process_org_catalog(organization_service: OrganizationService):
 
         # Renommage de l'id de l'organisation et de la métrique followers
         dfo = dfo.rename(columns={
-            'metric.followers': 'orga_followers',
-            'metric.datasets': 'orga_datasets'
+            'metric.followers': 'followers',
+            'metric.datasets': 'datasets'
         })
 
-        dfo['orga_followers'] = dfo['orga_followers'].astype(float)
+        dfo['followers'] = dfo['followers'].astype(float)
 
-        fobins = [-1, 0, 10, 50, 100, dfo['orga_followers'].max()]
-        dfo['orga_followers'] = pd.cut(dfo['orga_followers'], fobins, labels=list(range(1, 6)))
+        fobins = [-1, 0, 10, 50, 100, dfo['followers'].max()]
+        dfo['followers'] = pd.cut(dfo['followers'], fobins, labels=list(range(1, 6)))
 
         dfo_as_json = dfo.to_json(orient='records', lines=True)
         with click.progressbar(dfo_as_json.split('\n')) as bar:
@@ -45,7 +45,7 @@ def process_org_catalog(organization_service: OrganizationService):
                 if json_document != '':
                     # Convertion de la string json en dictionnaire
                     jdict = json.loads(json_document)
-                    if jdict['orga_datasets'] != '0':
+                    if jdict['datasets'] != '0':
                         organization_service.feed(Organization(**jdict))
 
 
@@ -97,9 +97,9 @@ def process_dataset_catalog(dataset_service: DatasetService):
         # Datasets entre 500 et 4999 vues = Valeur 4
         # Datasets entre 5000 et 'nombre de vues max d'un dataset' = Valeur 5
         mvbins = [-1, 0, 50, 500, 5000, df['metric.views'].max()]
-        df['dataset_views'] = pd.cut(df['metric.views'], mvbins, labels=list(range(1, 6)))
+        df['views'] = pd.cut(df['metric.views'], mvbins, labels=list(range(1, 6)))
         mfbins = [-1, 0, 2, 10, 40, df['metric.followers'].max()]
-        df['dataset_followers'] = pd.cut(df['metric.followers'], mfbins, labels=list(range(1, 6)))
+        df['followers'] = pd.cut(df['metric.followers'], mfbins, labels=list(range(1, 6)))
         fobins = [-1, 0, 10, 50, 100, df['orga_followers'].max()]
         df['orga_followers'] = pd.cut(df['orga_followers'], fobins, labels=list(range(1, 6)))
 
@@ -108,15 +108,15 @@ def process_dataset_catalog(dataset_service: DatasetService):
 
         # Création d'un champ "es_dataset_featured" se basant sur la colonne features. L'objectif étant de donner un poids plus grand aux datasets featured
         # Poids de 5 quand le dataset est featured, 1 sinon
-        df['dataset_featured'] = df['featured'].apply(lambda x: 5 if x == 'True' else 1)
+        df['featured'] = df['featured'].apply(lambda x: 5 if x == 'True' else 1)
 
         # Renommage de l'id de l'organisation et de la métrique followers
         df = df.rename(columns={
             'temporal_coverage.start': 'temporal_coverage_start',
             'temporal_coverage.end': 'temporal_coverage_end',
-            'spatial.granularity': 'spatial_granularity',
-            'spatial.zones': 'spatial_zones',
-            'metric.reuses': 'dataset_reuses'
+            'spatial.granularity': 'granularity',
+            'spatial.zones': 'geozones',
+            'metric.reuses': 'reuses'
         })
 
         # Suppresion des jeux de données archivés ou privés
@@ -134,16 +134,16 @@ def process_dataset_catalog(dataset_service: DatasetService):
             'description',
             'orga_sp',
             'orga_followers',
-            'dataset_views',
-            'dataset_followers',
+            'views',
+            'followers',
             'resources_count',
             'concat_title_org',
-            'dataset_featured',
+            'featured',
             'temporal_coverage_start',
             'temporal_coverage_end',
-            'spatial_granularity',
-            'spatial_zones',
-            'dataset_reuses'
+            'granularity',
+            'geozones',
+            'reuses'
         ]]
         # Convertion du dataframe en string json séparée par des \n
         df_as_json = df.to_json(orient='records', lines=True)
@@ -187,15 +187,16 @@ def process_reuse_catalog(reuse_service: ReuseService):
         df['orga_followers'] = df['orga_followers'].astype(float)
 
         mvbins = [-1, 0, 50, 500, 5000, df['metric.views'].max()]
-        df['reuse_views'] = pd.cut(df['metric.views'], mvbins, labels=list(range(1, 6)))
+        df['views'] = pd.cut(df['metric.views'], mvbins, labels=list(range(1, 6)))
         mfbins = [-1, 0, 2, 10, 40, df['metric.followers'].max()]
-        df['reuse_followers'] = pd.cut(df['metric.followers'], mfbins, labels=list(range(1, 6)))
+        df['followers'] = pd.cut(df['metric.followers'], mfbins, labels=list(range(1, 6)))
         fobins = [-1, 0, 10, 50, 100, df['orga_followers'].max()]
         df['orga_followers'] = pd.cut(df['orga_followers'], fobins, labels=list(range(1, 6)))
 
-        df['reuse_featured'] = df['featured'].apply(lambda x: 5 if x == 'True' else 1)
+        df['featured'] = df['featured'].apply(lambda x: 5 if x == 'True' else 1)
 
-        df = df.rename(columns={'metric.datasets': 'reuse_datasets'})
+        df = df.drop(columns=['datasets'])
+        df = df.rename(columns={'metric.datasets': 'datasets'})
 
         df = df[[
             'id',
@@ -206,10 +207,10 @@ def process_reuse_catalog(reuse_service: ReuseService):
             'organization_id',
             'description',
             'orga_followers',
-            'reuse_views',
-            'reuse_followers',
-            'reuse_datasets',
-            'reuse_featured'
+            'views',
+            'followers',
+            'datasets',
+            'featured'
         ]]
         # Convertion du dataframe en string json séparée par des \n
         df_as_json = df.to_json(orient='records', lines=True)
@@ -219,7 +220,7 @@ def process_reuse_catalog(reuse_service: ReuseService):
                 if json_document != '':
                     # Convertion de la string json en dictionnaire
                     jdict = json.loads(json_document)
-                    if jdict['reuse_datasets'] != '0':
+                    if jdict['datasets'] != '0':
                         reuse_service.feed(Reuse(**jdict))
 
 

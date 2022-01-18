@@ -3,15 +3,30 @@ from datetime import datetime
 
 
 @dataclasses.dataclass
-class Organization:
+class EntityBase():
+
+    @classmethod
+    def load_from_dict(cls, data):
+        fields = [f.name for f in dataclasses.fields(cls)]
+        data = {key: data[key] for key in data if key in fields}
+        return cls(**data)
+
+    def to_dict(self):
+        return dataclasses.asdict(self)
+
+
+@dataclasses.dataclass
+class Organization(EntityBase):
     id: str
     name: str
     description: str
     url: str
     orga_sp: int
     created_at: str
-    orga_followers: int
-    orga_datasets: int
+    followers: int
+    datasets: int
+
+    acronym: str = None
 
     def __post_init__(self):
         if isinstance(self.created_at, datetime):
@@ -19,27 +34,29 @@ class Organization:
 
 
 @dataclasses.dataclass
-class Dataset:
+class Dataset(EntityBase):
     id: str
     title: str
     acronym: str
     url: str
     created_at: str
-    orga_sp: int
-    orga_followers: int
-    dataset_views: int
-    dataset_followers: int
-    dataset_reuses: int
-    dataset_featured: int
+    views: int
+    followers: int
+    reuses: int
+    featured: int
     resources_count: int
     concat_title_org: str
-    organization_id: str
-    temporal_coverage_start: str
-    temporal_coverage_end: str
-    spatial_granularity: str
-    spatial_zones: str
     description: str
-    organization: str
+
+    temporal_coverage_start: str = None
+    temporal_coverage_end: str = None
+    granularity: str = None
+    geozones: str = None
+
+    orga_sp: int = None
+    orga_followers: int = None
+    organization_id: str = None
+    organization: str = None
 
     def __post_init__(self):
         if isinstance(self.created_at, datetime):
@@ -47,19 +64,20 @@ class Dataset:
 
 
 @dataclasses.dataclass
-class Reuse:
+class Reuse(EntityBase):
     id: str
     title: str
     url: str
     created_at: str
-    orga_followers: int
-    reuse_views: int
-    reuse_followers: int
-    reuse_datasets: int
-    reuse_featured: int
-    organization_id: str
+    views: int
+    followers: int
+    datasets: int
+    featured: int
     description: str
-    organization: str
+
+    orga_followers: int = None
+    organization_id: str = None
+    organization: str = None
 
     def __post_init__(self):
         if isinstance(self.created_at, datetime):
