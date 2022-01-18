@@ -98,13 +98,17 @@ class ElasticClient:
         SearchableOrganization(meta={'id': to_index.id}, **dataclasses.asdict(to_index)).save(skip_empty=False)
 
     def index_dataset(self, to_index: Dataset) -> None:
-        print(SearchableDataset(meta={'id': to_index.id}, **dataclasses.asdict(to_index)).save(skip_empty=False))
+        SearchableDataset(meta={'id': to_index.id}, **dataclasses.asdict(to_index)).save(skip_empty=False)
 
     def index_reuse(self, to_index: Reuse) -> None:
         SearchableReuse(meta={'id': to_index.id}, **dataclasses.asdict(to_index)).save(skip_empty=False)
 
     def query_organizations(self, query_text: str, offset: int, page_size: int, filters: dict) -> Tuple[int, List[dict]]:
         s = SearchableOrganization.search()
+
+        for key, value in filters.items():
+            s = s.filter('term', **{key: value})
+
         if query_text:
             s = s.query('bool', should=[
                     query.Q(
@@ -118,7 +122,9 @@ class ElasticClient:
                     ),
                 query.Match(title={"query": query_text, 'fuzziness': 'AUTO'})
             ])
+
         s = s[offset:(offset + page_size)]
+
         response = s.execute()
         results_number = response.hits.total.value
         res = [hit.to_dict(skip_empty=False) for hit in response.hits]
@@ -126,6 +132,15 @@ class ElasticClient:
 
     def query_datasets(self, query_text: str, offset: int, page_size: int, filters: dict) -> Tuple[int, List[dict]]:
         s = SearchableDataset.search()
+
+        for key, value in filters.items():
+            if key == 'temporal_coverage_start':
+                s = s.filter('range', **{'temporal_coverage_start': {'lte': value}})
+            if key == 'temporal_coverage_end':
+                s = s.filter('range', **{'temporal_coverage_end': {'gte': value}})
+            else:
+                s = s.filter('term', **{key: value})
+
         if query_text:
             datasets_score_functions = [
                 query.SF("field_value_factor", field="orga_sp", factor=8, modifier='sqrt', missing=1),
@@ -149,7 +164,9 @@ class ElasticClient:
                     ),
                     query.MultiMatch(query=query_text, type='most_fields', fields=['title', 'organization'], fuzziness='AUTO')
                 ])
+
         s = s[offset:(offset + page_size)]
+
         response = s.execute()
         results_number = response.hits.total.value
         res = [hit.to_dict(skip_empty=False) for hit in response.hits]
@@ -157,6 +174,10 @@ class ElasticClient:
 
     def query_reuses(self, query_text: str, offset: int, page_size: int, filters: dict) -> Tuple[int, List[dict]]:
         s = SearchableReuse.search()
+
+        for key, value in filters.items():
+            s = s.filter('term', **{key: value})
+
         if query_text:
             s = s.query('bool', should=[
                     query.Q(
@@ -171,7 +192,9 @@ class ElasticClient:
                     ),
                     query.MultiMatch(query=query_text, type='most_fields', fields=['title', 'organization'], fuzziness='AUTO')
                 ])
+
         s = s[offset:(offset + page_size)]
+
         response = s.execute()
         results_number = response.hits.total.value
         res = [hit.to_dict(skip_empty=False) for hit in response.hits]
