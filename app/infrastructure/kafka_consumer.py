@@ -99,7 +99,6 @@ def consume_messages(consumer, es):
                 logging.error(f'Model Deserializer not implemented for index: {index}')
                 continue
             data = dataclass_consumer.load_from_dict(json.loads(val_utf8)).to_dict()
-            print(data)
             try:
                 es.index(index=index, id=key.decode('utf-8'), document=data)
             except ConnectionError as e:
