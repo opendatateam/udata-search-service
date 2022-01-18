@@ -136,7 +136,7 @@ class ElasticClient:
         for key, value in filters.items():
             if key == 'temporal_coverage_start':
                 s = s.filter('range', **{'temporal_coverage_start': {'lte': value}})
-            if key == 'temporal_coverage_end':
+            elif key == 'temporal_coverage_end':
                 s = s.filter('range', **{'temporal_coverage_end': {'gte': value}})
             else:
                 s = s.filter('term', **{key: value})
