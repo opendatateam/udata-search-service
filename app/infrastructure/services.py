@@ -1,12 +1,11 @@
 from typing import Tuple, Optional, List
-from fastapi import Depends
 from app.domain.entities import Dataset, Organization, Reuse
 from app.infrastructure.search_clients import ElasticClient
 
 
 class OrganizationService:
 
-    def __init__(self, search_client: ElasticClient = Depends(ElasticClient)):
+    def __init__(self, search_client: ElasticClient):
         self.search_client = search_client
 
     def feed(self, organization: Organization) -> None:
@@ -19,20 +18,20 @@ class OrganizationService:
             offset = 0
 
         results_number, search_results = self.search_client.query_organizations(search_text, offset, page_size)
-        results = [Organization(**hit) for hit in search_results]
+        results = [Organization.load_from_dict(hit) for hit in search_results]
         total_pages = round(results_number / page_size) or 1
         return results, results_number, total_pages
 
     def find_one(self, organization_id: str) -> Optional[Organization]:
         try:
-            return Organization(**self.search_client.find_one_organization(organization_id))
+            return Organization.load_from_dict(self.search_client.find_one_organization(organization_id))
         except TypeError:
             return None
 
 
 class DatasetService:
 
-    def __init__(self, search_client: ElasticClient = Depends(ElasticClient)):
+    def __init__(self, search_client: ElasticClient):
         self.search_client = search_client
 
     def feed(self, dataset: Dataset) -> None:
@@ -45,20 +44,20 @@ class DatasetService:
             offset = 0
 
         results_number, search_results = self.search_client.query_datasets(search_text, offset, page_size)
-        results = [Dataset(**hit) for hit in search_results]
+        results = [Dataset.load_from_dict(hit) for hit in search_results]
         total_pages = round(results_number / page_size) or 1
         return results, results_number, total_pages
 
     def find_one(self, dataset_id: str) -> Optional[Dataset]:
         try:
-            return Dataset(**self.search_client.find_one_dataset(dataset_id))
+            return Dataset.load_from_dict(self.search_client.find_one_dataset(dataset_id))
         except TypeError:
             return None
 
 
 class ReuseService:
 
-    def __init__(self, search_client: ElasticClient = Depends(ElasticClient)):
+    def __init__(self, search_client: ElasticClient):
         self.search_client = search_client
 
     def feed(self, reuse: Reuse) -> None:
@@ -71,12 +70,12 @@ class ReuseService:
             offset = 0
 
         results_number, search_results = self.search_client.query_reuses(search_text, offset, page_size)
-        results = [Reuse(**hit) for hit in search_results]
+        results = [Reuse.load_from_dict(hit) for hit in search_results]
         total_pages = round(results_number / page_size) or 1
         return results, results_number, total_pages
 
     def find_one(self, reuse_id: str) -> Optional[Reuse]:
         try:
-            return Reuse(**self.search_client.find_one_reuse(reuse_id))
+            return Reuse.load_from_dict(self.search_client.find_one_reuse(reuse_id))
         except TypeError:
             return None

@@ -96,13 +96,13 @@ class ElasticClient:
         SearchableOrganization.init()
 
     def index_organization(self, to_index: Organization) -> None:
-        SearchableOrganization(meta={'id': to_index.id}, **dataclasses.asdict(to_index)).save(skip_empty=False)
+        SearchableOrganization(meta={'id': to_index.id}, **to_index.to_dict()).save(skip_empty=False)
 
     def index_dataset(self, to_index: Dataset) -> None:
-        SearchableDataset(meta={'id': to_index.id}, **dataclasses.asdict(to_index)).save(skip_empty=False)
+        SearchableDataset(meta={'id': to_index.id}, **to_index.to_dict()).save(skip_empty=False)
 
     def index_reuse(self, to_index: Reuse) -> None:
-        SearchableReuse(meta={'id': to_index.id}, **dataclasses.asdict(to_index)).save(skip_empty=False)
+        SearchableReuse(meta={'id': to_index.id}, **to_index.to_dict()).save(skip_empty=False)
 
     def query_organizations(self, query_text: str, offset: int, page_size: int) -> Tuple[int, List[dict]]:
         s = SearchableOrganization.search().query('bool', should=[

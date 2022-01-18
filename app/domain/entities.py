@@ -3,10 +3,22 @@ from datetime import datetime
 
 
 @dataclasses.dataclass
-class Organization:
+class EntityBase():
+
+    @classmethod
+    def load_from_dict(cls, data):
+        fields = [f.name for f in dataclasses.fields(cls)]
+        data = {key: data[key] for key in data if key in fields}
+        return cls(**data)
+
+    def to_dict(self):
+        return dataclasses.asdict(self)
+
+
+@dataclasses.dataclass
+class Organization(EntityBase):
     id: str
     name: str
-    acronym: str
     description: str
     url: str
     orga_sp: int
@@ -14,33 +26,37 @@ class Organization:
     followers: int
     datasets: int
 
+    acronym: str = None
+
     def __post_init__(self):
         if isinstance(self.created_at, datetime):
             self.created_at = self.created_at.strftime('%Y-%m-%d')
 
 
 @dataclasses.dataclass
-class Dataset:
+class Dataset(EntityBase):
     id: str
     title: str
     acronym: str
     url: str
     created_at: str
-    orga_sp: int
-    orga_followers: int
     views: int
     followers: int
     reuses: int
     featured: int
     resources_count: int
     concat_title_org: str
-    organization_id: str
-    temporal_coverage_start: str
-    temporal_coverage_end: str
-    granularity: str
-    geozones: str
     description: str
-    organization: str
+
+    temporal_coverage_start: str = None
+    temporal_coverage_end: str = None
+    granularity: str = None
+    geozones: str = None
+
+    orga_sp: int = None
+    orga_followers: int = None
+    organization_id: str = None
+    organization: str = None
 
     def __post_init__(self):
         if isinstance(self.created_at, datetime):
@@ -48,19 +64,20 @@ class Dataset:
 
 
 @dataclasses.dataclass
-class Reuse:
+class Reuse(EntityBase):
     id: str
     title: str
     url: str
     created_at: str
-    orga_followers: int
     views: int
     followers: int
     datasets: int
     featured: int
-    organization_id: str
     description: str
-    organization: str
+
+    orga_followers: int = None
+    organization_id: str = None
+    organization: str = None
 
     def __post_init__(self):
         if isinstance(self.created_at, datetime):
