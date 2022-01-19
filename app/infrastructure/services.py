@@ -1,4 +1,4 @@
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 from app.domain.entities import Dataset, Organization, Reuse
 from app.infrastructure.search_clients import ElasticClient
 
@@ -11,7 +11,7 @@ class OrganizationService:
     def feed(self, organization: Organization) -> None:
         self.search_client.index_organization(organization)
 
-    def search(self, args: dict) -> Tuple[list[Organization], int, int]:
+    def search(self, args: dict) -> Tuple[List[Organization], int, int]:
         page = args.pop('page')
         page_size = args.pop('page_size')
         search_text = args.pop('q')
@@ -22,13 +22,13 @@ class OrganizationService:
             offset = 0
 
         results_number, search_results = self.search_client.query_organizations(search_text, offset, page_size, args)
-        results = [Organization(**hit) for hit in search_results]
+        results = [Organization.load_from_dict(hit) for hit in search_results]
         total_pages = round(results_number / page_size) or 1
         return results, results_number, total_pages
 
     def find_one(self, organization_id: str) -> Optional[Organization]:
         try:
-            return Organization(**self.search_client.find_one_organization(organization_id))
+            return Organization.load_from_dict(self.search_client.find_one_organization(organization_id))
         except TypeError:
             return None
 
@@ -41,7 +41,7 @@ class DatasetService:
     def feed(self, dataset: Dataset) -> None:
         self.search_client.index_dataset(dataset)
 
-    def search(self, filters: dict) -> Tuple[list[Dataset], int, int]:
+    def search(self, filters: dict) -> Tuple[List[Dataset], int, int]:
         page = filters.pop('page')
         page_size = filters.pop('page_size')
         search_text = filters.pop('q')
@@ -55,13 +55,13 @@ class DatasetService:
             self.parse_temporal_value(filters)
 
         results_number, search_results = self.search_client.query_datasets(search_text, offset, page_size, filters)
-        results = [Dataset(**hit) for hit in search_results]
+        results = [Dataset.load_from_dict(hit) for hit in search_results]
         total_pages = round(results_number / page_size) or 1
         return results, results_number, total_pages
 
     def find_one(self, dataset_id: str) -> Optional[Dataset]:
         try:
-            return Dataset(**self.search_client.find_one_dataset(dataset_id))
+            return Dataset.load_from_dict(self.search_client.find_one_dataset(dataset_id))
         except TypeError:
             return None
 
@@ -80,7 +80,7 @@ class ReuseService:
     def feed(self, reuse: Reuse) -> None:
         self.search_client.index_reuse(reuse)
 
-    def search(self, args: dict) -> Tuple[list[Reuse], int, int]:
+    def search(self, args: dict) -> Tuple[List[Reuse], int, int]:
         page = args.pop('page')
         page_size = args.pop('page_size')
         search_text = args.pop('q')
@@ -91,12 +91,12 @@ class ReuseService:
             offset = 0
 
         results_number, search_results = self.search_client.query_reuses(search_text, offset, page_size, args)
-        results = [Reuse(**hit) for hit in search_results]
+        results = [Reuse.load_from_dict(hit) for hit in search_results]
         total_pages = round(results_number / page_size) or 1
         return results, results_number, total_pages
 
     def find_one(self, reuse_id: str) -> Optional[Reuse]:
         try:
-            return Reuse(**self.search_client.find_one_reuse(reuse_id))
+            return Reuse.load_from_dict(self.search_client.find_one_reuse(reuse_id))
         except TypeError:
             return None

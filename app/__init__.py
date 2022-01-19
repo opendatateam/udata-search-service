@@ -1,6 +1,7 @@
 from flask import Flask
 from app.config import Config
 from app.container import Container
+from app.infrastructure import kafka_consumer
 from app.presentation import seed, api
 
 
@@ -17,6 +18,7 @@ def create_app(config: object = Config) -> Flask:
 
     # register the database command
     seed.init_app(app)
+    kafka_consumer.init_app(app)
 
     app.register_blueprint(api.bp)
 

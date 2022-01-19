@@ -16,4 +16,4 @@ RUN pip install -r requirements.txt
 COPY . .
 
 # run entrypoint.sh
-ENTRYPOINT ["./gunicorn.sh"]
+ENTRYPOINT ["bash", "gunicorn.sh"]
