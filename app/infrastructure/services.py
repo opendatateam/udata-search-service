@@ -11,17 +11,17 @@ class OrganizationService:
     def feed(self, organization: Organization) -> None:
         self.search_client.index_organization(organization)
 
-    def search(self, args: dict) -> Tuple[List[Organization], int, int]:
-        page = args.pop('page')
-        page_size = args.pop('page_size')
-        search_text = args.pop('q')
+    def search(self, filters: dict) -> Tuple[List[Organization], int, int]:
+        page = filters.pop('page')
+        page_size = filters.pop('page_size')
+        search_text = filters.pop('q')
 
         if page > 1:
             offset = page_size * (page - 1)
         else:
             offset = 0
 
-        results_number, search_results = self.search_client.query_organizations(search_text, offset, page_size, args)
+        results_number, search_results = self.search_client.query_organizations(search_text, offset, page_size, filters)
         results = [Organization.load_from_dict(hit) for hit in search_results]
         total_pages = round(results_number / page_size) or 1
         return results, results_number, total_pages
@@ -80,17 +80,17 @@ class ReuseService:
     def feed(self, reuse: Reuse) -> None:
         self.search_client.index_reuse(reuse)
 
-    def search(self, args: dict) -> Tuple[List[Reuse], int, int]:
-        page = args.pop('page')
-        page_size = args.pop('page_size')
-        search_text = args.pop('q')
+    def search(self, filters: dict) -> Tuple[List[Reuse], int, int]:
+        page = filters.pop('page')
+        page_size = filters.pop('page_size')
+        search_text = filters.pop('q')
 
         if page > 1:
             offset = page_size * (page - 1)
         else:
             offset = 0
 
-        results_number, search_results = self.search_client.query_reuses(search_text, offset, page_size, args)
+        results_number, search_results = self.search_client.query_reuses(search_text, offset, page_size, filters)
         results = [Reuse.load_from_dict(hit) for hit in search_results]
         total_pages = round(results_number / page_size) or 1
         return results, results_number, total_pages
