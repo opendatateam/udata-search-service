@@ -93,11 +93,11 @@ def get_dataset(dataset_id: str, dataset_service: DatasetService = Provide[Conta
 @inject
 def organizations_search(organization_service: OrganizationService = Provide[Container.organization_service]):
     try:
-        args = OrganizationArgs(**request.args)
+        request_args = OrganizationArgs(**request.args)
     except ValidationError as e:
         abort(400, e)
 
-    results, results_number, total_pages = organization_service.search(args)
+    results, results_number, total_pages = organization_service.search(request_args.dict())
     next_url = url_for('api.organization_search', q=args.q, page=args.page + 1, page_size=args.page_size, _external=True)
     prev_url = url_for('api.organization_search', q=args.q, page=args.page - 1, page_size=args.page_size, _external=True)
 
@@ -117,11 +117,11 @@ def get_organization(organization_id: str, organization_service: OrganizationSer
 @inject
 def reuses_search(reuse_service: ReuseService = Provide[Container.reuse_service]):
     try:
-        args = ReuseArgs(**request.args)
+        request_args = ReuseArgs(**request.args)
     except ValidationError as e:
         abort(400, e)
 
-    results, results_number, total_pages = reuse_service.search(args)
+    results, results_number, total_pages = reuse_service.search(request_args.dict())
     next_url = url_for('api.reuse_search', q=args.q, page=args.page + 1, page_size=args.page_size, _external=True)
     prev_url = url_for('api.reuse_search', q=args.q, page=args.page - 1, page_size=args.page_size, _external=True)
 

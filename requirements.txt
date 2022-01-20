@@ -1,6 +1,7 @@
 dependency-injector==4.36.0
 elasticsearch==7.15.0
 elasticsearch_dsl==7.4.0
+Faker==11.3.0
 Flask==2.0.1
 gunicorn==20.1.0
 kafka-python==2.0.2
