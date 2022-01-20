@@ -15,7 +15,7 @@ def organizations_search(organization_service: OrganizationService = Provide[Con
     query_text = request.args.get('q', None)
 
     if not query_text:
-        abort(400)
+        query_text = ""
 
     results, results_number, total_pages = organization_service.search(query_text, page, page_size)
     next_url = url_for('api.organization_search', q=query_text, page=page + 1, page_size=page_size, _external=True)
@@ -49,7 +49,7 @@ def datasets_search(dataset_service: DatasetService = Provide[Container.dataset_
     query_text = request.args.get('q', None)
 
     if not query_text:
-        abort(400)
+        query_text = ""
 
     results, results_number, total_pages = dataset_service.search(query_text, page, page_size)
     next_url = url_for('api.dataset_search', q=query_text, page=page + 1, page_size=page_size, _external=True)
@@ -83,7 +83,7 @@ def reuses_search(reuse_service: ReuseService = Provide[Container.reuse_service]
     query_text = request.args.get('q', None)
 
     if not query_text:
-        abort(400)
+        query_text = ""
 
     results, results_number, total_pages = reuse_service.search(query_text, page, page_size)
     next_url = url_for('api.reuse_search', q=query_text, page=page + 1, page_size=page_size, _external=True)
