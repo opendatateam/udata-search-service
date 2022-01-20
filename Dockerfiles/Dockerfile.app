@@ -9,4 +9,6 @@ RUN pip install -r requirements.txt
 # copy project
 COPY . .
 
+RUN flask init-es
+
 ENTRYPOINT ["bash", "gunicorn.sh"]
