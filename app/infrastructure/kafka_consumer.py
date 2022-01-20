@@ -1,13 +1,11 @@
 import click
-import dataclasses
-import datetime
 import json
 import logging
 import os
 
-from elasticsearch import Elasticsearch, helpers
+from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import ConnectionError
-from flask import current_app, Flask
+from flask import Flask
 from flask.cli import with_appcontext
 from kafka import KafkaConsumer
 
@@ -62,8 +60,9 @@ class DatasetConsumer(Dataset):
         data["organization"] = data["organization"].get('name') if data["organization"] else None
 
         data["concat_title_org"] = data["title"] + (' ' + data["organization"] if data["organization"] else '')
-        data["geozones"] = '' # TODO
+        data["geozones"] = ''  # TODO
         return super().load_from_dict(data)
+
 
 class ReuseConsumer(Reuse):
     @classmethod
@@ -73,6 +72,7 @@ class ReuseConsumer(Reuse):
         data["organization"] = data["organization"].get('name') if data["organization"] else None
         return super().load_from_dict(data)
 
+
 class OrganizationConsumer(Organization):
     pass
 
@@ -81,14 +81,14 @@ def consume_messages(consumer, es):
     logging.info('Ready to consume message')
     for message in consumer:
         value = message.value
-        val_utf8 = value.decode('utf-8').replace('NaN','null')
+        val_utf8 = value.decode('utf-8').replace('NaN', 'null')
         
         key = message.key
         index = message.topic
 
         logging.warning(f'Message recieved with key: {key} and value: {value}')
 
-        if(val_utf8 != 'null'):
+        if val_utf8 != 'null':
             if index == 'dataset':
                 dataclass_consumer = DatasetConsumer
             elif index == 'reuse':
@@ -105,11 +105,11 @@ def consume_messages(consumer, es):
                 logging.error(f'ConnectionError with Elastic Client: {e}')
                 # TODO: add a retry mechanism?
         else:
-                try:
-                    if(es.exists_source(index=index, id=key.decode('utf-8'))):
-                        es.delete(index=index, id=key.decode('utf-8'))
-                except ConnectionError as e:
-                    logging.error(f'ConnectionError with Elastic Client: {e}')
+            try:
+                if es.exists_source(index=index, id=key.decode('utf-8')):
+                    es.delete(index=index, id=key.decode('utf-8'))
+            except ConnectionError as e:
+                logging.error(f'ConnectionError with Elastic Client: {e}')
 
 
 def consume_kafka():
@@ -119,10 +119,12 @@ def consume_kafka():
     consumer = create_kafka_consumer()
     consume_messages(consumer, es)
 
+
 @click.command("consume-kafka")
 @with_appcontext
 def consume_kafka_command() -> None:
     consume_kafka()
+
 
 def init_app(app: Flask) -> None:
     app.cli.add_command(consume_kafka_command)
