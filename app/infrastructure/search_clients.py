@@ -1,4 +1,3 @@
-import dataclasses
 from typing import Tuple, Optional, List
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl import Index, Document, Integer, Text, tokenizer, token_filter, analyzer, query, Date
