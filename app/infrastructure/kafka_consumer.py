@@ -1,12 +1,9 @@
-import click
 import json
 import logging
 import os
 
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import ConnectionError
-from flask import Flask
-from flask.cli import with_appcontext
 from kafka import KafkaConsumer
 
 from app.domain.entities import Dataset, Organization, Reuse
@@ -118,13 +115,3 @@ def consume_kafka():
     es = create_elastic_client()
     consumer = create_kafka_consumer()
     consume_messages(consumer, es)
-
-
-@click.command("consume-kafka")
-@with_appcontext
-def consume_kafka_command() -> None:
-    consume_kafka()
-
-
-def init_app(app: Flask) -> None:
-    app.cli.add_command(consume_kafka_command)
