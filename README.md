@@ -4,7 +4,8 @@ A search service for udata.
 The idea is to have search service separated from the udata MongoDB.
 The indexation update is made using real-time messages with Kafka.
 
-** TODO: ** Add a beautiful schema.
+See the following architecture schema:
+![Udata Search Service architecture schema](docs/udata-search-service-schema.png "Udata Search Service architecture schema")
 
 ## Getting started
 
