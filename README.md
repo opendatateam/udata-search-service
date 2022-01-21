@@ -31,4 +31,4 @@ You can feed the elasticsearch by publishing messages to Kafka.
 Using [udata](https://github.com/opendatateam/udata), when you modify objects,
 indexation messages will be sent and will be consumed by the kafka consumer.
 
-You can query the search service with http://localhost:5000/api/1/datasets/?q=toilettes%20à%20rennes
+You can query the search service with the search service api, ex: http://localhost:5000/api/1/datasets/?q=toilettes%20à%20rennes
