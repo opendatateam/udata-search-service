@@ -15,17 +15,17 @@ def test_general_search_with_and_without_query(app, client, search_client, faker
             created_at=faker.date(),
             orga_sp=4 if i % 2 else 1,
             orga_followers=faker.random_int(),
-            dataset_views=faker.random_int(),
-            dataset_followers=faker.random_int(),
-            dataset_reuses=faker.random_int(),
-            dataset_featured=faker.random_int(),
+            views=faker.random_int(),
+            followers=faker.random_int(),
+            reuses=faker.random_int(),
+            featured=faker.random_int(),
             resources_count=faker.random_int(min=1, max=15),
             concat_title_org=title + ' ' + acronym + ' ' + organization,
             organization_id=faker.md5(),
             temporal_coverage_start=None,
             temporal_coverage_end=None,
-            spatial_granularity=None,
-            spatial_zones=None,
+            granularity=None,
+            geozones=None,
             description=faker.sentence(nb_words=10),
             organization=organization
         ))
@@ -37,8 +37,8 @@ def test_general_search_with_and_without_query(app, client, search_client, faker
             url=faker.uri(),
             orga_sp=4 if i % 2 else 1,
             created_at=faker.date(),
-            orga_followers=faker.random_int(),
-            orga_datasets=faker.random_int()
+            followers=faker.random_int(),
+            datasets=faker.random_int()
         ))
 
         search_client.index_reuse(Reuse(
@@ -47,10 +47,10 @@ def test_general_search_with_and_without_query(app, client, search_client, faker
             url=faker.uri(),
             created_at=faker.date(),
             orga_followers=faker.random_int(),
-            reuse_views=faker.random_int(),
-            reuse_followers=faker.random_int(),
-            reuse_datasets=faker.random_int(),
-            reuse_featured=faker.random_int(),
+            views=faker.random_int(),
+            followers=faker.random_int(),
+            datasets=faker.random_int(),
+            featured=faker.random_int(),
             organization_id=faker.md5(),
             description=faker.sentence(nb_words=10),
             organization=organization
@@ -88,17 +88,17 @@ def test_search_with_filters(app, client, search_client, faker):
             created_at=faker.date(),
             orga_sp=4 if i % 2 else 1,
             orga_followers=faker.random_int(),
-            dataset_views=faker.random_int(),
-            dataset_followers=faker.random_int(),
-            dataset_reuses=faker.random_int(),
-            dataset_featured=faker.random_int(),
+            views=faker.random_int(),
+            followers=faker.random_int(),
+            reuses=faker.random_int(),
+            featured=faker.random_int(),
             resources_count=faker.random_int(min=1, max=15),
             concat_title_org=title + ' ' + acronym + ' ' + organization,
             organization_id=faker.md5(),
             temporal_coverage_start=None,
             temporal_coverage_end=None,
-            spatial_granularity=None,
-            spatial_zones=None,
+            granularity=None,
+            geozones=None,
             description=faker.sentence(nb_words=10),
             organization=organization
         ))
@@ -110,8 +110,8 @@ def test_search_with_filters(app, client, search_client, faker):
             url=faker.uri(),
             orga_sp=4 if i % 2 else 1,
             created_at=faker.date(),
-            orga_followers=faker.random_int(),
-            orga_datasets=faker.random_int()
+            followers=faker.random_int(),
+            datasets=faker.random_int()
         ))
 
     # Without this, ElasticSearch does not seem to have the time to index.
@@ -140,17 +140,17 @@ def test_search_datasets_with_temporal_filters(app, client, search_client, faker
             created_at=faker.date(),
             orga_sp=4 if i % 2 else 1,
             orga_followers=faker.random_int(),
-            dataset_views=faker.random_int(),
-            dataset_followers=faker.random_int(),
-            dataset_reuses=faker.random_int(),
-            dataset_featured=faker.random_int(),
+            views=faker.random_int(),
+            followers=faker.random_int(),
+            reuses=faker.random_int(),
+            featured=faker.random_int(),
             resources_count=faker.random_int(min=1, max=15),
             concat_title_org=title + ' ' + acronym + ' ' + organization,
             organization_id=faker.md5(),
             temporal_coverage_start='2021-12-02' if i % 2 else '2020-02-24',
             temporal_coverage_end='2022-01-13' if i % 2 else '2020-03-13',
-            spatial_granularity=None,
-            spatial_zones=None,
+            granularity=None,
+            geozones=None,
             description=faker.sentence(nb_words=10),
             organization=organization
         ))

@@ -26,6 +26,13 @@ def search_client(app):
 
 @pytest.fixture(autouse=True)
 def db(search_client):
+    if Index('dataset').exists():
+        Index('dataset').delete()
+    if Index('reuse').exists():
+        Index('reuse').delete()
+    if Index('organization').exists():
+        Index('organization').delete()
+
     SearchableDataset.init()
     SearchableReuse.init()
     SearchableOrganization.init()
