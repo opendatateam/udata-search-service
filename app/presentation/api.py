@@ -98,10 +98,10 @@ def organizations_search(organization_service: OrganizationService = Provide[Con
         abort(400, e)
 
     results, results_number, total_pages = organization_service.search(request_args.dict())
-    next_url = url_for('api.organization_search', q=args.q, page=args.page + 1, page_size=args.page_size, _external=True)
-    prev_url = url_for('api.organization_search', q=args.q, page=args.page - 1, page_size=args.page_size, _external=True)
+    next_url = url_for('api.organization_search', q=request_args.q, page=request_args.page + 1, page_size=request_args.page_size, _external=True)
+    prev_url = url_for('api.organization_search', q=request_args.q, page=request_args.page - 1, page_size=request_args.page_size, _external=True)
 
-    return make_response(results, total_pages, results_number, args.page, args.page_size, next_url, prev_url)
+    return make_response(results, total_pages, results_number, request_args.page, request_args.page_size, next_url, prev_url)
 
 
 @bp.route("/organizations/<organization_id>/", methods=["GET"])
@@ -122,10 +122,10 @@ def reuses_search(reuse_service: ReuseService = Provide[Container.reuse_service]
         abort(400, e)
 
     results, results_number, total_pages = reuse_service.search(request_args.dict())
-    next_url = url_for('api.reuse_search', q=args.q, page=args.page + 1, page_size=args.page_size, _external=True)
-    prev_url = url_for('api.reuse_search', q=args.q, page=args.page - 1, page_size=args.page_size, _external=True)
+    next_url = url_for('api.reuse_search', q=request_args.q, page=request_args.page + 1, page_size=request_args.page_size, _external=True)
+    prev_url = url_for('api.reuse_search', q=request_args.q, page=request_args.page - 1, page_size=request_args.page_size, _external=True)
 
-    return make_response(results, total_pages, results_number, args.page, args.page_size, next_url, prev_url)
+    return make_response(results, total_pages, results_number, request_args.page, request_args.page_size, next_url, prev_url)
 
 
 @bp.route("/reuses/<reuse_id>/", methods=["GET"])

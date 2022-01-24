@@ -2,12 +2,12 @@ from flask import Flask
 from app.config import Config
 from app.container import Container
 from app.infrastructure import kafka_consumer
-from app.presentation import seed, api
+from app.presentation import api, commands
 
 
 def create_app(config: object = Config) -> Flask:
     container = Container()
-    container.wire(modules=[api, seed])
+    container.wire(modules=[api, commands])
 
     app: Flask = Flask(__name__)
     app.container = container
@@ -17,8 +17,7 @@ def create_app(config: object = Config) -> Flask:
     container.config.search_synonyms.from_value(app.config['SEARCH_SYNONYMS'])
 
     # register the database command
-    seed.init_app(app)
-    kafka_consumer.init_app(app)
+    commands.init_app(app)
 
     app.register_blueprint(api.bp)
 
