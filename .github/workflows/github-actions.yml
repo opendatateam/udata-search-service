@@ -9,6 +9,10 @@ jobs:
     services:
       es-1:
         image: udata/elasticsearch:7.16.2
+        env:
+          node.name: es01
+          cluster.name: es-docker-cluster
+          cluster.initial_master_nodes: es01
         ports:
           - 9200:9200
     strategy:
