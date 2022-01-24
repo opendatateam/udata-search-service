@@ -113,7 +113,7 @@ class ElasticClient:
             s = s.query('bool', should=[
                     query.Q(
                         'function_score',
-                        query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['name^15','acronym^15','description^8'])]),
+                        query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['name^15', 'acronym^15', 'description^8'])]),
                         functions=[
                             query.SF("field_value_factor", field="orga_sp", factor=8, modifier='sqrt', missing=1),
                             query.SF("field_value_factor", field="followers", factor=4, modifier='sqrt', missing=1),
@@ -154,7 +154,7 @@ class ElasticClient:
                 should=[
                     query.Q(
                         'function_score',
-                        query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['title^15','acronym^15','description^8','organization^8'])]),
+                        query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['title^15', 'acronym^15', 'description^8', 'organization^8'])]),
                         functions=datasets_score_functions,
                     ),
                     query.Q(
@@ -182,7 +182,7 @@ class ElasticClient:
             s = s.query('bool', should=[
                     query.Q(
                         'function_score',
-                        query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['title^15','description^8','organization^8'])]),
+                        query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['title^15', 'description^8', 'organization^8'])]),
                         functions=[
                             query.SF("field_value_factor", field="views", factor=4, modifier='sqrt', missing=1),
                             query.SF("field_value_factor", field="followers", factor=4, modifier='sqrt', missing=1),

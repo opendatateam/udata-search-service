@@ -74,10 +74,14 @@ def datasets_search(dataset_service: DatasetService = Provide[Container.dataset_
         abort(400, e)
 
     results, results_number, total_pages = dataset_service.search(request_args.dict())
-    next_url = url_for('api.dataset_search', q=request_args.q, page=request_args.page + 1, page_size=request_args.page_size, _external=True)
-    prev_url = url_for('api.dataset_search', q=request_args.q, page=request_args.page - 1, page_size=request_args.page_size, _external=True)
 
-    return make_response(results, total_pages, results_number, request_args.page, request_args.page_size, next_url, prev_url)
+    next_url = url_for('api.dataset_search', q=request_args.q, page=request_args.page + 1,
+                       page_size=request_args.page_size, _external=True)
+    prev_url = url_for('api.dataset_search', q=request_args.q, page=request_args.page - 1,
+                       page_size=request_args.page_size, _external=True)
+
+    return make_response(results, total_pages, results_number,
+                         request_args.page, request_args.page_size, next_url, prev_url)
 
 
 @bp.route("/datasets/<dataset_id>/", methods=["GET"])
@@ -98,15 +102,20 @@ def organizations_search(organization_service: OrganizationService = Provide[Con
         abort(400, e)
 
     results, results_number, total_pages = organization_service.search(request_args.dict())
-    next_url = url_for('api.organization_search', q=request_args.q, page=request_args.page + 1, page_size=request_args.page_size, _external=True)
-    prev_url = url_for('api.organization_search', q=request_args.q, page=request_args.page - 1, page_size=request_args.page_size, _external=True)
 
-    return make_response(results, total_pages, results_number, request_args.page, request_args.page_size, next_url, prev_url)
+    next_url = url_for('api.organization_search', q=request_args.q, page=request_args.page + 1,
+                       page_size=request_args.page_size, _external=True)
+    prev_url = url_for('api.organization_search', q=request_args.q, page=request_args.page - 1,
+                       page_size=request_args.page_size, _external=True)
+
+    return make_response(results, total_pages, results_number, request_args.page,
+                         request_args.page_size, next_url, prev_url)
 
 
 @bp.route("/organizations/<organization_id>/", methods=["GET"])
 @inject
-def get_organization(organization_id: str, organization_service: OrganizationService = Provide[Container.organization_service]):
+def get_organization(organization_id: str,
+                     organization_service: OrganizationService = Provide[Container.organization_service]):
     result = organization_service.find_one(organization_id)
     if result:
         return jsonify(result)
@@ -122,10 +131,14 @@ def reuses_search(reuse_service: ReuseService = Provide[Container.reuse_service]
         abort(400, e)
 
     results, results_number, total_pages = reuse_service.search(request_args.dict())
-    next_url = url_for('api.reuse_search', q=request_args.q, page=request_args.page + 1, page_size=request_args.page_size, _external=True)
-    prev_url = url_for('api.reuse_search', q=request_args.q, page=request_args.page - 1, page_size=request_args.page_size, _external=True)
 
-    return make_response(results, total_pages, results_number, request_args.page, request_args.page_size, next_url, prev_url)
+    next_url = url_for('api.reuse_search', q=request_args.q, page=request_args.page + 1,
+                       page_size=request_args.page_size, _external=True)
+    prev_url = url_for('api.reuse_search', q=request_args.q, page=request_args.page - 1,
+                       page_size=request_args.page_size, _external=True)
+
+    return make_response(results, total_pages, results_number, request_args.page,
+                         request_args.page_size, next_url, prev_url)
 
 
 @bp.route("/reuses/<reuse_id>/", methods=["GET"])

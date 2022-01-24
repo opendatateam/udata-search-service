@@ -37,8 +37,8 @@ def create_kafka_consumer():
     consumer = KafkaConsumer(
         bootstrap_servers=f'{KAFKA_HOST}:{KAFKA_PORT}',
         group_id='elastic',
-        reconnect_backoff_max_ms=100000, # TODO: what value to set here?
-        
+        reconnect_backoff_max_ms=100000,  # TODO: what value to set here?
+
         # API Version is needed in order to prevent api version guessing leading to an error
         # on startup if Kafka Broker isn't ready yet
         api_version=tuple([int(value) for value in KAFKA_API_VERSION.split('.')])
@@ -79,7 +79,7 @@ def consume_messages(consumer, es):
     for message in consumer:
         value = message.value
         val_utf8 = value.decode('utf-8').replace('NaN', 'null')
-        
+
         key = message.key
         index = message.topic
 

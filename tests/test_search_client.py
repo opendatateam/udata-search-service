@@ -159,5 +159,8 @@ def test_search_datasets_with_temporal_filters(app, client, search_client, faker
 
     results_number, res = search_client.query_datasets('test', 0, 20, {})
     assert results_number == 4
-    results_number, res = search_client.query_datasets('test', 0, 20, {'temporal_coverage_start': '2020-01-29', 'temporal_coverage_end': '2020-04-15'})
+    results_number, res = search_client.query_datasets('test', 0, 20, {
+        'temporal_coverage_start': '2020-01-29',
+        'temporal_coverage_end': '2020-04-15'
+    })
     assert results_number == 2
