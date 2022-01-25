@@ -1,4 +1,6 @@
+import datetime
 import time
+
 from app.domain.entities import Dataset, Organization, Reuse
 
 
@@ -25,7 +27,7 @@ def test_general_search_with_and_without_query(app, client, search_client, faker
             temporal_coverage_start=None,
             temporal_coverage_end=None,
             granularity=None,
-            geozones=None,
+            geozone=None,
             description=faker.sentence(nb_words=10),
             organization=organization
         ))
@@ -98,7 +100,7 @@ def test_search_with_filters(app, client, search_client, faker):
             temporal_coverage_start=None,
             temporal_coverage_end=None,
             granularity=None,
-            geozones=None,
+            geozone=None,
             description=faker.sentence(nb_words=10),
             organization=organization
         ))
@@ -147,10 +149,10 @@ def test_search_datasets_with_temporal_filters(app, client, search_client, faker
             resources_count=faker.random_int(min=1, max=15),
             concat_title_org=title + ' ' + acronym + ' ' + organization,
             organization_id=faker.md5(),
-            temporal_coverage_start='2021-12-02' if i % 2 else '2020-02-24',
-            temporal_coverage_end='2022-01-13' if i % 2 else '2020-03-13',
+            temporal_coverage_start=datetime.date(2021, 12, 2) if i % 2 else datetime.date(2020, 2, 24),
+            temporal_coverage_end=datetime.date(2022, 1, 13) if i % 2 else datetime.date(2020, 3, 13),
             granularity=None,
-            geozones=None,
+            geozone=None,
             description=faker.sentence(nb_words=10),
             organization=organization
         ))
@@ -160,7 +162,17 @@ def test_search_datasets_with_temporal_filters(app, client, search_client, faker
     results_number, res = search_client.query_datasets('test', 0, 20, {})
     assert results_number == 4
     results_number, res = search_client.query_datasets('test', 0, 20, {
-        'temporal_coverage_start': '2020-01-29',
-        'temporal_coverage_end': '2020-04-15'
+        'temporal_coverage_start': datetime.date(2020, 2, 25),
+        'temporal_coverage_end': datetime.date(2020, 3, 10)
     })
     assert results_number == 2
+    results_number, res = search_client.query_datasets('test', 0, 20, {
+        'temporal_coverage_start': datetime.date(2022, 1, 1),
+        'temporal_coverage_end': datetime.date(2022, 1, 10)
+    })
+    assert results_number == 2
+    results_number, res = search_client.query_datasets('test', 0, 20, {
+        'temporal_coverage_start': datetime.date(1970, 1, 1),
+        'temporal_coverage_end': datetime.date(2022, 12, 31)
+    })
+    assert results_number == 0

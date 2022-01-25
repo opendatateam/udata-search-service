@@ -57,7 +57,7 @@ class DatasetConsumer(Dataset):
         data["organization"] = data["organization"].get('name') if data["organization"] else None
 
         data["concat_title_org"] = data["title"] + (' ' + data["organization"] if data["organization"] else '')
-        data["geozones"] = ''  # TODO
+        data["geozone"] = [zone.get("id") for zone in data.get("geozones", [])]
         return super().load_from_dict(data)
 
 
@@ -83,7 +83,7 @@ def consume_messages(consumer, es):
         key = message.key
         index = message.topic
 
-        logging.warning(f'Message recieved with key: {key} and value: {value}')
+        logging.info(f'Message recieved with key: {key} and value: {value}')
 
         if val_utf8 != 'null':
             if index == 'dataset':

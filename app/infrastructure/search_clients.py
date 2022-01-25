@@ -1,6 +1,6 @@
 from typing import Tuple, Optional, List
 from elasticsearch.exceptions import NotFoundError
-from elasticsearch_dsl import Index, Document, Integer, Text, tokenizer, token_filter, analyzer, query
+from elasticsearch_dsl import Index, Date, Document, Integer, Keyword, Text, tokenizer, token_filter, analyzer, query
 from elasticsearch_dsl.connections import connections
 from app.domain.entities import Dataset, Organization, Reuse
 from app.config import Config
@@ -28,7 +28,7 @@ class SearchableOrganization(Document):
     description = Text(analyzer=dgv_analyzer)
     url = Text()
     orga_sp = Integer()
-    created_at = Text()
+    created_at = Date()
     followers = Integer()
     datasets = Integer()
 
@@ -39,7 +39,7 @@ class SearchableOrganization(Document):
 class SearchableReuse(Document):
     title = Text(analyzer=dgv_analyzer)
     url = Text()
-    created_at = Text()
+    created_at = Date()
     orga_followers = Integer()
     views = Integer()
     followers = Integer()
@@ -57,7 +57,7 @@ class SearchableDataset(Document):
     title = Text(analyzer=dgv_analyzer)
     acronym = Text()
     url = Text()
-    created_at = Text()
+    created_at = Date()
     orga_sp = Integer()
     orga_followers = Integer()
     views = Integer()
@@ -67,10 +67,10 @@ class SearchableDataset(Document):
     resources_count = Integer()
     concat_title_org = Text(analyzer=dgv_analyzer)
     organization_id = Text()
-    temporal_coverage_start = Text()
-    temporal_coverage_end = Text()
+    temporal_coverage_start = Date()
+    temporal_coverage_end = Date()
     granularity = Text()
-    geozones = Text()
+    geozone = Keyword(multi=True)
     description = Text(analyzer=dgv_analyzer)
     organization = Text(analyzer=dgv_analyzer)
 
