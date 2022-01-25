@@ -1,5 +1,6 @@
 import dataclasses
 from datetime import datetime
+from dateutil.parser import isoparse
 
 
 @dataclasses.dataclass
@@ -22,15 +23,15 @@ class Organization(EntityBase):
     description: str
     url: str
     orga_sp: int
-    created_at: str
+    created_at: datetime.date
     followers: int
     datasets: int
 
     acronym: str = None
 
     def __post_init__(self):
-        if isinstance(self.created_at, datetime):
-            self.created_at = self.created_at.strftime('%Y-%m-%d')
+        if isinstance(self.created_at, str):
+            self.created_at = isoparse(self.created_at)
 
 
 @dataclasses.dataclass
@@ -39,7 +40,7 @@ class Dataset(EntityBase):
     title: str
     acronym: str
     url: str
-    created_at: str
+    created_at: datetime.date
     views: int
     followers: int
     reuses: int
@@ -48,10 +49,10 @@ class Dataset(EntityBase):
     concat_title_org: str
     description: str
 
-    temporal_coverage_start: str = None
-    temporal_coverage_end: str = None
+    temporal_coverage_start: datetime.date = None
+    temporal_coverage_end: datetime.date = None
     granularity: str = None
-    geozones: str = None
+    geozone: str = None
 
     orga_sp: int = None
     orga_followers: int = None
@@ -59,8 +60,12 @@ class Dataset(EntityBase):
     organization: str = None
 
     def __post_init__(self):
-        if isinstance(self.created_at, datetime):
-            self.created_at = self.created_at.strftime('%Y-%m-%d')
+        if isinstance(self.created_at, str):
+            self.created_at = isoparse(self.created_at)
+        if isinstance(self.temporal_coverage_start, str):
+            self.temporal_coverage_start = isoparse(self.temporal_coverage_start)
+        if isinstance(self.temporal_coverage_end, str):
+            self.temporal_coverage_end = isoparse(self.temporal_coverage_end)
 
 
 @dataclasses.dataclass
@@ -68,7 +73,7 @@ class Reuse(EntityBase):
     id: str
     title: str
     url: str
-    created_at: str
+    created_at: datetime.date
     views: int
     followers: int
     datasets: int
@@ -80,5 +85,5 @@ class Reuse(EntityBase):
     organization: str = None
 
     def __post_init__(self):
-        if isinstance(self.created_at, datetime):
-            self.created_at = self.created_at.strftime('%Y-%m-%d')
+        if isinstance(self.created_at, str):
+            self.created_at = isoparse(self.created_at)
