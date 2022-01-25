@@ -100,13 +100,16 @@ def consume_messages(consumer, es):
                 es.index(index=index, id=key.decode('utf-8'), document=data)
             except ConnectionError as e:
                 logging.error(f'ConnectionError with Elastic Client: {e}')
-                # TODO: add a retry mechanism?
+            except Exception as e:
+                logging.error(f'Exeption when indexing: {e}')
         else:
             try:
                 if es.exists_source(index=index, id=key.decode('utf-8')):
                     es.delete(index=index, id=key.decode('utf-8'))
             except ConnectionError as e:
                 logging.error(f'ConnectionError with Elastic Client: {e}')
+            except Exception as e:
+                logging.error(f'Exeption when unindexing: {e}')
 
 
 def consume_kafka():
