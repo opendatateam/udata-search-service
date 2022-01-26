@@ -52,10 +52,11 @@ def create_kafka_consumer():
 class DatasetConsumer(Dataset):
     @classmethod
     def load_from_dict(cls, data):
-        data["orga_followers"] = data["organization"].get('followers') if data["organization"] else None
-        data["orga_sp"] = data["organization"].get('public_service') if data["organization"] else None
-        data["organization_name"] = data["organization"].get('name') if data["organization"] else None
-        data["organization"] = data["organization"].get('id') if data["organization"] else None
+        organization = data["organization"]
+        data["organization"] = organization.get('id') if organization else None
+        data["orga_followers"] = organization.get('followers') if organization else None
+        data["orga_sp"] = organization.get('public_service') if organization else None
+        data["organization_name"] = organization.get('name') if organization else None
 
         data["concat_title_org"] = get_concat_title_org(data["title"], data['acronym'], data['organization_name'])
         data["geozone"] = [zone.get("id") for zone in data.get("geozones", [])]
@@ -65,9 +66,10 @@ class DatasetConsumer(Dataset):
 class ReuseConsumer(Reuse):
     @classmethod
     def load_from_dict(cls, data):
-        data["orga_followers"] = data["organization"].get('followers') if data["organization"] else None
-        data["organization_name"] = data["organization"].get('name') if data["organization"] else None
-        data["organization"] = data["organization"].get('id') if data["organization"] else None
+        organization = data["organization"]
+        data["organization"] = organization.get('id') if organization else None
+        data["orga_followers"] = organization.get('followers') if organization else None
+        data["organization_name"] = organization.get('name') if organization else None
         return super().load_from_dict(data)
 
 
