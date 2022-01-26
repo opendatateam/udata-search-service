@@ -50,10 +50,10 @@ class SearchableReuse(Document):
     topic = Keyword()
     tags = Keyword(multi=True)
     badges = Keyword(multi=True)
-    organization = Text()
+    organization = Keyword()
     description = Text(analyzer=dgv_analyzer)
     organization_name = Text(analyzer=dgv_analyzer)
-    owner = Text()
+    owner = Keyword()
 
     class Index:
         name = 'reuse'
@@ -82,9 +82,9 @@ class SearchableDataset(Document):
     granularity = Keyword()
     geozone = Keyword(multi=True)
     description = Text(analyzer=dgv_analyzer)
-    organization = Text()
+    organization = Keyword()
     organization_name = Text(analyzer=dgv_analyzer)
-    owner = Text()
+    owner = Keyword()
 
     class Index:
         name = 'dataset'

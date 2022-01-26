@@ -221,6 +221,86 @@ def test_search_with_orga_id_filter(app, client, search_client, faker):
     assert results_number == 1
 
 
+def test_search_with_owner_filter(app, client, search_client, faker):
+    for i in range(4):
+        title = 'test-{0}'.format(faker.word(ext_word_list=['abc', 'def', 'hij', 'klm', 'nop', 'qrs', 'tuv']))
+        search_client.index_dataset(Dataset(
+            id=faker.md5(),
+            title=title,
+            url=faker.uri(),
+            created_at=faker.date(),
+            views=faker.random_int(),
+            followers=faker.random_int(),
+            reuses=faker.random_int(),
+            featured=faker.random_int(),
+            resources_count=faker.random_int(min=1, max=15),
+            concat_title_org=title,
+            description=faker.sentence(nb_words=10),
+            format=['pdf'],
+            frequency=faker.word(),
+            owner=faker.md5()
+        ))
+
+        search_client.index_reuse(Reuse(
+            id=faker.md5(),
+            title='test-{0}'.format(faker.word(ext_word_list=['abc', 'def', 'hij', 'klm', 'nop', 'qrs', 'tuv'])),
+            url=faker.uri(),
+            created_at=faker.date(),
+            views=faker.random_int(),
+            followers=faker.random_int(),
+            datasets=faker.random_int(),
+            featured=faker.random_int(),
+            description=faker.sentence(nb_words=10),
+            type=faker.word(),
+            topic=faker.word(),
+            owner=faker.md5()
+        ))
+
+    search_client.index_dataset(Dataset(
+        id=faker.md5(),
+        title='test-data',
+        url=faker.uri(),
+        created_at=faker.date(),
+        views=faker.random_int(),
+        followers=faker.random_int(),
+        reuses=faker.random_int(),
+        featured=faker.random_int(),
+        resources_count=faker.random_int(min=1, max=15),
+        concat_title_org='test-orga-id',
+        description=faker.sentence(nb_words=10),
+        format=[faker.word()],
+        frequency=faker.word(),
+        owner='64f01c248bf99eab7c197717'
+    ))
+
+    search_client.index_reuse(Reuse(
+        id=faker.md5(),
+        title='test-reuse',
+        url=faker.uri(),
+        created_at=faker.date(),
+        views=faker.random_int(),
+        followers=faker.random_int(),
+        datasets=faker.random_int(),
+        featured=faker.random_int(),
+        description=faker.sentence(nb_words=10),
+        type=faker.word(),
+        topic=faker.word(),
+        owner='77f01c346bf99eab7c198891'
+    ))
+
+    # Without this, ElasticSearch does not seem to have the time to index.
+    time.sleep(2)
+
+    results_number, res = search_client.query_datasets('test', 0, 20, {})
+    assert results_number == 5
+    results_number, res = search_client.query_datasets('test', 0, 20, {'owner': '64f01c248bf99eab7c197717'})
+    assert results_number == 1
+    results_number, res = search_client.query_reuses('test', 0, 20, {})
+    assert results_number == 5
+    results_number, res = search_client.query_reuses('test', 0, 20, {'owner': '77f01c346bf99eab7c198891'})
+    assert results_number == 1
+
+
 def test_search_datasets_with_temporal_filters(app, client, search_client, faker):
     for i in range(4):
         title = 'test-{0}'.format(faker.word(ext_word_list=['abc', 'def', 'hij', 'klm', 'nop', 'qrs', 'tuv']))
