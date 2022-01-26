@@ -1,0 +1,120 @@
+import datetime
+import json
+
+from app.infrastructure.kafka_consumer import parse_message
+from app.infrastructure.utils import get_concat_title_org
+
+
+def test_parse_dataset_message():
+    message = {
+        'id': '5c4ae55a634f4117716d5656',
+        'title': 'Demandes de valeurs foncières',
+        'description': '### Propos liminaires...',
+        'acronym': 'DVF',
+        'url': '/fr/datasets/demandes-de-valeurs-foncieres/',
+        'tags': ['foncier', 'foncier-sol-mutation-fonciere', 'fonciere', 'valeur-fonciere'],
+        'license': 'notspecified',
+        'badges': [],
+        'frequency': 'semiannual',
+        'created_at': '2019-01-25T11:30:50',
+        'views': 7806,
+        'followers': 72,
+        'reuses': 45,
+        'featured': 0,
+        'resources_count': 10,
+        'organization': {
+            'id': '534fff8ea3a7292c64a77f02',
+            'name': 'Ministère de l\'économie, des finances et de la relance',
+            'public_service': 1,
+            'followers': 401},
+        'owner': None,
+        'format': ['pdf', 'pdf', 'pdf', 'pdf', 'txt', 'txt', 'txt', 'txt', 'txt', 'txt'],
+        'temporal_coverage_start': '2016-07-01T00:00:00',
+        'temporal_coverage_end': '2021-06-30T00:00:00',
+        'geozones': [{'id': 'fr:arrondissement:353', 'name': 'Rennes', 'keys': ['353']},
+                     {'id': 'country-group:world'},
+                     {'id': 'country:fr'},
+                     {'id': 'country-group:ue'}],
+        'granularity': 'fr:commune'
+    }
+    val_utf8 = json.dumps(message)
+    data = parse_message('dataset', val_utf8)
+
+    # Make sure that these fields are loaded as is
+    for key in ['id', 'title', 'url', 'frequency', 'views', 'followers', 'reuses', 'featured',
+                'resources_count', 'description', 'acronym', 'badges', 'tags', 'license', 'owner']:
+        assert data[key] == message[key]
+
+    # Make sure that all other particular fields are treated accordingly
+    assert data['concat_title_org'] == get_concat_title_org(data['title'], data['acronym'], data['organization_name'])
+    assert data['created_at'].date() == datetime.date(2019, 1, 25)
+    assert data['temporal_coverage_start'].date() == datetime.date(2016, 7, 1)
+    assert data['temporal_coverage_end'].date() == datetime.date(2021, 6, 30)
+    assert data['granularity'] == 'fr:commune'
+    assert data['geozone'] == ['fr:arrondissement:353', 'country-group:world', 'country:fr', 'country-group:ue']
+    assert data['organization'] == message['organization']['id']
+    assert data['organization_name'] == message['organization']['name']
+    assert data['orga_sp'] == 1
+    assert data['orga_followers'] == 401
+
+
+def test_parse_reuse_message():
+    message = {
+        "id": "5cc2dfbe8b4c414c91ffc46d",
+        "title": "Explorateur de données de valeur foncière (DVF)",
+        "description": "Cartographie des mutations à titre onéreux (parcelles en bleu).",
+        "url": "https://app.dvf.etalab.gouv.fr/",
+        "created_at": "2019-04-26T12:38:54",
+        "views": 4326,
+        "followers": 11,
+        "datasets": 2,
+        "featured": 1,
+        "organization": {
+            "id": "534fff75a3a7292c64a77de4",
+            "name": "Etalab",
+            "public_service": 1,
+            "followers": 357},
+        "owner": None,
+        "type": "application",
+        "topic": "housing_and_development",
+        "tags": ["application-cartographique", "cadastre", "dgfip", "dvf", "etalab", "foncier", "mutations"],
+        "badges": []
+    }
+    val_utf8 = json.dumps(message)
+    data = parse_message('reuse', val_utf8)
+
+    # Make sure that these fields are loaded as is
+    for key in ['id', 'title', 'url', 'views', 'followers', 'datasets', 'featured',
+                'description', 'badges', 'tags', 'owner']:
+        assert data[key] == message[key]
+
+    # Make sure that all other particular fields are treated accordingly
+    assert data['created_at'].date() == datetime.date(2019, 4, 26)
+    assert data['organization'] == message['organization']['id']
+    assert data['organization_name'] == message['organization']['name']
+    assert data['orga_followers'] == 357
+
+
+def test_parse_organization_message():
+    message = {
+        "id": "534fff75a3a7292c64a77de4",
+        "name": "Etalab",
+        "acronym": None,
+        "description": "Etalab est un département de la direction interministérielle du numérique (DINUM)",
+        "url": "https://www.etalab.gouv.fr",
+        "badges": ["public-service", "certified"],
+        "created_at": "2014-04-17T18:21:09",
+        "orga_sp": 1,
+        "followers": 357,
+        "datasets": 56
+    }
+    val_utf8 = json.dumps(message)
+    data = parse_message('organization', val_utf8)
+
+    # Make sure that these fields are loaded as is
+    for key in ['id', 'name', 'acronym', 'description', 'url', 'badges', 'orga_sp',
+                'followers', 'datasets']:
+        assert data[key] == message[key]
+
+    # Make sure that all other particular fields are treated accordingly
+    assert data['created_at'].date() == datetime.date(2014, 4, 17)
