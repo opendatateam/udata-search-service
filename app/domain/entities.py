@@ -1,4 +1,5 @@
 import dataclasses
+from typing import List
 from datetime import datetime
 from dateutil.parser import isoparse
 
@@ -27,6 +28,7 @@ class Organization(EntityBase):
     followers: int
     datasets: int
 
+    badges: List[str] = None
     acronym: str = None
 
     def __post_init__(self):
@@ -38,9 +40,10 @@ class Organization(EntityBase):
 class Dataset(EntityBase):
     id: str
     title: str
-    acronym: str
     url: str
     created_at: datetime.date
+    frequency: str
+    format: List[str]
     views: int
     followers: int
     reuses: int
@@ -49,6 +52,10 @@ class Dataset(EntityBase):
     concat_title_org: str
     description: str
 
+    acronym: str = None
+    badges: List[str] = None
+    tags: List[str] = None
+    license: str = None
     temporal_coverage_start: datetime.date = None
     temporal_coverage_end: datetime.date = None
     granularity: str = None
@@ -56,8 +63,9 @@ class Dataset(EntityBase):
 
     orga_sp: int = None
     orga_followers: int = None
-    organization_id: str = None
     organization: str = None
+    organization_name: str = None
+    owner: str = None
 
     def __post_init__(self):
         if isinstance(self.created_at, str):
@@ -79,10 +87,15 @@ class Reuse(EntityBase):
     datasets: int
     featured: int
     description: str
+    type: str
+    topic: str
 
+    tags: List[str] = None
+    badges: List[str] = None
     orga_followers: int = None
-    organization_id: str = None
     organization: str = None
+    organization_name: str = None
+    owner: str = None
 
     def __post_init__(self):
         if isinstance(self.created_at, str):
