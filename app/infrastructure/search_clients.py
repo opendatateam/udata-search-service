@@ -46,8 +46,8 @@ class SearchableReuse(Document):
     followers = Integer()
     datasets = Integer()
     featured = Integer()
-    type = Text()
-    topic = Text()
+    type = Keyword()
+    topic = Keyword()
     tags = Keyword(multi=True)
     badges = Keyword(multi=True)
     organization = Text()
@@ -65,7 +65,7 @@ class SearchableDataset(Document):
     url = Text()
     created_at = Date()
     tags = Keyword(multi=True)
-    license = Text()
+    license = Keyword()
     badges = Keyword(multi=True)
     frequency = Text()
     format = Keyword(multi=True)
@@ -79,7 +79,7 @@ class SearchableDataset(Document):
     concat_title_org = Text(analyzer=dgv_analyzer)
     temporal_coverage_start = Date()
     temporal_coverage_end = Date()
-    granularity = Text()
+    granularity = Keyword()
     geozone = Keyword(multi=True)
     description = Text(analyzer=dgv_analyzer)
     organization = Text()
@@ -110,7 +110,6 @@ class ElasticClient:
         SearchableOrganization(meta={'id': to_index.id}, **to_index.to_dict()).save(skip_empty=False)
 
     def index_dataset(self, to_index: Dataset) -> None:
-        print(to_index)
         SearchableDataset(meta={'id': to_index.id}, **to_index.to_dict()).save(skip_empty=False)
 
     def index_reuse(self, to_index: Reuse) -> None:
