@@ -7,6 +7,7 @@ from elasticsearch.exceptions import ConnectionError
 from kafka import KafkaConsumer
 
 from app.domain.entities import Dataset, Organization, Reuse
+from app.infrastructure.utils import get_concat_title_org
 
 ELASTIC_HOST = os.environ.get('ELASTIC_HOST', 'localhost')
 ELASTIC_PORT = os.environ.get('ELASTIC_PORT', '9200')
@@ -51,12 +52,13 @@ def create_kafka_consumer():
 class DatasetConsumer(Dataset):
     @classmethod
     def load_from_dict(cls, data):
-        data["organization"] = data["organization"].get('id') if data["organization"] else None
-        data["orga_followers"] = data["organization"].get('followers') if data["organization"] else None
-        data["orga_sp"] = data["organization"].get('public_service') if data["organization"] else None
-        data["organization_name"] = data["organization"].get('name') if data["organization"] else None
+        organization = data["organization"]
+        data["organization"] = organization.get('id') if organization else None
+        data["orga_followers"] = organization.get('followers') if organization else None
+        data["orga_sp"] = organization.get('public_service') if organization else None
+        data["organization_name"] = organization.get('name') if organization else None
 
-        data["concat_title_org"] = data["title"] + (' ' + data["organization"] if data["organization"] else '')
+        data["concat_title_org"] = get_concat_title_org(data["title"], data['acronym'], data['organization_name'])
         data["geozone"] = [zone.get("id") for zone in data.get("geozones", [])]
         return super().load_from_dict(data)
 
@@ -64,14 +66,31 @@ class DatasetConsumer(Dataset):
 class ReuseConsumer(Reuse):
     @classmethod
     def load_from_dict(cls, data):
-        data["organization"] = data["organization"].get('id') if data["organization"] else None
-        data["orga_followers"] = data["organization"].get('followers') if data["organization"] else None
-        data["organization_name"] = data["organization"].get('name') if data["organization"] else None
+        organization = data["organization"]
+        data["organization"] = organization.get('id') if organization else None
+        data["orga_followers"] = organization.get('followers') if organization else None
+        data["organization_name"] = organization.get('name') if organization else None
         return super().load_from_dict(data)
 
 
 class OrganizationConsumer(Organization):
     pass
+
+
+def parse_message(index, val_utf8):
+    if index == 'dataset':
+        dataclass_consumer = DatasetConsumer
+    elif index == 'reuse':
+        dataclass_consumer = ReuseConsumer
+    elif index == 'organization':
+        dataclass_consumer = OrganizationConsumer
+    else:
+        raise ValueError(f'Model Deserializer not implemented for index: {index}')
+    try:
+        data = dataclass_consumer.load_from_dict(json.loads(val_utf8)).to_dict()
+        return data
+    except Exception as e:
+        raise ValueError(f'Failed to deserialize message: {val_utf8}. Exception raised: {e}')
 
 
 def consume_messages(consumer, es):
@@ -86,18 +105,11 @@ def consume_messages(consumer, es):
         logging.info(f'Message recieved with key: {key} and value: {value}')
 
         if val_utf8 != 'null':
-            if index == 'dataset':
-                dataclass_consumer = DatasetConsumer
-            elif index == 'reuse':
-                dataclass_consumer = ReuseConsumer
-            elif index == 'organization':
-                dataclass_consumer = OrganizationConsumer
-            else:
-                logging.error(f'Model Deserializer not implemented for index: {index}')
-                continue
-            data = dataclass_consumer.load_from_dict(json.loads(val_utf8)).to_dict()
             try:
+                data = parse_message(index, val_utf8)
                 es.index(index=index, id=key.decode('utf-8'), document=data)
+            except ValueError as e:
+                logging.error(f'ValueError when parsing message: {e}')
             except ConnectionError as e:
                 logging.error(f'ConnectionError with Elastic Client: {e}')
                 # TODO: add a retry mechanism?
