@@ -23,7 +23,7 @@ class DatasetArgs(BaseModel):
     page_size: Optional[int] = 20
     tag: Optional[str] = None
     badge: Optional[str] = None
-    organization_id: Optional[str] = None
+    organization: Optional[str] = None
     owner: Optional[str] = None
     license: Optional[str] = None
     geozone: Optional[str] = None
@@ -46,7 +46,7 @@ class ReuseArgs(BaseModel):
     page_size: Optional[int] = 20
     tag: Optional[str] = None
     badge: Optional[str] = None
-    organization_id: Optional[str] = None
+    organization: Optional[str] = None
     owner: Optional[str] = None
     type: Optional[str] = None
     featured: Optional[str] = None

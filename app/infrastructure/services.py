@@ -51,8 +51,7 @@ class DatasetService:
         else:
             offset = 0
 
-        if filters['temporal_coverage']:
-            self.parse_temporal_value(filters)
+        self.format_filters(filters)
 
         results_number, search_results = self.search_client.query_datasets(search_text, offset, page_size, filters)
         results = [Dataset.load_from_dict(hit) for hit in search_results]
@@ -66,10 +65,14 @@ class DatasetService:
             return None
 
     @staticmethod
-    def parse_temporal_value(filters):
-        parts = filters.pop('temporal_coverage')
-        filters['temporal_coverage_start'] = parts[:10]
-        filters['temporal_coverage_end'] = parts[11:]
+    def format_filters(filters):
+        if filters['temporal_coverage']:
+            parts = filters.pop('temporal_coverage')
+            filters['temporal_coverage_start'] = parts[:10]
+            filters['temporal_coverage_end'] = parts[11:]
+        filtered = {k: v for k, v in filters.items() if v is not None}
+        filters.clear()
+        filters.update(filtered)
 
 
 class ReuseService:
