@@ -177,9 +177,18 @@ class ElasticClient:
                     query.Q(
                         'function_score',
                         query=query.Bool(must=[query.Match(concat_title_org={"query": query_text, "operator": "and", "boost": 8})]),
+                        functions=datasets_score_functions,
+                    ),
+                    query.Q(
+                        'function_score',
+                        query=query.Bool(should=[query.MultiMatch(
+                            query=query_text,
+                            type='most_fields',
+                            fields=['title^7', 'acronym^7', 'description^4', 'organization_name^4'],
+                            operator="and")]),
                         functions=datasets_score_functions
                     ),
-                    query.MultiMatch(query=query_text, type='most_fields', fields=['title', 'organization_name'], fuzziness='AUTO')
+                    query.MultiMatch(query=query_text, type='most_fields', operator="and", fields=['title', 'organization_name'], fuzziness='AUTO')
                 ])
         else:
             s = s.query(query.Q('function_score', query=query.MatchAll(), functions=datasets_score_functions))
