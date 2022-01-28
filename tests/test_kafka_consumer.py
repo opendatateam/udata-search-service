@@ -2,7 +2,7 @@ import datetime
 import json
 
 from app.infrastructure.kafka_consumer import parse_message
-from app.infrastructure.utils import get_concat_title_org
+from app.infrastructure.utils import get_concat_title_org, log2p
 
 
 def test_parse_dataset_message():
@@ -41,9 +41,17 @@ def test_parse_dataset_message():
     data = parse_message('dataset', val_utf8)
 
     # Make sure that these fields are loaded as is
-    for key in ['id', 'title', 'url', 'frequency', 'views', 'followers', 'reuses', 'featured',
-                'resources_count', 'description', 'acronym', 'badges', 'tags', 'license', 'owner']:
+    for key in ['id', 'title', 'url', 'frequency', 'resources_count', 'description',
+                'acronym', 'badges', 'tags', 'license', 'owner']:
         assert data[key] == message[key]
+
+    # Make sure that these fields are log2p-normalized
+    for key in ['views', 'followers', 'reuses']:
+        assert data[key] == log2p(message[key])
+
+    # Make sure that boolean fields are either 1 or 4
+    assert data['featured'] == 1
+    assert data['orga_sp'] == 4
 
     # Make sure that all other particular fields are treated accordingly
     assert data['concat_title_org'] == get_concat_title_org(data['title'], data['acronym'], data['organization_name'])
@@ -54,8 +62,7 @@ def test_parse_dataset_message():
     assert data['geozone'] == ['fr:arrondissement:353', 'country-group:world', 'country:fr', 'country-group:ue']
     assert data['organization'] == message['organization']['id']
     assert data['organization_name'] == message['organization']['name']
-    assert data['orga_sp'] == 1
-    assert data['orga_followers'] == 401
+    assert data['orga_followers'] == log2p(401)
 
 
 def test_parse_reuse_message():
@@ -84,15 +91,19 @@ def test_parse_reuse_message():
     data = parse_message('reuse', val_utf8)
 
     # Make sure that these fields are loaded as is
-    for key in ['id', 'title', 'url', 'views', 'followers', 'datasets', 'featured',
+    for key in ['id', 'title', 'url', 'datasets', 'featured',
                 'description', 'badges', 'tags', 'owner']:
         assert data[key] == message[key]
+
+    # Make sure that these fields are log2p-normalized
+    for key in ['views', 'followers']:
+        assert data[key] == log2p(message[key])
 
     # Make sure that all other particular fields are treated accordingly
     assert data['created_at'].date() == datetime.date(2019, 4, 26)
     assert data['organization'] == message['organization']['id']
     assert data['organization_name'] == message['organization']['name']
-    assert data['orga_followers'] == 357
+    assert data['orga_followers'] == log2p(357)
 
 
 def test_parse_organization_message():

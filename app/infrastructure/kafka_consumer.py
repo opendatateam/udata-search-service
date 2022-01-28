@@ -1,6 +1,5 @@
 import json
 import logging
-from math import log
 import os
 
 from elasticsearch import Elasticsearch
@@ -8,7 +7,7 @@ from elasticsearch.exceptions import ConnectionError
 from kafka import KafkaConsumer
 
 from app.domain.entities import Dataset, Organization, Reuse
-from app.infrastructure.utils import get_concat_title_org
+from app.infrastructure.utils import get_concat_title_org, log2p
 
 ELASTIC_HOST = os.environ.get('ELASTIC_HOST', 'localhost')
 ELASTIC_PORT = os.environ.get('ELASTIC_PORT', '9200')
@@ -50,13 +49,6 @@ def create_kafka_consumer():
     return consumer
 
 
-def log2p(value):
-    # Add 2 to the field value and take the common logarithm.
-    # It makes sure that the result is > 0, needed for function score
-    # Using multiply boost mode
-    if not value:
-        value = 0
-    return log(value + 2)
 
 
 class DatasetConsumer(Dataset):
@@ -94,7 +86,6 @@ class ReuseConsumer(Reuse):
         data["views"] = log2p(data.get("views", 0))
         data["followers"] = log2p(data.get("followers", 0))
         data["orga_followers"] = log2p(data.get("orga_followers", 0))
-        data["orga_sp"] = 4 if data.get("orga_sp", 0) else 1
         return super().load_from_dict(data)
 
 
