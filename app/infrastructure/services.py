@@ -21,6 +21,8 @@ class OrganizationService:
         else:
             offset = 0
 
+        self.format_filters(filters)
+
         results_number, search_results = self.search_client.query_organizations(search_text, offset, page_size, filters)
         results = [Organization.load_from_dict(hit) for hit in search_results]
         total_pages = round(results_number / page_size) or 1
@@ -31,6 +33,12 @@ class OrganizationService:
             return Organization.load_from_dict(self.search_client.find_one_organization(organization_id))
         except TypeError:
             return None
+
+    @staticmethod
+    def format_filters(filters):
+        filtered = {k: v for k, v in filters.items() if v is not None}
+        filters.clear()
+        filters.update(filtered)
 
 
 class DatasetService:
@@ -93,6 +101,8 @@ class ReuseService:
         else:
             offset = 0
 
+        self.format_filters(filters)
+
         results_number, search_results = self.search_client.query_reuses(search_text, offset, page_size, filters)
         results = [Reuse.load_from_dict(hit) for hit in search_results]
         total_pages = round(results_number / page_size) or 1
@@ -103,3 +113,9 @@ class ReuseService:
             return Reuse.load_from_dict(self.search_client.find_one_reuse(reuse_id))
         except TypeError:
             return None
+
+    @staticmethod
+    def format_filters(filters):
+        filtered = {k: v for k, v in filters.items() if v is not None}
+        filters.clear()
+        filters.update(filtered)
