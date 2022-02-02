@@ -59,7 +59,7 @@ class Dataset(EntityBase):
     temporal_coverage_start: datetime.date = None
     temporal_coverage_end: datetime.date = None
     granularity: str = None
-    geozone: str = None
+    geozones: str = None
 
     orga_sp: int = None
     orga_followers: int = None

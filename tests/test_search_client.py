@@ -498,7 +498,7 @@ def test_search_dataset_with_geozone_filter(app, client, search_client, faker):
             organization_name=organization,
             format=['pdf'],
             frequency=faker.word(),
-            geozone='country:fr' if i % 2 else 'country:ro'
+            geozones='country:fr' if i % 2 else 'country:ro'
         ))
 
     # Without this, ElasticSearch does not seem to have the time to index.
@@ -506,7 +506,7 @@ def test_search_dataset_with_geozone_filter(app, client, search_client, faker):
 
     results_number, res = search_client.query_datasets('test', 0, 20, {})
     assert results_number == 4
-    results_number, res = search_client.query_datasets('test', 0, 20, {'geozone': 'country:fr'})
+    results_number, res = search_client.query_datasets('test', 0, 20, {'geozones': 'country:fr'})
     assert results_number == 2
 
 

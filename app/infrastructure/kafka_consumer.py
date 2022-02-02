@@ -49,8 +49,6 @@ def create_kafka_consumer():
     return consumer
 
 
-
-
 class DatasetConsumer(Dataset):
     @classmethod
     def load_from_dict(cls, data):
@@ -61,7 +59,7 @@ class DatasetConsumer(Dataset):
         data["organization_name"] = organization.get('name') if organization else None
 
         data["concat_title_org"] = get_concat_title_org(data["title"], data['acronym'], data['organization_name'])
-        data["geozone"] = [zone.get("id") for zone in data.get("geozones", [])]
+        data["geozones"] = [zone.get("id") for zone in data.get("geozones", [])]
 
         # Normalize values
         data["views"] = log2p(data.get("views", 0))

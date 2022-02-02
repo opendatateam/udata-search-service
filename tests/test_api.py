@@ -310,3 +310,103 @@ def test_api_dataset_search_with_temporal_filter(app, client, search_client, fak
 
     resp = client.get(url_for('api.dataset_search', temporal_coverage='2020-02-25-20111111111111-10'))
     assert resp.status_code == 400
+
+
+def test_api_search_with_tag_filter(app, client, search_client, faker):
+    for i in range(4):
+        title = 'test-{0}'.format(faker.word(ext_word_list=['abc', 'def', 'hij', 'klm', 'nop', 'qrs', 'tuv']))
+        acronym = faker.company_suffix()
+        organization = 'test-{0}'.format(faker.company())
+        search_client.index_dataset(Dataset(
+            id=faker.md5(),
+            title=title,
+            acronym=acronym,
+            url=faker.uri(),
+            created_at=faker.date(),
+            orga_sp=4 if i % 2 else 1,
+            orga_followers=faker.random_int(),
+            views=faker.random_int(),
+            followers=faker.random_int(),
+            reuses=faker.random_int(),
+            featured=faker.random_int(),
+            resources_count=faker.random_int(min=1, max=15),
+            concat_title_org=title + ' ' + acronym + ' ' + organization,
+            organization=faker.md5(),
+            description=faker.sentence(nb_words=10),
+            organization_name=organization,
+            format=['pdf'],
+            frequency=faker.word(),
+            tags=['test-tag'] if i % 2 else ['not-test-tag']
+        ))
+
+        search_client.index_reuse(Reuse(
+            id=faker.md5(),
+            title='test-{0}'.format(i) if i % 2 else faker.word(ext_word_list=['abc', 'def', 'hij', 'klm', 'nop', 'qrs', 'tuv']),
+            url=faker.uri(),
+            created_at=faker.date(),
+            orga_followers=faker.random_int(),
+            views=faker.random_int(),
+            followers=faker.random_int(),
+            datasets=faker.random_int(),
+            featured=faker.random_int(),
+            organization=faker.md5(),
+            description=faker.sentence(nb_words=10),
+            organization_name=organization,
+            type=faker.word(),
+            topic=faker.word(),
+            tags=['test-tag'] if i % 2 else ['not-test-tag']
+        ))
+
+    # Without this, ElasticSearch does not seem to have the time to index.
+    time.sleep(2)
+
+    # Filter is singular, we test the feature that maps it to the plural field of the entity.
+    resp = client.get(url_for('api.dataset_search'))
+    assert resp.json['total'] == 4
+
+    resp = client.get(url_for('api.dataset_search', tag='test-tag'))
+    assert resp.json['total'] == 2
+
+    resp = client.get(url_for('api.reuse_search'))
+    assert resp.json['total'] == 4
+
+    resp = client.get(url_for('api.reuse_search', tag='test-tag'))
+    assert resp.json['total'] == 2
+
+
+def test_api_dataset_search_with_geozone_filter(app, client, search_client, faker):
+    for i in range(4):
+        title = 'test-{0}'.format(faker.word(ext_word_list=['abc', 'def', 'hij', 'klm', 'nop', 'qrs', 'tuv']))
+        acronym = faker.company_suffix()
+        organization = 'test-{0}'.format(faker.company())
+        search_client.index_dataset(Dataset(
+            id=faker.md5(),
+            title=title,
+            acronym=acronym,
+            url=faker.uri(),
+            created_at=faker.date(),
+            orga_sp=4 if i % 2 else 1,
+            orga_followers=faker.random_int(),
+            views=faker.random_int(),
+            followers=faker.random_int(),
+            reuses=faker.random_int(),
+            featured=faker.random_int(),
+            resources_count=faker.random_int(min=1, max=15),
+            concat_title_org=title + ' ' + acronym + ' ' + organization,
+            organization=faker.md5(),
+            description=faker.sentence(nb_words=10),
+            organization_name=organization,
+            format=['pdf'],
+            frequency=faker.word(),
+            geozones='country:fr' if i % 2 else 'country:ro'
+        ))
+
+    # Without this, ElasticSearch does not seem to have the time to index.
+    time.sleep(2)
+
+    resp = client.get(url_for('api.dataset_search'))
+    assert resp.json['total'] == 4
+
+    # Filter is singular, we test the feature that maps it to the plural field of the entity.
+    resp = client.get(url_for('api.dataset_search', geozone='country:fr'))
+    assert resp.json['total'] == 2

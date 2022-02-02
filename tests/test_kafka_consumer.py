@@ -59,7 +59,7 @@ def test_parse_dataset_message():
     assert data['temporal_coverage_start'].date() == datetime.date(2016, 7, 1)
     assert data['temporal_coverage_end'].date() == datetime.date(2021, 6, 30)
     assert data['granularity'] == 'fr:commune'
-    assert data['geozone'] == ['fr:arrondissement:353', 'country-group:world', 'country:fr', 'country-group:ue']
+    assert data['geozones'] == ['fr:arrondissement:353', 'country-group:world', 'country:fr', 'country-group:ue']
     assert data['organization'] == message['organization']['id']
     assert data['organization_name'] == message['organization']['name']
     assert data['orga_followers'] == log2p(401)

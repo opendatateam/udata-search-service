@@ -78,6 +78,10 @@ class DatasetService:
             parts = filters.pop('temporal_coverage')
             filters['temporal_coverage_start'] = parts[:10]
             filters['temporal_coverage_end'] = parts[11:]
+        if filters['tag']:
+            filters['tags'] = filters.pop('tag')
+        if filters['geozone']:
+            filters['geozones'] = filters.pop('geozone')
         filtered = {k: v for k, v in filters.items() if v is not None}
         filters.clear()
         filters.update(filtered)
@@ -116,6 +120,8 @@ class ReuseService:
 
     @staticmethod
     def format_filters(filters):
+        if filters['tag']:
+            filters['tags'] = filters.pop('tag')
         filtered = {k: v for k, v in filters.items() if v is not None}
         filters.clear()
         filters.update(filtered)
