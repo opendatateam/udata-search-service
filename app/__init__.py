@@ -1,7 +1,6 @@
 from flask import Flask
 from app.config import Config
 from app.container import Container
-from app.infrastructure import kafka_consumer
 from app.presentation import api, commands
 
 

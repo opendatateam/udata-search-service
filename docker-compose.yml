@@ -1,4 +1,4 @@
-version: "3"
+version: "3.8"
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.0.0
@@ -40,15 +40,14 @@ services:
       KAFKA_ADVERTISED_HOST_NAME: 'broker'
 
   search:
-    image: udata/elasticsearch:7.14
+    image: udata/elasticsearch:7.16.2
     container_name: es01
     environment:
       - node.name=es01
       - cluster.name=es-docker-cluster
       - cluster.initial_master_nodes=es01
-      - "ES_JAVA_OPTS=-Dlog4j2.formatMsgNoLookups=true"
     volumes:
-      - ./data/search/data:/usr/share/elasticsearch/data
+      - es_data_prod:/usr/share/elasticsearch/data
     expose:
       - "9200"
     ports:
@@ -78,4 +77,5 @@ services:
       KAFKA_API_VERSION: 2.5.0
       CONSUMER_LOGGING_LEVEL: 20
 
-# image: docker.elastic.co/elasticsearch/elasticsearch:7.14.1
+volumes:
+  es_data_prod:

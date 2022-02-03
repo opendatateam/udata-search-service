@@ -11,13 +11,19 @@ class OrganizationService:
     def feed(self, organization: Organization) -> None:
         self.search_client.index_organization(organization)
 
-    def search(self, search_text: str, page: int, page_size: int) -> Tuple[List[Organization], int, int]:
+    def search(self, filters: dict) -> Tuple[List[Organization], int, int]:
+        page = filters.pop('page')
+        page_size = filters.pop('page_size')
+        search_text = filters.pop('q')
+
         if page > 1:
             offset = page_size * (page - 1)
         else:
             offset = 0
 
-        results_number, search_results = self.search_client.query_organizations(search_text, offset, page_size)
+        self.format_filters(filters)
+
+        results_number, search_results = self.search_client.query_organizations(search_text, offset, page_size, filters)
         results = [Organization.load_from_dict(hit) for hit in search_results]
         total_pages = round(results_number / page_size) or 1
         return results, results_number, total_pages
@@ -28,6 +34,12 @@ class OrganizationService:
         except TypeError:
             return None
 
+    @staticmethod
+    def format_filters(filters):
+        filtered = {k: v for k, v in filters.items() if v is not None}
+        filters.clear()
+        filters.update(filtered)
+
 
 class DatasetService:
 
@@ -37,13 +49,19 @@ class DatasetService:
     def feed(self, dataset: Dataset) -> None:
         self.search_client.index_dataset(dataset)
 
-    def search(self, search_text: str, page: int, page_size: int) -> Tuple[List[Dataset], int, int]:
+    def search(self, filters: dict) -> Tuple[List[Dataset], int, int]:
+        page = filters.pop('page')
+        page_size = filters.pop('page_size')
+        search_text = filters.pop('q')
+
         if page > 1:
             offset = page_size * (page - 1)
         else:
             offset = 0
 
-        results_number, search_results = self.search_client.query_datasets(search_text, offset, page_size)
+        self.format_filters(filters)
+
+        results_number, search_results = self.search_client.query_datasets(search_text, offset, page_size, filters)
         results = [Dataset.load_from_dict(hit) for hit in search_results]
         total_pages = round(results_number / page_size) or 1
         return results, results_number, total_pages
@@ -54,6 +72,20 @@ class DatasetService:
         except TypeError:
             return None
 
+    @staticmethod
+    def format_filters(filters):
+        if filters['temporal_coverage']:
+            parts = filters.pop('temporal_coverage')
+            filters['temporal_coverage_start'] = parts[:10]
+            filters['temporal_coverage_end'] = parts[11:]
+        if filters['tag']:
+            filters['tags'] = filters.pop('tag')
+        if filters['geozone']:
+            filters['geozones'] = filters.pop('geozone')
+        filtered = {k: v for k, v in filters.items() if v is not None}
+        filters.clear()
+        filters.update(filtered)
+
 
 class ReuseService:
 
@@ -63,13 +95,19 @@ class ReuseService:
     def feed(self, reuse: Reuse) -> None:
         self.search_client.index_reuse(reuse)
 
-    def search(self, search_text: str, page: int, page_size: int) -> Tuple[List[Reuse], int, int]:
+    def search(self, filters: dict) -> Tuple[List[Reuse], int, int]:
+        page = filters.pop('page')
+        page_size = filters.pop('page_size')
+        search_text = filters.pop('q')
+
         if page > 1:
             offset = page_size * (page - 1)
         else:
             offset = 0
 
-        results_number, search_results = self.search_client.query_reuses(search_text, offset, page_size)
+        self.format_filters(filters)
+
+        results_number, search_results = self.search_client.query_reuses(search_text, offset, page_size, filters)
         results = [Reuse.load_from_dict(hit) for hit in search_results]
         total_pages = round(results_number / page_size) or 1
         return results, results_number, total_pages
@@ -79,3 +117,11 @@ class ReuseService:
             return Reuse.load_from_dict(self.search_client.find_one_reuse(reuse_id))
         except TypeError:
             return None
+
+    @staticmethod
+    def format_filters(filters):
+        if filters['tag']:
+            filters['tags'] = filters.pop('tag')
+        filtered = {k: v for k, v in filters.items() if v is not None}
+        filters.clear()
+        filters.update(filtered)

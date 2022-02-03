@@ -7,6 +7,7 @@ from elasticsearch.exceptions import ConnectionError
 from kafka import KafkaConsumer
 
 from app.domain.entities import Dataset, Organization, Reuse
+from app.infrastructure.utils import get_concat_title_org, log2p
 
 ELASTIC_HOST = os.environ.get('ELASTIC_HOST', 'localhost')
 ELASTIC_PORT = os.environ.get('ELASTIC_PORT', '9200')
@@ -37,8 +38,8 @@ def create_kafka_consumer():
     consumer = KafkaConsumer(
         bootstrap_servers=f'{KAFKA_HOST}:{KAFKA_PORT}',
         group_id='elastic',
-        reconnect_backoff_max_ms=100000, # TODO: what value to set here?
-        
+        reconnect_backoff_max_ms=100000,  # TODO: what value to set here?
+
         # API Version is needed in order to prevent api version guessing leading to an error
         # on startup if Kafka Broker isn't ready yet
         api_version=tuple([int(value) for value in KAFKA_API_VERSION.split('.')])
@@ -51,27 +52,62 @@ def create_kafka_consumer():
 class DatasetConsumer(Dataset):
     @classmethod
     def load_from_dict(cls, data):
-        data["organization_id"] = data["organization"].get('id') if data["organization"] else None
-        data["orga_followers"] = data["organization"].get('followers') if data["organization"] else None
-        data["orga_sp"] = data["organization"].get('public_service') if data["organization"] else None
-        data["organization"] = data["organization"].get('name') if data["organization"] else None
+        organization = data["organization"]
+        data["organization"] = organization.get('id') if organization else None
+        data["orga_followers"] = organization.get('followers') if organization else None
+        data["orga_sp"] = organization.get('public_service') if organization else None
+        data["organization_name"] = organization.get('name') if organization else None
 
-        data["concat_title_org"] = data["title"] + (' ' + data["organization"] if data["organization"] else '')
-        data["geozones"] = ''  # TODO
+        data["concat_title_org"] = get_concat_title_org(data["title"], data['acronym'], data['organization_name'])
+        data["geozones"] = [zone.get("id") for zone in data.get("geozones", [])]
+
+        # Normalize values
+        data["views"] = log2p(data.get("views", 0))
+        data["followers"] = log2p(data.get("followers", 0))
+        data["reuses"] = log2p(data.get("reuses", 0))
+        data["orga_followers"] = log2p(data.get("orga_followers", 0))
+        data["orga_sp"] = 4 if data.get("orga_sp", 0) else 1
+        data["featured"] = 4 if data.get("featured", 0) else 1
+
         return super().load_from_dict(data)
 
 
 class ReuseConsumer(Reuse):
     @classmethod
     def load_from_dict(cls, data):
-        data["organization_id"] = data["organization"].get('id') if data["organization"] else None
-        data["orga_followers"] = data["organization"].get('followers') if data["organization"] else None
-        data["organization"] = data["organization"].get('name') if data["organization"] else None
+        organization = data["organization"]
+        data["organization"] = organization.get('id') if organization else None
+        data["orga_followers"] = organization.get('followers') if organization else None
+        data["organization_name"] = organization.get('name') if organization else None
+
+        # Normalize values
+        data["views"] = log2p(data.get("views", 0))
+        data["followers"] = log2p(data.get("followers", 0))
+        data["orga_followers"] = log2p(data.get("orga_followers", 0))
         return super().load_from_dict(data)
 
 
 class OrganizationConsumer(Organization):
-    pass
+    @classmethod
+    def load_from_dict(cls, data):
+        data["followers"] = log2p(data.get("followers", 0))
+        return super().load_from_dict(data)
+
+
+def parse_message(index, val_utf8):
+    if index == 'dataset':
+        dataclass_consumer = DatasetConsumer
+    elif index == 'reuse':
+        dataclass_consumer = ReuseConsumer
+    elif index == 'organization':
+        dataclass_consumer = OrganizationConsumer
+    else:
+        raise ValueError(f'Model Deserializer not implemented for index: {index}')
+    try:
+        data = dataclass_consumer.load_from_dict(json.loads(val_utf8)).to_dict()
+        return data
+    except Exception as e:
+        raise ValueError(f'Failed to deserialize message: {val_utf8}. Exception raised: {e}')
 
 
 def consume_messages(consumer, es):
@@ -79,25 +115,18 @@ def consume_messages(consumer, es):
     for message in consumer:
         value = message.value
         val_utf8 = value.decode('utf-8').replace('NaN', 'null')
-        
+
         key = message.key
         index = message.topic
 
-        logging.warning(f'Message recieved with key: {key} and value: {value}')
+        logging.info(f'Message recieved with key: {key} and value: {value}')
 
         if val_utf8 != 'null':
-            if index == 'dataset':
-                dataclass_consumer = DatasetConsumer
-            elif index == 'reuse':
-                dataclass_consumer = ReuseConsumer
-            elif index == 'organization':
-                dataclass_consumer = OrganizationConsumer
-            else:
-                logging.error(f'Model Deserializer not implemented for index: {index}')
-                continue
-            data = dataclass_consumer.load_from_dict(json.loads(val_utf8)).to_dict()
             try:
+                data = parse_message(index, val_utf8)
                 es.index(index=index, id=key.decode('utf-8'), document=data)
+            except ValueError as e:
+                logging.error(f'ValueError when parsing message: {e}')
             except ConnectionError as e:
                 logging.error(f'ConnectionError with Elastic Client: {e}')
             except Exception as e:
