@@ -80,7 +80,7 @@ class SearchableDataset(Document):
     temporal_coverage_start = Date()
     temporal_coverage_end = Date()
     granularity = Keyword()
-    geozone = Keyword(multi=True)
+    geozones = Keyword(multi=True)
     description = Text(analyzer=dgv_analyzer)
     organization = Keyword()
     organization_name = Text(analyzer=dgv_analyzer)
