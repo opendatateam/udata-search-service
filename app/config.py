@@ -21,3 +21,4 @@ class Config:
 
 class Testing(Config):
     TESTING = True
+    ELASTICSEARCH_URL = 'localhost:9201'

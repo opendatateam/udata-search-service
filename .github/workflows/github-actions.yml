@@ -14,7 +14,7 @@ jobs:
           cluster.name: es-docker-cluster
           cluster.initial_master_nodes: es01
         ports:
-          - 9200:9200
+          - 9201:9200
     strategy:
       matrix:
         python-version: [3.9]
