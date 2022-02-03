@@ -1,6 +1,6 @@
 from typing import Tuple, Optional, List
 from elasticsearch.exceptions import NotFoundError
-from elasticsearch_dsl import Index, Date, Document, Integer, Keyword, Text, tokenizer, token_filter, analyzer, query
+from elasticsearch_dsl import Index, Date, Document, Float, Integer, Keyword, Text, tokenizer, token_filter, analyzer, query
 from elasticsearch_dsl.connections import connections
 from app.domain.entities import Dataset, Organization, Reuse
 from app.config import Config
@@ -29,7 +29,7 @@ class SearchableOrganization(Document):
     url = Text()
     orga_sp = Integer()
     created_at = Date()
-    followers = Integer()
+    followers = Float()
     datasets = Integer()
     badges = Keyword(multi=True)
 
@@ -41,9 +41,9 @@ class SearchableReuse(Document):
     title = Text(analyzer=dgv_analyzer)
     url = Text()
     created_at = Date()
-    orga_followers = Integer()
-    views = Integer()
-    followers = Integer()
+    orga_followers = Float()
+    views = Float()
+    followers = Float()
     datasets = Integer()
     featured = Integer()
     type = Keyword()
@@ -70,10 +70,10 @@ class SearchableDataset(Document):
     frequency = Text()
     format = Keyword(multi=True)
     orga_sp = Integer()
-    orga_followers = Integer()
-    views = Integer()
-    followers = Integer()
-    reuses = Integer()
+    orga_followers = Float()
+    views = Float()
+    followers = Float()
+    reuses = Float()
     featured = Integer()
     resources_count = Integer()
     concat_title_org = Text(analyzer=dgv_analyzer)

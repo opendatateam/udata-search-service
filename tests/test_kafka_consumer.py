@@ -103,7 +103,7 @@ def test_parse_reuse_message():
     assert data['created_at'].date() == datetime.date(2019, 4, 26)
     assert data['organization'] == message['organization']['id']
     assert data['organization_name'] == message['organization']['name']
-    assert data['orga_followers'] == log2p(357)
+    assert data['orga_followers'] == log2p(message['organization']['followers'])
 
 
 def test_parse_organization_message():
@@ -123,9 +123,11 @@ def test_parse_organization_message():
     data = parse_message('organization', val_utf8)
 
     # Make sure that these fields are loaded as is
-    for key in ['id', 'name', 'acronym', 'description', 'url', 'badges', 'orga_sp',
-                'followers', 'datasets']:
+    for key in ['id', 'name', 'acronym', 'description', 'url', 'badges', 'orga_sp', 'datasets']:
         assert data[key] == message[key]
+
+    # Make sure that these fields are log2p-normalized
+    assert data["followers"] == log2p(message["followers"])
 
     # Make sure that all other particular fields are treated accordingly
     assert data['created_at'].date() == datetime.date(2014, 4, 17)

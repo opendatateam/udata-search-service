@@ -88,7 +88,10 @@ class ReuseConsumer(Reuse):
 
 
 class OrganizationConsumer(Organization):
-    pass
+    @classmethod
+    def load_from_dict(cls, data):
+        data["followers"] = log2p(data.get("followers", 0))
+        return super().load_from_dict(data)
 
 
 def parse_message(index, val_utf8):
