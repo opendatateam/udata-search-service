@@ -140,7 +140,7 @@ class ElasticClient:
             s = s.query(query.Q('function_score', query=query.MatchAll(), functions=organizations_score_functions))
 
         if sort:
-            s = s.sort(sort)
+            s = s.sort(sort, {'_score': {'order': 'desc'}})
 
         s = s[offset:(offset + page_size)]
 
@@ -197,7 +197,7 @@ class ElasticClient:
             s = s.query(query.Q('function_score', query=query.MatchAll(), functions=datasets_score_functions))
 
         if sort:
-            s = s.sort(sort)
+            s = s.sort(sort, {'_score': {'order': 'desc'}})
 
         s = s[offset:(offset + page_size)]
 
@@ -232,7 +232,7 @@ class ElasticClient:
             s = s.query(query.Q('function_score', query=query.MatchAll(), functions=reuses_score_functions))
 
         if sort:
-            s = s.sort(sort)
+            s = s.sort(sort, {'_score': {'order': 'desc'}})
 
         s = s[offset:(offset + page_size)]
 
