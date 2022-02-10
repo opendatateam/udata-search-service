@@ -14,6 +14,7 @@ class OrganizationArgs(BaseModel):
     q: Optional[str] = None
     page: Optional[int] = 1
     page_size: Optional[int] = 20
+    sort: Optional[str] = None
     badge: Optional[str] = None
 
 
@@ -21,6 +22,7 @@ class DatasetArgs(BaseModel):
     q: Optional[str] = None
     page: Optional[int] = 1
     page_size: Optional[int] = 20
+    sort: Optional[str] = None
     tag: Optional[str] = None
     badge: Optional[str] = None
     organization: Optional[str] = None
@@ -44,6 +46,7 @@ class ReuseArgs(BaseModel):
     q: Optional[str] = None
     page: Optional[int] = 1
     page_size: Optional[int] = 20
+    sort: Optional[str] = None
     tag: Optional[str] = None
     badge: Optional[str] = None
     organization: Optional[str] = None

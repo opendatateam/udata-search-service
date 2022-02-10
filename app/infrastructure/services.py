@@ -15,6 +15,7 @@ class OrganizationService:
         page = filters.pop('page')
         page_size = filters.pop('page_size')
         search_text = filters.pop('q')
+        sort = filters.pop('sort', None)
 
         if page > 1:
             offset = page_size * (page - 1)
@@ -23,7 +24,7 @@ class OrganizationService:
 
         self.format_filters(filters)
 
-        results_number, search_results = self.search_client.query_organizations(search_text, offset, page_size, filters)
+        results_number, search_results = self.search_client.query_organizations(search_text, offset, page_size, filters, sort)
         results = [Organization.load_from_dict(hit) for hit in search_results]
         total_pages = round(results_number / page_size) or 1
         return results, results_number, total_pages
@@ -53,6 +54,7 @@ class DatasetService:
         page = filters.pop('page')
         page_size = filters.pop('page_size')
         search_text = filters.pop('q')
+        sort = filters.pop('sort', None)
 
         if page > 1:
             offset = page_size * (page - 1)
@@ -61,7 +63,7 @@ class DatasetService:
 
         self.format_filters(filters)
 
-        results_number, search_results = self.search_client.query_datasets(search_text, offset, page_size, filters)
+        results_number, search_results = self.search_client.query_datasets(search_text, offset, page_size, filters, sort)
         results = [Dataset.load_from_dict(hit) for hit in search_results]
         total_pages = round(results_number / page_size) or 1
         return results, results_number, total_pages
@@ -99,6 +101,7 @@ class ReuseService:
         page = filters.pop('page')
         page_size = filters.pop('page_size')
         search_text = filters.pop('q')
+        sort = filters.pop('sort', None)
 
         if page > 1:
             offset = page_size * (page - 1)
@@ -107,7 +110,7 @@ class ReuseService:
 
         self.format_filters(filters)
 
-        results_number, search_results = self.search_client.query_reuses(search_text, offset, page_size, filters)
+        results_number, search_results = self.search_client.query_reuses(search_text, offset, page_size, filters, sort)
         results = [Reuse.load_from_dict(hit) for hit in search_results]
         total_pages = round(results_number / page_size) or 1
         return results, results_number, total_pages

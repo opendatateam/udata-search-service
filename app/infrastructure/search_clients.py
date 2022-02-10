@@ -115,7 +115,7 @@ class ElasticClient:
     def index_reuse(self, to_index: Reuse) -> None:
         SearchableReuse(meta={'id': to_index.id}, **to_index.to_dict()).save(skip_empty=False)
 
-    def query_organizations(self, query_text: str, offset: int, page_size: int, filters: dict) -> Tuple[int, List[dict]]:
+    def query_organizations(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict]]:
         s = SearchableOrganization.search()
 
         for key, value in filters.items():
@@ -139,6 +139,9 @@ class ElasticClient:
         else:
             s = s.query(query.Q('function_score', query=query.MatchAll(), functions=organizations_score_functions))
 
+        if sort:
+            s = s.sort(sort)
+
         s = s[offset:(offset + page_size)]
 
         response = s.execute()
@@ -146,7 +149,7 @@ class ElasticClient:
         res = [hit.to_dict(skip_empty=False) for hit in response.hits]
         return results_number, res
 
-    def query_datasets(self, query_text: str, offset: int, page_size: int, filters: dict) -> Tuple[int, List[dict]]:
+    def query_datasets(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict]]:
         s = SearchableDataset.search()
 
         for key, value in filters.items():
@@ -193,6 +196,9 @@ class ElasticClient:
         else:
             s = s.query(query.Q('function_score', query=query.MatchAll(), functions=datasets_score_functions))
 
+        if sort:
+            s = s.sort(sort)
+
         s = s[offset:(offset + page_size)]
 
         response = s.execute()
@@ -200,7 +206,7 @@ class ElasticClient:
         res = [hit.to_dict(skip_empty=False) for hit in response.hits]
         return results_number, res
 
-    def query_reuses(self, query_text: str, offset: int, page_size: int, filters: dict) -> Tuple[int, List[dict]]:
+    def query_reuses(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict]]:
         s = SearchableReuse.search()
 
         for key, value in filters.items():
@@ -224,6 +230,9 @@ class ElasticClient:
                 ])
         else:
             s = s.query(query.Q('function_score', query=query.MatchAll(), functions=reuses_score_functions))
+
+        if sort:
+            s = s.sort(sort)
 
         s = s[offset:(offset + page_size)]
 
