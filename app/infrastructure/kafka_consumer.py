@@ -1,3 +1,4 @@
+from enum import Enum
 import json
 import logging
 import os
@@ -24,6 +25,12 @@ TOPICS_AND_INDEX = [
     'reuse',
     'organization',
 ]
+
+
+class KafkaMessageType(Enum):
+    INDEX = 'index'
+    REINDEX = 'reindex'
+    UNINDEX = 'unindex'
 
 
 def create_elastic_client():
@@ -104,8 +111,13 @@ def parse_message(index, val_utf8):
     else:
         raise ValueError(f'Model Deserializer not implemented for index: {index}')
     try:
-        data = dataclass_consumer.load_from_dict(json.loads(val_utf8)).to_dict()
-        return data
+        message = json.loads(val_utf8)
+        message_type = message.get("message_type")
+        if not message.get("data"):
+            document = None
+        else:
+            document = dataclass_consumer.load_from_dict(message.get("data")).to_dict()
+        return message_type, document
     except Exception as e:
         raise ValueError(f'Failed to deserialize message: {val_utf8}. Exception raised: {e}')
 
@@ -116,29 +128,24 @@ def consume_messages(consumer, es):
         value = message.value
         val_utf8 = value.decode('utf-8').replace('NaN', 'null')
 
-        key = message.key
-        index = message.topic
+        key = message.key.decode('utf-8')
+        index = message.topic.split('-')[0]
 
         logging.info(f'Message recieved with key: {key} and value: {value}')
 
-        if val_utf8 != 'null':
-            try:
-                data = parse_message(index, val_utf8)
-                es.index(index=index, id=key.decode('utf-8'), document=data)
-            except ValueError as e:
-                logging.error(f'ValueError when parsing message: {e}')
-            except ConnectionError as e:
-                logging.error(f'ConnectionError with Elastic Client: {e}')
-            except Exception as e:
-                logging.error(f'Exeption when indexing: {e}')
-        else:
-            try:
-                if es.exists_source(index=index, id=key.decode('utf-8')):
-                    es.delete(index=index, id=key.decode('utf-8'))
-            except ConnectionError as e:
-                logging.error(f'ConnectionError with Elastic Client: {e}')
-            except Exception as e:
-                logging.error(f'Exeption when unindexing: {e}')
+        try:
+            message_type, data = parse_message(index, val_utf8)
+            if message_type == KafkaMessageType.INDEX.value:
+                es.index(index=index, id=key, document=data)
+            elif message_type == KafkaMessageType.UNINDEX.value:
+                if es.exists_source(index=index, id=key):
+                    es.delete(index=index, id=key)
+        except ValueError as e:
+            logging.error(f'ValueError when parsing message: {e}')
+        except ConnectionError as e:
+            logging.error(f'ConnectionError with Elastic Client: {e}')
+        except Exception as e:
+            logging.error(f'Exeption when indexing/unindexing: {e}')
 
 
 def consume_kafka():
