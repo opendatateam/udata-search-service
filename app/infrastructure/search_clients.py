@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Tuple, Optional, List
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl import Index, Date, Document, Float, Integer, Keyword, Text, tokenizer, token_filter, analyzer, query
@@ -93,18 +94,26 @@ class SearchableDataset(Document):
 class ElasticClient:
 
     def __init__(self, url: str):
-        connections.create_connection(hosts=[url])
+        self.es = connections.create_connection(hosts=[url])
+
+    def delete_index_with_alias(self, alias: str) -> None:
+        for previous_index in self.es.indices.get_alias(alias).keys():
+            Index(previous_index).delete()
 
     def clean_indices(self) -> None:
-        if Index('dataset').exists():
-            Index('dataset').delete()
-        SearchableDataset.init()
-        if Index('reuse').exists():
-            Index('reuse').delete()
-        SearchableReuse.init()
-        if Index('organization').exists():
-            Index('organization').delete()
-        SearchableOrganization.init()
+        suffix_name = '-' + datetime.now().strftime('%Y-%m-%d-%H-%M')
+
+        self.delete_index_with_alias('dataset')
+        SearchableDataset.init('dataset' + suffix_name)
+        Index('dataset' + suffix_name).put_alias(name='dataset')
+
+        self.delete_index_with_alias('reuse')
+        SearchableReuse.init('reuse' + suffix_name)
+        Index('reuse' + suffix_name).put_alias(name='reuse')
+
+        self.delete_index_with_alias('organization')
+        SearchableOrganization.init('organization' + suffix_name)
+        Index('organization' + suffix_name).put_alias(name='organization')
 
     def index_organization(self, to_index: Organization) -> None:
         SearchableOrganization(meta={'id': to_index.id}, **to_index.to_dict()).save(skip_empty=False)

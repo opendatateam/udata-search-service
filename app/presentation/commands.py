@@ -5,6 +5,7 @@ from flask.cli import with_appcontext
 from app.container import Container
 from app.domain.interfaces import SearchClient
 from app.infrastructure.kafka_consumer import consume_kafka
+from app.infrastructure.index import set_alias
 
 
 @inject
@@ -26,6 +27,14 @@ def consume_kafka_command() -> None:
     consume_kafka()
 
 
+@click.command("set-alias")
+@click.argument("index_suffix_to_use")
+@with_appcontext
+def set_alias_command(index_suffix_to_use) -> None:
+    set_alias(index_suffix_to_use)
+
+
 def init_app(app: Flask) -> None:
     app.cli.add_command(consume_kafka_command)
     app.cli.add_command(init_es_command)
+    app.cli.add_command(set_alias_command)
