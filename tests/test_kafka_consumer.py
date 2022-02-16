@@ -8,7 +8,10 @@ from app.infrastructure.utils import get_concat_title_org, log2p
 def test_parse_dataset_message():
     message = {
         'service': 'udata',
-        'message_type': 'index',
+        'meta': {
+            'message_type': 'index',
+            'index': 'dataset'
+        },
         'data': {
             'id': '5c4ae55a634f4117716d5656',
             'title': 'Demandes de valeurs foncières',
@@ -42,9 +45,10 @@ def test_parse_dataset_message():
         }
     }
     val_utf8 = json.dumps(message)
-    message_type, data = parse_message('dataset', val_utf8)
+    message_type, index_name, data = parse_message('dataset', val_utf8)
 
     assert message_type == 'index'
+    assert index_name == 'dataset'
 
     # Make sure that these fields are loaded as is
     for key in ['id', 'title', 'url', 'frequency', 'resources_count', 'description',
@@ -74,8 +78,10 @@ def test_parse_dataset_message():
 def test_parse_reuse_message():
     message = {
         'service': 'udata',
-        'message_type': 'index',
-        'data': {
+        'meta': {
+            'message_type': 'index',
+            'index': 'reuse'
+        },        'data': {
             "id": "5cc2dfbe8b4c414c91ffc46d",
             "title": "Explorateur de données de valeur foncière (DVF)",
             "description": "Cartographie des mutations à titre onéreux (parcelles en bleu).",
@@ -98,9 +104,10 @@ def test_parse_reuse_message():
         }
     }
     val_utf8 = json.dumps(message)
-    message_type, data = parse_message('reuse', val_utf8)
+    message_type, index_name, data = parse_message('reuse', val_utf8)
 
     assert message_type == 'index'
+    assert index_name == 'reuse'
 
     # Make sure that these fields are loaded as is
     for key in ['id', 'title', 'url', 'datasets', 'featured',
@@ -121,8 +128,10 @@ def test_parse_reuse_message():
 def test_parse_organization_message():
     message = {
         'service': 'udata',
-        'message_type': 'index',
-        'data': {
+        'meta': {
+            'message_type': 'index',
+            'index': 'organization'
+        },        'data': {
             "id": "534fff75a3a7292c64a77de4",
             "name": "Etalab",
             "acronym": None,
@@ -136,9 +145,10 @@ def test_parse_organization_message():
         }
     }
     val_utf8 = json.dumps(message)
-    message_type, data = parse_message('organization', val_utf8)
+    message_type, index_name, data = parse_message('organization', val_utf8)
 
     assert message_type == 'index'
+    assert index_name == 'organization'
 
     # Make sure that these fields are loaded as is
     for key in ['id', 'name', 'acronym', 'description', 'url', 'badges', 'orga_sp', 'datasets']:
