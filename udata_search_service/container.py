@@ -1,6 +1,6 @@
 from dependency_injector import containers, providers
-from app.infrastructure.services import DatasetService, OrganizationService, ReuseService
-from app.infrastructure.search_clients import ElasticClient
+from udata_search_service.infrastructure.services import DatasetService, OrganizationService, ReuseService
+from udata_search_service.infrastructure.search_clients import ElasticClient
 
 
 class Container(containers.DeclarativeContainer):

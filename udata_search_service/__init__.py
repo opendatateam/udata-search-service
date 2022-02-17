@@ -1,7 +1,7 @@
 from flask import Flask
-from app.config import Config
-from app.container import Container
-from app.presentation import api, commands
+from udata_search_service.config import Config
+from udata_search_service.container import Container
+from udata_search_service.presentation import api, commands
 
 
 def create_app(config: object = Config) -> Flask:

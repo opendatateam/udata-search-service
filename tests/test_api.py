@@ -2,7 +2,7 @@ import datetime
 import time
 from flask import url_for
 
-from app.domain.entities import Dataset, Organization, Reuse
+from udata_search_service.domain.entities import Dataset, Organization, Reuse
 
 
 def test_api_search_without_query(app, client, search_client, faker):

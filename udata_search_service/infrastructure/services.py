@@ -1,6 +1,6 @@
 from typing import Tuple, Optional, List
-from app.domain.entities import Dataset, Organization, Reuse
-from app.infrastructure.search_clients import ElasticClient
+from udata_search_service.domain.entities import Dataset, Organization, Reuse
+from udata_search_service.infrastructure.search_clients import ElasticClient
 
 
 class OrganizationService:

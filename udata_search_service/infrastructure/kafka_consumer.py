@@ -6,8 +6,8 @@ from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import ConnectionError
 from kafka import KafkaConsumer
 
-from app.domain.entities import Dataset, Organization, Reuse
-from app.infrastructure.utils import get_concat_title_org, log2p
+from udata_search_service.domain.entities import Dataset, Organization, Reuse
+from udata_search_service.infrastructure.utils import get_concat_title_org, log2p
 
 ELASTIC_HOST = os.environ.get('ELASTIC_HOST', 'localhost')
 ELASTIC_PORT = os.environ.get('ELASTIC_PORT', '9200')

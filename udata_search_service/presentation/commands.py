@@ -2,9 +2,9 @@ import click
 from dependency_injector.wiring import inject, Provide
 from flask import Flask
 from flask.cli import with_appcontext
-from app.container import Container
-from app.domain.interfaces import SearchClient
-from app.infrastructure.kafka_consumer import consume_kafka
+from udata_search_service.container import Container
+from udata_search_service.domain.interfaces import SearchClient
+from udata_search_service.infrastructure.kafka_consumer import consume_kafka
 
 
 @inject

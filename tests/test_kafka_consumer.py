@@ -1,8 +1,8 @@
 import datetime
 import json
 
-from app.infrastructure.kafka_consumer import parse_message
-from app.infrastructure.utils import get_concat_title_org, log2p
+from udata_search_service.infrastructure.kafka_consumer import parse_message
+from udata_search_service.infrastructure.utils import get_concat_title_org, log2p
 
 
 def test_parse_dataset_message():

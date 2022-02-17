@@ -1,9 +1,9 @@
 from faker import Faker
 from elasticsearch_dsl import Index
 import pytest
-from app import create_app
-from app.config import Testing
-from app.infrastructure.search_clients import SearchableDataset, SearchableReuse, SearchableOrganization, ElasticClient
+from udata_search_service import create_app
+from udata_search_service.config import Testing
+from udata_search_service.infrastructure.search_clients import SearchableDataset, SearchableReuse, SearchableOrganization, ElasticClient
 
 
 @pytest.fixture

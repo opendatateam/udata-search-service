@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Tuple, Optional, List
-from app.domain.entities import Dataset, Organization, Reuse
+from udata_search_service.domain.entities import Dataset, Organization, Reuse
 
 
 class SearchClient(ABC):
