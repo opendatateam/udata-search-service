@@ -112,7 +112,7 @@ def test_api_search_pagination_without_query(app, client, search_client, faker):
 
 def test_api_search_with_query(app, client, search_client, faker):
     for i in range(4):
-        title = 'test-{0}'.format(i) if i % 2 else 'not-{0}'.format(i)
+        title = 'test-{0}'.format(i) if i % 2 else i
         organization = 'test-{0}'.format(faker.company()) if i % 2 else 'not-{0}'.format(faker.company())
         search_client.index_dataset(DatasetFactory(title=title))
         search_client.index_organization(OrganizationFactory(name=organization))
@@ -191,7 +191,7 @@ def test_api_dataset_search_with_geozone_filter(app, client, search_client, fake
     assert resp.json['total'] == 2
 
 
-def test_api_search_with_sorting(app, client, search_client, faker):
+def test_api_search_with_followers_sorting(app, client, search_client, faker):
     search_client.index_dataset(DatasetFactory(
         title='data-test-1',
         followers=0
@@ -243,6 +243,66 @@ def test_api_search_with_sorting(app, client, search_client, faker):
     reuse_resp = client.get(url_for('api.reuse_search', sort='followers'))
     assert len(reuse_resp.json['data']) == 2
     assert reuse_resp.json['data'][0]['title'] == 'reuse-test-1'
+    assert reuse_resp.json['next_page'] is None
+    assert reuse_resp.json['page'] == 1
+    assert reuse_resp.json['previous_page'] is None
+    assert reuse_resp.json['page_size'] == 20
+    assert reuse_resp.json['total_pages'] == 1
+    assert reuse_resp.json['total'] == 2
+
+
+def test_api_search_with_followers_decreasing_sorting(app, client, search_client, faker):
+    search_client.index_dataset(DatasetFactory(
+        title='data-test-1',
+        followers=0
+    ))
+    search_client.index_dataset(DatasetFactory(
+        title='data-test-2',
+        followers=3
+    ))
+    search_client.index_organization(OrganizationFactory(
+        name='org-test-1',
+        followers=0
+    ))
+    search_client.index_organization(OrganizationFactory(
+        name='org-test-2',
+        followers=3
+    ))
+    search_client.index_reuse(ReuseFactory(
+        title='reuse-test-1',
+        followers=0
+    ))
+    search_client.index_reuse(ReuseFactory(
+        title='reuse-test-2',
+        followers=3
+    ))
+
+    # Without this, ElasticSearch does not seem to have the time to index.
+    time.sleep(2)
+
+    dataset_resp = client.get(url_for('api.dataset_search', sort='-followers'))
+    assert len(dataset_resp.json['data']) == 2
+    assert dataset_resp.json['data'][0]['title'] == 'data-test-2'
+    assert dataset_resp.json['next_page'] is None
+    assert dataset_resp.json['page'] == 1
+    assert dataset_resp.json['previous_page'] is None
+    assert dataset_resp.json['page_size'] == 20
+    assert dataset_resp.json['total_pages'] == 1
+    assert dataset_resp.json['total'] == 2
+
+    org_resp = client.get(url_for('api.organization_search', sort='-followers'))
+    assert len(org_resp.json['data']) == 2
+    assert org_resp.json['data'][0]['name'] == 'org-test-2'
+    assert org_resp.json['next_page'] is None
+    assert org_resp.json['page'] == 1
+    assert org_resp.json['previous_page'] is None
+    assert org_resp.json['page_size'] == 20
+    assert org_resp.json['total_pages'] == 1
+    assert org_resp.json['total'] == 2
+
+    reuse_resp = client.get(url_for('api.reuse_search', sort='-followers'))
+    assert len(reuse_resp.json['data']) == 2
+    assert reuse_resp.json['data'][0]['title'] == 'reuse-test-2'
     assert reuse_resp.json['next_page'] is None
     assert reuse_resp.json['page'] == 1
     assert reuse_resp.json['previous_page'] is None

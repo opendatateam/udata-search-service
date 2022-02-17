@@ -15,7 +15,7 @@ class OrganizationService:
         page = filters.pop('page')
         page_size = filters.pop('page_size')
         search_text = filters.pop('q')
-        sort = filters.pop('sort', None)
+        sort = self.format_sort(filters.pop('sort', None))
 
         if page > 1:
             offset = page_size * (page - 1)
@@ -41,6 +41,10 @@ class OrganizationService:
         filters.clear()
         filters.update(filtered)
 
+    @staticmethod
+    def format_sort(sort):
+        return 'created_at' if sort == 'created' else sort
+
 
 class DatasetService:
 
@@ -54,7 +58,7 @@ class DatasetService:
         page = filters.pop('page')
         page_size = filters.pop('page_size')
         search_text = filters.pop('q')
-        sort = filters.pop('sort', None)
+        sort = self.format_sort(filters.pop('sort', None))
 
         if page > 1:
             offset = page_size * (page - 1)
@@ -88,6 +92,10 @@ class DatasetService:
         filters.clear()
         filters.update(filtered)
 
+    @staticmethod
+    def format_sort(sort):
+        return 'created_at' if sort == 'created' else sort
+
 
 class ReuseService:
 
@@ -101,7 +109,7 @@ class ReuseService:
         page = filters.pop('page')
         page_size = filters.pop('page_size')
         search_text = filters.pop('q')
-        sort = filters.pop('sort', None)
+        sort = self.format_sort(filters.pop('sort', None))
 
         if page > 1:
             offset = page_size * (page - 1)
@@ -128,3 +136,7 @@ class ReuseService:
         filtered = {k: v for k, v in filters.items() if v is not None}
         filters.clear()
         filters.update(filtered)
+
+    @staticmethod
+    def format_sort(sort):
+        return 'created_at' if sort == 'created' else sort

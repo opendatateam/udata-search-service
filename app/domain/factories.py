@@ -1,23 +1,14 @@
-import binascii
-import os
-import time
 import datetime
 import factory
 
 from app.domain.entities import Dataset, Organization, Reuse
 
 
-def generate_id() -> str:
-    timestamp = int(time.time())
-    rest = binascii.b2a_hex(os.urandom(8)).decode("ascii")
-    return f"{timestamp:x}{rest}"
-
-
 class DatasetFactory(factory.Factory):
     class Meta:
         model = Dataset
 
-    id = factory.Sequence(lambda n: generate_id())
+    id = factory.Faker('md5')
     title = factory.Faker('sentence')
     description = factory.Faker('text')
     acronym = factory.Faker('company_suffix')
@@ -30,7 +21,7 @@ class DatasetFactory(factory.Factory):
     reuses = factory.Faker('random_int')
     featured = factory.Faker('random_int')
     resources_count = factory.Faker('random_int', min=1, max=15)
-    organization = factory.Sequence(lambda n: generate_id())
+    organization = factory.Faker('md5')
     organization_name = factory.Faker('company')
     format = ['pdf']
     frequency = 'unknown'
@@ -42,14 +33,14 @@ class DatasetFactory(factory.Factory):
     temporal_coverage_end = factory.Faker('past_datetime')
     granularity = factory.Faker('word')
     geozones = factory.Faker('word')
-    owner = factory.Sequence(lambda n: generate_id())
+    owner = factory.Faker('md5')
 
 
 class OrganizationFactory(factory.Factory):
     class Meta:
         model = Organization
 
-    id = factory.Sequence(lambda n: generate_id())
+    id = factory.Faker('md5')
     name = factory.Faker('company')
     description = factory.Faker('text')
     url = factory.Faker('url')
@@ -63,7 +54,7 @@ class ReuseFactory(factory.Factory):
     class Meta:
         model = Reuse
 
-    id = factory.Sequence(lambda n: generate_id())
+    id = factory.Faker('md5')
     title = factory.Faker('sentence')
     description = factory.Faker('text')
     url = factory.Faker('url')
@@ -73,8 +64,8 @@ class ReuseFactory(factory.Factory):
     followers = factory.Faker('random_int')
     datasets = factory.Faker('random_int')
     featured = factory.Faker('random_int')
-    organization = factory.Sequence(lambda n: generate_id())
+    organization = factory.Faker('md5')
     organization_name = factory.Faker('company')
     type = factory.Faker('word')
     topic = factory.Faker('word')
-    owner = factory.Sequence(lambda n: generate_id())
+    owner = factory.Faker('md5')
