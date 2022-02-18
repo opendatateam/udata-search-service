@@ -20,7 +20,7 @@ class OrganizationArgs(BaseModel):
     @validator('sort')
     def sort_validate(cls, value):
         sorts = [
-            'title', 'created', 'last_modified', 'reuses', 'datasets', 'followers', 'views'
+            'created', 'reuses', 'datasets', 'followers', 'views'
         ]
         choices = sorts + ['-' + k for k in sorts]
         if value not in choices:
@@ -54,7 +54,7 @@ class DatasetArgs(BaseModel):
     @validator('sort')
     def sort_validate(cls, value):
         sorts = [
-            'title', 'created', 'last_modified', 'reuses', 'followers', 'views'
+            'created', 'reuses', 'followers', 'views'
         ]
         choices = sorts + ['-' + k for k in sorts]
         if value not in choices:
@@ -78,7 +78,7 @@ class ReuseArgs(BaseModel):
     @validator('sort')
     def sort_validate(cls, value):
         sorts = [
-            'title', 'created', 'last_modified', 'datasets', 'followers', 'views'
+            'created', 'datasets', 'followers', 'views'
         ]
         choices = sorts + ['-' + k for k in sorts]
         if value not in choices:

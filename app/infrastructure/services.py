@@ -43,7 +43,9 @@ class OrganizationService:
 
     @staticmethod
     def format_sort(sort):
-        return 'created_at' if sort == 'created' else sort
+        if 'created' in sort:
+            sort.replace('created', 'created_at')
+        return sort
 
 
 class DatasetService:
@@ -94,7 +96,9 @@ class DatasetService:
 
     @staticmethod
     def format_sort(sort):
-        return 'created_at' if sort == 'created' else sort
+        if 'created' in sort:
+            sort.replace('created', 'created_at')
+        return sort
 
 
 class ReuseService:
@@ -139,4 +143,6 @@ class ReuseService:
 
     @staticmethod
     def format_sort(sort):
-        return 'created_at' if sort == 'created' else sort
+        if 'created' in sort:
+            sort.replace('created', 'created_at')
+        return sort
