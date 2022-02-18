@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "udata-search-service"
-authors = [{name = "quaxsze", email = "quaxsze@hello.com"}]
+authors = [{name = "Opendata Team", email = "opendatateam@data.gouv.fr"}]
 readme = "README.md"
 dynamic = ["version", "description"]
 
