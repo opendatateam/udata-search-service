@@ -42,9 +42,11 @@ def consume_kafka_command() -> None:
 
 @click.command("set-alias")
 @click.argument("index_suffix_to_use")
+@click.argument('indices', nargs=-1, metavar='[<index> ...]')
 @with_appcontext
-def set_alias_command(index_suffix_to_use) -> None:
-    set_alias(index_suffix_to_use)
+def set_alias_command(index_suffix_to_use, indices=None) -> None:
+    indices = [index.lower().rstrip('s') for index in (indices or [])]
+    set_alias(index_suffix_to_use, indices)
 
 
 def init_app(app: Flask) -> None:

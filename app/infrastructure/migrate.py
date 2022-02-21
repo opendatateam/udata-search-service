@@ -1,29 +1,37 @@
 import logging
 import os
+import sys
+from typing import List
 
 from elasticsearch import Elasticsearch
 
 ELASTIC_HOST = os.environ.get('ELASTIC_HOST', 'localhost')
 ELASTIC_PORT = os.environ.get('ELASTIC_PORT', '9200')
 
-INDICES = [
+ALL_INDICES = [
     'dataset',
     'reuse',
     'organization',
 ]
 
 
-def set_alias(index_suffix_name, delete=True, timeout=None):
+def set_alias(index_suffix_name: str, indices: List[str] = None, delete: bool = True) -> None:
     '''
     Properly end an indexation by swapping alias.
     Previous alias is deleted if needed.
     Alias will be removed from previous indices and set to
     the new indices (that match the suffix `index_suffix_name`).
+    A list of indices on which to apply the alias migration can be passed.
     See an example logic https://github.com/elastic/elasticsearch-dsl-py/blob/master/examples/alias_migration.py
     '''
     es = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}])
 
-    for index_alias in INDICES:
+    indices = indices or ALL_INDICES
+    for index_alias in indices:
+        if index_alias not in ALL_INDICES:
+            logging.error('Unknown index alias %s', index_alias)
+            sys.exit(-1)
+
         pattern = index_alias + '-*'
         index_name = index_alias + '-' + index_suffix_name
         logging.info('Creating alias "%s" on index "%s"', index_alias, index_name)
@@ -45,4 +53,4 @@ def set_alias(index_suffix_name, delete=True, timeout=None):
         if delete and previous_indices:
             for previous_index in previous_indices:
                 if previous_index != index_name:
-                    es.indices.delete(index=previous_index, request_timeout=timeout)
+                    es.indices.delete(index=previous_index)
