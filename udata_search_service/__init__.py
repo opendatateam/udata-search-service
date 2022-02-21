@@ -4,6 +4,9 @@ from udata_search_service.container import Container
 from udata_search_service.presentation import api, commands
 
 
+__version__ = '1.0.0'
+
+
 def create_app(config: object = Config) -> Flask:
     container = Container()
     container.wire(modules=[api, commands])
