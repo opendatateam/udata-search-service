@@ -1,7 +1,7 @@
 from faker import Faker
 from elasticsearch_dsl import Index
 import pytest
-from udata_search_service import create_app
+from udata_search_service.app import create_app
 from udata_search_service.config import Testing
 from udata_search_service.infrastructure.search_clients import SearchableDataset, SearchableReuse, SearchableOrganization, ElasticClient
 
