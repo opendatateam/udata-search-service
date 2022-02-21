@@ -5,7 +5,6 @@ import os
 
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import ConnectionError
-from elasticsearch_dsl import Index
 from kafka import KafkaConsumer
 
 from app.domain.entities import Dataset, Organization, Reuse
@@ -148,7 +147,7 @@ def consume_messages(consumer, es):
             elif message_type == KafkaMessageType.REINDEX.value:
                 if not es.indices.exists(index_name):
                     logging.info(f'Initializing new index {index_name} for reindexation')
-                    Index(index_name)
+                    es.indices.create(index=index_name)
                 es.index(index=index_name, id=key, document=data)
 
         except ValueError as e:
