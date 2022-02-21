@@ -15,9 +15,6 @@ def create_app(config: object = Config) -> Flask:
     container.config.elasticsearch_url.from_value(app.config['ELASTICSEARCH_URL'])
     container.config.search_synonyms.from_value(app.config['SEARCH_SYNONYMS'])
 
-    # register the database command
-    commands.init_app(app)
-
     app.register_blueprint(api.bp)
 
     return app

@@ -26,3 +26,6 @@ Home = "https://github.com/opendatateam/udata-search-service"
 
 [tool.flit.module]
 name = "udata_search_service"
+
+[project.scripts]
+ udata-search-service = "udata_search_service.presentation.commands:cli"
