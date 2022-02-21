@@ -43,8 +43,8 @@ jobs:
               run: |
                 flit build
 
-            - name: Download a single artifact
-              uses: actions/download-artifact@v2
+            - name: Upload wheel as artifact
+              uses: actions/upload-artifact@v2
               with:
                 name: build-wheel
                 path: dist/*.whl
