@@ -44,7 +44,7 @@ class OrganizationService:
     @staticmethod
     def format_sort(sort):
         if sort and 'created' in sort:
-            sort.replace('created', 'created_at')
+            sort = sort.replace('created', 'created_at')
         return sort
 
 
