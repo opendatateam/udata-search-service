@@ -1,4 +1,6 @@
+import click
 from flask import Flask
+from flask.cli import FlaskGroup
 from udata_search_service.config import Config
 from udata_search_service.container import Container
 from udata_search_service.presentation import api, commands
@@ -18,3 +20,11 @@ def create_app(config: object = Config) -> Flask:
     app.register_blueprint(api.bp)
 
     return app
+
+
+@click.group(cls=FlaskGroup, create_app=create_app)
+def cli():
+    '''udata-search-service management client'''
+
+
+commands.init_app(cli)

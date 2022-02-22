@@ -1,7 +1,6 @@
 import click
+from flask.cli import with_appcontext
 from dependency_injector.wiring import inject, Provide
-from flask.cli import shell_command, with_appcontext, FlaskGroup
-from udata_search_service.app import create_app
 from udata_search_service.container import Container
 from udata_search_service.domain.interfaces import SearchClient
 from udata_search_service.infrastructure.kafka_consumer import consume_kafka as consume_kafka_func
@@ -14,16 +13,18 @@ def init_es_func(search_client: SearchClient = Provide[Container.search_client])
     click.echo("Done.")
 
 
-@click.group(cls=FlaskGroup, create_app=create_app)
-def cli():
-    '''udata-search-service management client'''
-
-
-@cli.command()
+@click.command('init-es')
+@with_appcontext
 def init_es() -> None:
     init_es_func()
 
 
-@cli.command()
+@click.command('consume-kafka')
+@with_appcontext
 def consume_kafka() -> None:
     consume_kafka_func()
+
+
+def init_app(cli):
+    cli.add_command(consume_kafka)
+    cli.add_command(init_es)

@@ -28,4 +28,4 @@ Home = "https://github.com/opendatateam/udata-search-service"
 name = "udata_search_service"
 
 [project.scripts]
- udata-search-service = "udata_search_service.presentation.commands:cli"
+ udata-search-service = "udata_search_service.app:cli"
