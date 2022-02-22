@@ -24,7 +24,7 @@ class OrganizationArgs(BaseModel):
         ]
         choices = sorts + ['-' + k for k in sorts]
         if value not in choices:
-            raise ValueError('Temporal coverage does not match the right pattern.')
+            raise ValueError('Sort parameter is not in the sorts available choices.')
         return value
 
 
