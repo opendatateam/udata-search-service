@@ -15,7 +15,7 @@ jobs:
       - checkout
       - run:
           name: Compute Python dependencies key
-          command: cat requirements/*.pip > python.deps
+          command: requirements.txt > python.deps
       - run:
           name: Get the base reference branch
           command: export BASE_BRANCH=$(base_branch)
