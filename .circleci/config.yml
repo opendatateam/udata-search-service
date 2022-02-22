@@ -14,9 +14,6 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Wait for piwik
-          command: dockerize -wait tcp://localhost:9201 -timeout 2m
-      - run:
           name: Compute Python dependencies key
           command: cat requirements/*.pip > python.deps
       - run:
