@@ -4,6 +4,7 @@ version: 2
 jobs:
   build:
     docker:
+      - image: udata/circleci:2-alpine
       - image: udata/elasticsearch:7.16.2
         envirnonment:
           node.name: es01
