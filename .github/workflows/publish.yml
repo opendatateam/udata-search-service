@@ -7,6 +7,7 @@ on:
 jobs:
     publish:
         runs-on: ubuntu-latest
+        environment: pypi_publish_key
         steps:
             - name: Checkout sources
               uses: actions/checkout@v2
