@@ -1,0 +1,92 @@
+---
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: udata/elasticsearch:7.16.2
+        envirnonment:
+          node.name: es01
+          cluster.name: es-docker-cluster
+          cluster.initial_master_nodes: es01
+        ports:
+          - 9201:9200
+    steps:
+      - checkout
+      - run:
+          name: Wait for piwik
+          command: dockerize -wait tcp://localhost:9201 -timeout 2m
+      - run:
+          name: Compute Python dependencies key
+          command: cat requirements/*.pip > python.deps
+      - run:
+          name: Get the base reference branch
+          command: export BASE_BRANCH=$(base_branch)
+      - restore_cache:
+          keys:
+            - py-cache-v1-{{ arch }}-{{ checksum "python.deps" }}
+            - py-cache-v1-{{ arch }}-{{ .Branch }}
+            - py-cache-v1-{{ arch }}-{{ .Environment.BASE_BRANCH }}
+      - run:
+          name: Install python dependencies
+          command: |
+            virtualenv venv
+            source venv/bin/activate
+            make deps
+      - save_cache:
+          key: py-cache-v1-{{ arch }}-{{ checksum "python.deps" }}
+          paths:
+            - venv
+      - save_cache:
+          key: py-cache-v1-{{ arch }}-{{ .Branch }}
+          paths:
+            - venv
+      - run:
+          name: Lint with flake8
+          command: |
+            source venv/bin/activate
+            make lint
+      - run:
+          name: Run tests
+          command: |
+            source venv/bin/activate
+            make test
+      - store_test_results:
+          path: reports/
+      - store_artifacts:
+          path: reports/
+          destination: reports
+      - run:
+          name: Build a distributable package
+          command: |
+            source venv/bin/activate
+            # Build a wheel release
+            flit build
+      - store_artifacts:
+          path: dist
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist
+            - venv
+
+  publish:
+    docker:
+      - image: udata/circleci:2-alpine
+    steps:
+      - attach_workspace:
+          at: .
+      - deploy:
+          name: Publish on PyPI
+          command: |
+            source venv/bin/activate
+            twine upload --username "${PYPI_USERNAME}" --password "${PYPI_PASSWORD}" dist/*.whl
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*/
