@@ -14,14 +14,11 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Compute Python dependencies key
-          command: requirements.txt > python.deps
-      - run:
           name: Get the base reference branch
           command: export BASE_BRANCH=$(base_branch)
       - restore_cache:
           keys:
-            - py-cache-v1-{{ arch }}-{{ checksum "python.deps" }}
+            - py-cache-v1-{{ arch }}-{{ checksum "requirements.txt" }}
             - py-cache-v1-{{ arch }}-{{ .Branch }}
             - py-cache-v1-{{ arch }}-{{ .Environment.BASE_BRANCH }}
       - run:
