@@ -30,6 +30,8 @@ class SearchableOrganization(Document):
     orga_sp = Integer()
     created_at = Date()
     followers = Float()
+    views = Float()
+    reuses = Float()
     datasets = Integer()
     badges = Keyword(multi=True)
 
