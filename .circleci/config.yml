@@ -61,14 +61,17 @@ jobs:
   publish:
     docker:
       - image: udata/circleci:2-alpine
+    environment:
+       FLIT_USERNAME: ${PYPI_USERNAME}
+       FLIT_PASSWORD: ${PYPI_PASSWORD}
     steps:
       - attach_workspace:
           at: .
-      - deploy:
+      - publish:
           name: Publish on PyPI
           command: |
             source venv/bin/activate
-            twine upload --username "${PYPI_USERNAME}" --password "${PYPI_PASSWORD}" dist/*.whl
+            make publish
 
 workflows:
   version: 2
@@ -78,3 +81,14 @@ workflows:
           filters:
             tags:
               only: /v[0-9]+(\.[0-9]+)*/
+      - publish:
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - master
+                - /[0-9]+(\.[0-9]+)+/
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*/
+          context: org-global
