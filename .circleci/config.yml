@@ -6,7 +6,7 @@ jobs:
     docker:
       - image: udata/circleci:2-alpine
       - image: udata/elasticsearch:7.16.2
-        envirnonment:
+        environment:
           node.name: es01
           cluster.name: es-docker-cluster
           cluster.initial_master_nodes: es01
