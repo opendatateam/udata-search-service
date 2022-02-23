@@ -12,6 +12,8 @@ jobs:
           cluster.initial_master_nodes: es01
         ports:
           - 9201:9200
+    environment:
+       BASH_ENV: /root/.bashrc
     steps:
       - checkout
       - run:
@@ -36,6 +38,9 @@ jobs:
           key: py-cache-v1-{{ arch }}-{{ .Branch }}
           paths:
             - venv
+      - run:
+          name: Wait for elasticsearch
+          command: dockerize -wait tcp://localhost:9201 -timeout 5m
       - run:
           name: Run tests
           command: |
