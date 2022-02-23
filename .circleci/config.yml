@@ -10,8 +10,6 @@ jobs:
           node.name: es01
           cluster.name: es-docker-cluster
           cluster.initial_master_nodes: es01
-        ports:
-          - 9201:9200
     environment:
        BASH_ENV: /root/.bashrc
     steps:
