@@ -66,10 +66,8 @@ jobs:
       - deploy:
           name: Publish on PyPI
           command: |
-            FLIT_USERNAME=${PYPI_USERNAME}
-            FLIT_PASSWORD=${PYPI_PASSWORD}
             source venv/bin/activate
-            make publish
+            FLIT_USERNAME=${PYPI_USERNAME} FLIT_PASSWORD=${PYPI_PASSWORD} make publish
 
 workflows:
   version: 2
