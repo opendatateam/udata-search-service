@@ -29,7 +29,7 @@ jobs:
             source venv/bin/activate
             make deps
       - save_cache:
-          key: py-cache-v1-{{ arch }}-{{ checksum "python.deps" }}
+          key: py-cache-v1-{{ arch }}-{{ checksum "requirements.txt" }}
           paths:
             - venv
       - save_cache:
@@ -37,20 +37,10 @@ jobs:
           paths:
             - venv
       - run:
-          name: Lint with flake8
-          command: |
-            source venv/bin/activate
-            make lint
-      - run:
           name: Run tests
           command: |
             source venv/bin/activate
             make test
-      - store_test_results:
-          path: reports/
-      - store_artifacts:
-          path: reports/
-          destination: reports
       - run:
           name: Build a distributable package
           command: |
