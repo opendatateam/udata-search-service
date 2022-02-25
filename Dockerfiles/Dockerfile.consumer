@@ -9,4 +9,6 @@ RUN pip install -r requirements.txt
 # copy project
 COPY . .
 
-ENTRYPOINT ["flask", "consume-kafka"]
+RUN FLIT_ROOT_INSTALL=1 flit install
+
+ENTRYPOINT ["udata-search-service", "consume-kafka"]
