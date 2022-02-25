@@ -92,7 +92,6 @@ class OrganizationConsumer(Organization):
     def load_from_dict(cls, data):
         data["followers"] = log2p(data.get("followers", 0))
         data["views"] = log2p(data.get("views", 0))
-        data["reuses"] = log2p(data.get("reuses", 0))
         return super().load_from_dict(data)
 
 
