@@ -30,10 +30,14 @@ flask init-es
 You can feed the elasticsearch by publishing messages to Kafka.
 Using [udata](https://github.com/opendatateam/udata), when you modify objects,
 indexation messages will be sent and will be consumed by the kafka consumer.
-
-If you want to reindex your local mongo base, you can run:
+If you want to reindex your local mongo base in udata, you can run:
 ```
 udata search index
+```
+
+After a reindexation, you'll need to change the alias by using the following command:
+```
+flask set-alias <index-suffix>
 ```
 
 You can query the search service with the search service api, ex: http://localhost:5000/api/1/datasets/?q=toilettes%20à%20rennes
