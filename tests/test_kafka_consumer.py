@@ -117,7 +117,9 @@ def test_parse_organization_message():
         "created_at": "2014-04-17T18:21:09",
         "orga_sp": 1,
         "followers": 357,
-        "datasets": 56
+        "datasets": 56,
+        "views": 42,
+        "reuses": 0
     }
     val_utf8 = json.dumps(message)
     data = parse_message('organization', val_utf8)
