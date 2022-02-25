@@ -48,6 +48,8 @@ class OrganizationFactory(factory.Factory):
     created_at = factory.LazyFunction(datetime.datetime.now)
     followers = factory.Faker('random_int')
     datasets = factory.Faker('random_int')
+    views = factory.Faker('random_int')
+    reuses = factory.Faker('random_int')
 
 
 class ReuseFactory(factory.Factory):
