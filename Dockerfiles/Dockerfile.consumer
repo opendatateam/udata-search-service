@@ -9,6 +9,6 @@ RUN pip install -r requirements.txt
 # copy project
 COPY . .
 
-RUN FLIT_ROOT_INSTALL=1 flit install
+RUN FLIT_ROOT_INSTALL=1 make install
 
 ENTRYPOINT ["udata-search-service", "consume-kafka"]
