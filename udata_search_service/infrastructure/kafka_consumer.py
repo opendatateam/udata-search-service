@@ -1,3 +1,4 @@
+from enum import Enum
 import json
 import logging
 import os
@@ -19,11 +20,17 @@ KAFKA_API_VERSION = os.environ.get('KAFKA_API_VERSION', '2.5.0')
 CONSUMER_LOGGING_LEVEL = int(os.environ.get("CONSUMER_LOGGING_LEVEL", logging.INFO))
 
 # Topics and their corresponding indices have the same name
-TOPICS_AND_INDEX = [
+TOPICS = [
     'dataset',
     'reuse',
     'organization',
 ]
+
+
+class KafkaMessageType(Enum):
+    INDEX = 'index'
+    REINDEX = 'reindex'
+    UNINDEX = 'unindex'
 
 
 def create_elastic_client():
@@ -44,7 +51,7 @@ def create_kafka_consumer():
         # on startup if Kafka Broker isn't ready yet
         api_version=tuple([int(value) for value in KAFKA_API_VERSION.split('.')])
         )
-    consumer.subscribe(TOPICS_AND_INDEX)
+    consumer.subscribe(TOPICS + [topic + '-reindex' for topic in TOPICS])
     logging.info('Kafka Consumer created')
     return consumer
 
@@ -94,18 +101,24 @@ class OrganizationConsumer(Organization):
         return super().load_from_dict(data)
 
 
-def parse_message(index, val_utf8):
-    if index == 'dataset':
+def parse_message(topic, val_utf8):
+    if topic == 'dataset':
         dataclass_consumer = DatasetConsumer
-    elif index == 'reuse':
+    elif topic == 'reuse':
         dataclass_consumer = ReuseConsumer
-    elif index == 'organization':
+    elif topic == 'organization':
         dataclass_consumer = OrganizationConsumer
     else:
-        raise ValueError(f'Model Deserializer not implemented for index: {index}')
+        raise ValueError(f'Model Deserializer not implemented for topic: {topic}')
     try:
-        data = dataclass_consumer.load_from_dict(json.loads(val_utf8)).to_dict()
-        return data
+        message = json.loads(val_utf8)
+        message_type = message.get("meta", {}).get("message_type")
+        index_name = message.get("meta", {}).get("index")
+        if not message.get("data"):
+            document = None
+        else:
+            document = dataclass_consumer.load_from_dict(message.get("data")).to_dict()
+        return message_type, index_name, document
     except Exception as e:
         raise ValueError(f'Failed to deserialize message: {val_utf8}. Exception raised: {e}')
 
@@ -116,29 +129,33 @@ def consume_messages(consumer, es):
         value = message.value
         val_utf8 = value.decode('utf-8').replace('NaN', 'null')
 
-        key = message.key
-        index = message.topic
+        key = message.key.decode('utf-8')
+        topic_short = message.topic.split('-')[0]
 
         logging.info(f'Message recieved with key: {key} and value: {value}')
 
-        if val_utf8 != 'null':
-            try:
-                data = parse_message(index, val_utf8)
-                es.index(index=index, id=key.decode('utf-8'), document=data)
-            except ValueError as e:
-                logging.error(f'ValueError when parsing message: {e}')
-            except ConnectionError as e:
-                logging.error(f'ConnectionError with Elastic Client: {e}')
-            except Exception as e:
-                logging.error(f'Exeption when indexing: {e}')
-        else:
-            try:
-                if es.exists_source(index=index, id=key.decode('utf-8')):
-                    es.delete(index=index, id=key.decode('utf-8'))
-            except ConnectionError as e:
-                logging.error(f'ConnectionError with Elastic Client: {e}')
-            except Exception as e:
-                logging.error(f'Exeption when unindexing: {e}')
+        try:
+            message_type, index_name, data = parse_message(topic_short, val_utf8)
+
+            if message_type == KafkaMessageType.INDEX.value:
+                es.index(index=index_name, id=key, document=data)
+
+            elif message_type == KafkaMessageType.UNINDEX.value:
+                if es.exists_source(index=index_name, id=key):
+                    es.delete(index=index_name, id=key)
+
+            elif message_type == KafkaMessageType.REINDEX.value:
+                if not es.indices.exists(index_name):
+                    logging.info(f'Initializing new index {index_name} for reindexation')
+                    es.indices.create(index=index_name)
+                es.index(index=index_name, id=key, document=data)
+
+        except ValueError as e:
+            logging.error(f'ValueError when parsing message: {e}')
+        except ConnectionError as e:
+            logging.error(f'ConnectionError with Elastic Client: {e}')
+        except Exception as e:
+            logging.error(f'Exeption when indexing/unindexing: {e}')
 
 
 def consume_kafka():

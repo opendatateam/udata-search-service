@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from faker import Faker
 from elasticsearch_dsl import Index
 import pytest
@@ -26,20 +28,28 @@ def search_client(app):
 
 @pytest.fixture(autouse=True)
 def db(search_client):
-    if Index('dataset').exists():
-        Index('dataset').delete()
-    if Index('reuse').exists():
-        Index('reuse').delete()
-    if Index('organization').exists():
-        Index('organization').delete()
+    suffix_name = '-' + datetime.now().strftime('%Y-%m-%d-%H-%M')
 
+    search_client.delete_index_with_alias('dataset')
+    SearchableDataset._index._name = 'dataset' + suffix_name
     SearchableDataset.init()
+    Index('dataset' + suffix_name).put_alias(name='dataset')
+
+    search_client.delete_index_with_alias('reuse')
+    SearchableReuse._index._name = 'reuse' + suffix_name
     SearchableReuse.init()
+    Index('reuse' + suffix_name).put_alias(name='reuse')
+
+    search_client.delete_index_with_alias('organization')
+    SearchableOrganization._index._name = 'organization' + suffix_name
     SearchableOrganization.init()
+    Index('organization' + suffix_name).put_alias(name='organization')
+
     yield
-    Index('dataset').delete()
-    Index('reuse').delete()
-    Index('organization').delete()
+
+    Index('dataset' + suffix_name).delete()
+    Index('reuse' + suffix_name).delete()
+    Index('organization' + suffix_name).delete()
 
 
 @pytest.fixture
