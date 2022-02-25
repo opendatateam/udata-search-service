@@ -46,6 +46,10 @@ This will start:
 
 Initialize the elasticsearch indices on setup.
 ```
+# Locally
+udata-search-service init-es
+
+# In the docker context
 docker-compose run --entrypoint /bin/bash web -c 'udata-search-service init-es'
 ```
 
@@ -61,7 +65,11 @@ udata search index
 
 After a reindexation, you'll need to change the alias by using the following command:
 ```
-flask set-alias <index-suffix>
+# Locally
+udata-search-service set-alias <index-suffix>
+
+# In the docker context
+docker-compose run --entrypoint /bin/bash web -c 'udata-search-service set-alias <index-suffix>'
 ```
 
 You can query the search service with the search service api, ex: http://localhost:5000/api/1/datasets/?q=toilettes%20à%20rennes
