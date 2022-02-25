@@ -82,6 +82,8 @@ class DatasetService:
             filters['tags'] = filters.pop('tag')
         if filters['geozone']:
             filters['geozones'] = filters.pop('geozone')
+        if filters['schema_']:
+            filters['schema'] = filters.pop('schema_')
         filtered = {k: v for k, v in filters.items() if v is not None}
         filters.clear()
         filters.update(filtered)
