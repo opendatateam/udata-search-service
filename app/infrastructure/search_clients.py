@@ -1,7 +1,11 @@
+from datetime import datetime
+from fnmatch import fnmatch
 from typing import Tuple, Optional, List
+
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl import Index, Date, Document, Float, Integer, Keyword, Text, tokenizer, token_filter, analyzer, query
 from elasticsearch_dsl.connections import connections
+
 from app.domain.entities import Dataset, Organization, Reuse
 from app.config import Config
 
@@ -33,6 +37,12 @@ class SearchableOrganization(Document):
     datasets = Integer()
     badges = Keyword(multi=True)
 
+    @classmethod
+    def _matches(cls, hit):
+        # override _matches to match indices in a pattern instead of just ALIAS
+        # hit is the raw dict as returned by elasticsearch
+        return fnmatch(hit["_index"], 'organization-*')
+
     class Index:
         name = 'organization'
 
@@ -54,6 +64,12 @@ class SearchableReuse(Document):
     description = Text(analyzer=dgv_analyzer)
     organization_name = Text(analyzer=dgv_analyzer)
     owner = Keyword()
+
+    @classmethod
+    def _matches(cls, hit):
+        # override _matches to match indices in a pattern instead of just ALIAS
+        # hit is the raw dict as returned by elasticsearch
+        return fnmatch(hit["_index"], 'reuse-*')
 
     class Index:
         name = 'reuse'
@@ -86,6 +102,12 @@ class SearchableDataset(Document):
     organization_name = Text(analyzer=dgv_analyzer)
     owner = Keyword()
 
+    @classmethod
+    def _matches(cls, hit):
+        # override _matches to match indices in a pattern instead of just ALIAS
+        # hit is the raw dict as returned by elasticsearch
+        return fnmatch(hit["_index"], 'dataset-*')
+
     class Index:
         name = 'dataset'
 
@@ -93,18 +115,51 @@ class SearchableDataset(Document):
 class ElasticClient:
 
     def __init__(self, url: str):
-        connections.create_connection(hosts=[url])
+        self.es = connections.create_connection(hosts=[url])
+
+    def delete_index_with_alias(self, alias: str) -> None:
+        if self.es.indices.exists_alias(name=alias):
+            for previous_index in self.es.indices.get_alias(alias).keys():
+                Index(previous_index).delete()
+
+    def init_indices(self) -> None:
+        '''
+        Create templates based on Document mappings and map patterns.
+        Create time-based index matchin the template patterns.
+        '''
+        suffix_name = '-' + datetime.now().strftime('%Y-%m-%d-%H-%M')
+
+        index_template = SearchableDataset._index.as_template('dataset', 'dataset-*')
+        index_template.save()
+        self.es.indices.create(index='dataset' + suffix_name)
+
+        index_template = SearchableReuse._index.as_template('reuse', 'reuse-*')
+        index_template.save()
+        self.es.indices.create(index='reuse' + suffix_name)
+
+        index_template = SearchableOrganization._index.as_template('organization', 'organization-*')
+        index_template.save()
+        self.es.indices.create(index='organization' + suffix_name)
+
+        self.clean_aliases(suffix_name)
 
     def clean_indices(self) -> None:
-        if Index('dataset').exists():
-            Index('dataset').delete()
-        SearchableDataset.init()
-        if Index('reuse').exists():
-            Index('reuse').delete()
-        SearchableReuse.init()
-        if Index('organization').exists():
-            Index('organization').delete()
-        SearchableOrganization.init()
+        for alias in ['dataset', 'reuse', 'organization']:
+            self.delete_index_with_alias(alias)
+
+        self.init_indices()
+
+    def clean_aliases(self, suffix: str) -> None:
+        for alias in ['dataset', 'reuse', 'organization']:
+            pattern = alias + '-*'
+            self.es.indices.update_aliases(
+                body={
+                    "actions": [
+                        {"remove": {"alias": alias, "index": pattern}},
+                        {"add": {"alias": alias, "index": alias + suffix}},
+                    ]
+                }
+            )
 
     def index_organization(self, to_index: Organization) -> None:
         SearchableOrganization(meta={'id': to_index.id}, **to_index.to_dict()).save(skip_empty=False)

@@ -6,6 +6,10 @@ from app.domain.entities import Dataset, Organization, Reuse
 class SearchClient(ABC):
 
     @abstractmethod
+    def init_indices(self) -> None:
+        pass
+
+    @abstractmethod
     def clean_indices(self) -> None:
         pass
 
