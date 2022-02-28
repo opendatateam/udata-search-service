@@ -1,6 +1,7 @@
 import datetime
 import time
 
+from udata_search_service.domain.entities import Dataset
 from udata_search_service.domain.factories import DatasetFactory, OrganizationFactory, ReuseFactory
 
 
