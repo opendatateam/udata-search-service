@@ -1,0 +1,31 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "udata-search-service"
+authors = [{name = "Opendata Team", email = "opendatateam@data.gouv.fr"}]
+readme = "README.md"
+dynamic = ["version", "description"]
+dependencies = [
+    "dependency-injector==4.36.0",
+    "elasticsearch==7.15.0",
+    "elasticsearch_dsl==7.4.0",
+    "Faker==11.3.0",
+    "flake8==4.0.1",
+    "Flask==2.0.1",
+    "gunicorn==20.1.0",
+    "kafka-python==2.0.2",
+    "pydantic==1.9.0",
+    "pytest==6.2.5",
+    "pytest-flask==1.2.0"
+]
+
+[project.urls]
+Home = "https://github.com/opendatateam/udata-search-service"
+
+[tool.flit.module]
+name = "udata_search_service"
+
+[project.scripts]
+ udata-search-service = "udata_search_service.app:cli"

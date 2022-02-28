@@ -1,7 +1,7 @@
 import datetime
 import time
 
-from app.domain.entities import Dataset, Organization, Reuse
+from udata_search_service.domain.entities import Dataset, Organization, Reuse
 
 
 def test_general_search_with_and_without_query(app, client, search_client, faker):

@@ -3,8 +3,8 @@ from typing import Optional
 from dependency_injector.wiring import inject, Provide
 from flask import Blueprint, request, url_for, jsonify, abort
 from pydantic import BaseModel, Field, ValidationError, validator
-from app.container import Container
-from app.infrastructure.services import DatasetService, OrganizationService, ReuseService
+from udata_search_service.container import Container
+from udata_search_service.infrastructure.services import DatasetService, OrganizationService, ReuseService
 
 
 bp = Blueprint('api', __name__, url_prefix='/api/1')
