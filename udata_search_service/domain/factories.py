@@ -1,7 +1,7 @@
 import datetime
 import factory
 
-from app.domain.entities import Dataset, Organization, Reuse
+from udata_search_service.domain.entities import Dataset, Organization, Reuse
 
 
 class DatasetFactory(factory.Factory):
