@@ -41,7 +41,8 @@ def test_parse_dataset_message():
                          {'id': 'country-group:world'},
                          {'id': 'country:fr'},
                          {'id': 'country-group:ue'}],
-            'granularity': 'fr:commune'
+            'granularity': 'fr:commune',
+            'schema': ['etalab/schema-irve']
         }
     }
     val_utf8 = json.dumps(message)
@@ -52,7 +53,7 @@ def test_parse_dataset_message():
 
     # Make sure that these fields are loaded as is
     for key in ['id', 'title', 'url', 'frequency', 'resources_count', 'description',
-                'acronym', 'badges', 'tags', 'license', 'owner']:
+                'acronym', 'badges', 'tags', 'license', 'owner', 'schema']:
         assert data[key] == message['data'][key]
 
     # Make sure that these fields are log2p-normalized

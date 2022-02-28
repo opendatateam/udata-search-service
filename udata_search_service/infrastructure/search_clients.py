@@ -102,6 +102,7 @@ class SearchableDataset(Document):
     organization = Keyword()
     organization_name = Text(analyzer=dgv_analyzer)
     owner = Keyword()
+    schema = Keyword(multi=True)
 
     @classmethod
     def _matches(cls, hit):
