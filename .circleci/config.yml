@@ -42,7 +42,7 @@ jobs:
       - run:
           name: Run tests
           environment:
-            ELASTICSEARCH_URL_TEST: 9200
+            ELASTICSEARCH_URL_TEST: http://localhost:9200
           command: |
             source venv/bin/activate
             make test
