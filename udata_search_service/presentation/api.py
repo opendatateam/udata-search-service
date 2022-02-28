@@ -2,7 +2,7 @@ import re
 from typing import Optional
 from dependency_injector.wiring import inject, Provide
 from flask import Blueprint, request, url_for, jsonify, abort
-from pydantic import BaseModel, ValidationError, validator
+from pydantic import BaseModel, Field, ValidationError, validator
 from udata_search_service.container import Container
 from udata_search_service.infrastructure.services import DatasetService, OrganizationService, ReuseService
 
@@ -31,6 +31,7 @@ class DatasetArgs(BaseModel):
     format: Optional[str] = None
     temporal_coverage: Optional[str] = None
     featured: Optional[str] = None
+    schema_: Optional[str] = Field(None, alias="schema")
 
     @validator('temporal_coverage')
     def temporal_coverage_format(cls, value):
