@@ -27,6 +27,8 @@ class Organization(EntityBase):
     created_at: datetime.date
     followers: int
     datasets: int
+    views: int
+    reuses: int
 
     badges: List[str] = None
     acronym: str = None

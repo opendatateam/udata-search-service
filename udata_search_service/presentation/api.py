@@ -14,13 +14,25 @@ class OrganizationArgs(BaseModel):
     q: Optional[str] = None
     page: Optional[int] = 1
     page_size: Optional[int] = 20
+    sort: Optional[str] = None
     badge: Optional[str] = None
+
+    @validator('sort')
+    def sort_validate(cls, value):
+        sorts = [
+            'created', 'reuses', 'datasets', 'followers', 'views'
+        ]
+        choices = sorts + ['-' + k for k in sorts]
+        if value not in choices:
+            raise ValueError('Sort parameter is not in the sorts available choices.')
+        return value
 
 
 class DatasetArgs(BaseModel):
     q: Optional[str] = None
     page: Optional[int] = 1
     page_size: Optional[int] = 20
+    sort: Optional[str] = None
     tag: Optional[str] = None
     badge: Optional[str] = None
     organization: Optional[str] = None
@@ -40,11 +52,22 @@ class DatasetArgs(BaseModel):
             raise ValueError('Temporal coverage does not match the right pattern.')
         return value
 
+    @validator('sort')
+    def sort_validate(cls, value):
+        sorts = [
+            'created', 'reuses', 'followers', 'views'
+        ]
+        choices = sorts + ['-' + k for k in sorts]
+        if value not in choices:
+            raise ValueError('Temporal coverage does not match the right pattern.')
+        return value
+
 
 class ReuseArgs(BaseModel):
     q: Optional[str] = None
     page: Optional[int] = 1
     page_size: Optional[int] = 20
+    sort: Optional[str] = None
     tag: Optional[str] = None
     badge: Optional[str] = None
     organization: Optional[str] = None
@@ -52,6 +75,16 @@ class ReuseArgs(BaseModel):
     type: Optional[str] = None
     featured: Optional[str] = None
     topic: Optional[str] = None
+
+    @validator('sort')
+    def sort_validate(cls, value):
+        sorts = [
+            'created', 'datasets', 'followers', 'views'
+        ]
+        choices = sorts + ['-' + k for k in sorts]
+        if value not in choices:
+            raise ValueError('Temporal coverage does not match the right pattern.')
+        return value
 
 
 def make_response(results, total_pages, results_number, page, page_size, next_url, prev_url):
