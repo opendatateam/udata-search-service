@@ -1,7 +1,6 @@
 import datetime
 import time
 
-from udata_search_service.domain.entities import Dataset
 from udata_search_service.domain.factories import DatasetFactory, OrganizationFactory, ReuseFactory
 
 
@@ -283,28 +282,8 @@ def test_general_search_with_sorting(app, client, search_client, faker):
 
 def test_search_reuse_with_schema_filter(app, client, search_client, faker):
     for i in range(4):
-        title = 'test-{0}'.format(faker.word(ext_word_list=['abc', 'def', 'hij', 'klm', 'nop', 'qrs', 'tuv']))
-        acronym = faker.company_suffix()
-        organization = 'test-{0}'.format(faker.company())
-        search_client.index_dataset(Dataset(
-            id=faker.md5(),
-            title=title,
-            acronym=acronym,
-            url=faker.uri(),
-            created_at=faker.date(),
-            orga_sp=4 if i % 2 else 1,
-            orga_followers=faker.random_int(),
-            views=faker.random_int(),
-            followers=faker.random_int(),
-            reuses=faker.random_int(),
-            featured=faker.random_int(),
-            resources_count=faker.random_int(min=1, max=15),
-            concat_title_org=title + ' ' + acronym + ' ' + organization,
-            organization=faker.md5(),
-            description=faker.sentence(nb_words=10),
-            organization_name=organization,
-            format=[faker.word()],
-            frequency=faker.word(),
+        search_client.index_dataset(DatasetFactory(
+            title='data-test-1',
             schema=['etalab/schema-irve'] if i % 2 else []
         ))
 
