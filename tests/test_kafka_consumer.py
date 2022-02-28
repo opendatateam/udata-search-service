@@ -153,11 +153,12 @@ def test_parse_organization_message():
     assert index_name == 'organization'
 
     # Make sure that these fields are loaded as is
-    for key in ['id', 'name', 'acronym', 'description', 'url', 'badges', 'orga_sp', 'datasets']:
+    for key in ['id', 'name', 'acronym', 'description', 'url', 'badges', 'orga_sp', 'datasets', 'reuses']:
         assert data[key] == message['data'][key]
 
     # Make sure that these fields are log2p-normalized
     assert data["followers"] == log2p(message['data']["followers"])
+    assert data["views"] == log2p(message['data']["views"])
 
     # Make sure that all other particular fields are treated accordingly
     assert data['created_at'].date() == datetime.date(2014, 4, 17)
