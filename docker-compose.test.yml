@@ -8,7 +8,6 @@ services:
       - node.name=es01
       - cluster.name=es-docker-cluster
       - cluster.initial_master_nodes=es01
-      - ELASTICSEARCH_URL_TEST=localhost:9201
     volumes:
       - ./data/search/data:/usr/share/elasticsearch/data
     expose:
