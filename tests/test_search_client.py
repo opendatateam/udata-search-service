@@ -602,3 +602,39 @@ def test_search_reuse_with_topic_filter(app, client, search_client, faker):
     assert results_number == 4
     results_number, res = search_client.query_reuses('test', 0, 20, {'topic': 'transport_and_mobility'})
     assert results_number == 2
+
+
+def test_search_reuse_with_schema_filter(app, client, search_client, faker):
+    for i in range(4):
+        title = 'test-{0}'.format(faker.word(ext_word_list=['abc', 'def', 'hij', 'klm', 'nop', 'qrs', 'tuv']))
+        acronym = faker.company_suffix()
+        organization = 'test-{0}'.format(faker.company())
+        search_client.index_dataset(Dataset(
+            id=faker.md5(),
+            title=title,
+            acronym=acronym,
+            url=faker.uri(),
+            created_at=faker.date(),
+            orga_sp=4 if i % 2 else 1,
+            orga_followers=faker.random_int(),
+            views=faker.random_int(),
+            followers=faker.random_int(),
+            reuses=faker.random_int(),
+            featured=faker.random_int(),
+            resources_count=faker.random_int(min=1, max=15),
+            concat_title_org=title + ' ' + acronym + ' ' + organization,
+            organization=faker.md5(),
+            description=faker.sentence(nb_words=10),
+            organization_name=organization,
+            format=[faker.word()],
+            frequency=faker.word(),
+            schema=['etalab/schema-irve'] if i % 2 else []
+        ))
+
+    # Without this, ElasticSearch does not seem to have the time to index.
+    time.sleep(2)
+
+    results_number, res = search_client.query_datasets('test', 0, 20, {})
+    assert results_number == 4
+    results_number, res = search_client.query_datasets('test', 0, 20, {'schema': 'etalab/schema-irve'})
+    assert results_number == 2
