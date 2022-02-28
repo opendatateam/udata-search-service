@@ -5,9 +5,8 @@ from typing import Tuple, Optional, List
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl import Index, Date, Document, Float, Integer, Keyword, Text, tokenizer, token_filter, analyzer, query
 from elasticsearch_dsl.connections import connections
-
-from app.domain.entities import Dataset, Organization, Reuse
-from app.config import Config
+from udata_search_service.domain.entities import Dataset, Organization, Reuse
+from udata_search_service.config import Config
 
 
 # Définition d'un analyzer français (repris ici : https://jolicode.com/blog/construire-un-bon-analyzer-francais-pour-elasticsearch)

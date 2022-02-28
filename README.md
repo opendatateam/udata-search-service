@@ -9,8 +9,31 @@ See the following architecture schema:
 
 ## Getting started
 
+You can follow this recommended architecture for your code:
+```
+$WORKSPACE
+├── fs
+├── udata
+│   ├── ...
+│   └── setup.py
+│		└── udata.cfg
+├── udata-front
+│   ├── ...
+│   └── setup.py
+└── udata-search-service
+    ├── ...
+    └── pyproject.toml
+```
+
+Clone the repository:
+```
+cd $WORKSPACE
+git clone git@github.com:opendatateam/udata-search-service.git
+```
+
 Start the different services using docker-compose:
 ```
+cd udata-search-service
 docker-compose up
 ```
 
@@ -21,10 +44,13 @@ This will start:
 - a kafka consumer
 - a search app
 
-
-Initialize the elasticsearch indices
+Initialize the elasticsearch indices on setup.
 ```
-flask init-es
+# Locally
+udata-search-service init-es
+
+# In the docker context
+docker-compose run --entrypoint /bin/bash web -c 'udata-search-service init-es'
 ```
 
 You can feed the elasticsearch by publishing messages to Kafka.
@@ -32,15 +58,42 @@ Using [udata](https://github.com/opendatateam/udata), when you modify objects,
 indexation messages will be sent and will be consumed by the kafka consumer.
 If you want to reindex your local mongo base in udata, you can run:
 ```
+cd $WORKSPACE/udata/
+source ./venv/bin/activate
 udata search index
 ```
 
 After a reindexation, you'll need to change the alias by using the following command:
 ```
-flask set-alias <index-suffix>
+# Locally
+udata-search-service set-alias <index-suffix>
+
+# In the docker context
+docker-compose run --entrypoint /bin/bash web -c 'udata-search-service set-alias <index-suffix>'
 ```
 
 You can query the search service with the search service api, ex: http://localhost:5000/api/1/datasets/?q=toilettes%20à%20rennes
+
+## Development
+
+You can create a virtualenv, activate it and install the requirements with the following commands.
+```
+python3 -m venv venv
+source venv/bin/activate
+make deps
+make install
+```
+
+You can start the Elasticsearch and Kafak broker and zookeper using the docker compose.
+You can start the consumer locally with the following command:
+```
+udata-search-service consume-kafka
+```
+
+You can start the web search service with the following command:
+```
+udata-search-service run
+```
 
 ## Troubleshooting
 
