@@ -243,7 +243,7 @@ class ElasticClient:
                         'function_score',
                         query=query.Bool(should=[query.MultiMatch(
                             query=query_text,
-                            type='most_fields',
+                            type='cross_fields',
                             fields=['title^7', 'acronym^7', 'description^4', 'organization_name^4'],
                             operator="and")]),
                         functions=datasets_score_functions
