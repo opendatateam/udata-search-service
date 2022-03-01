@@ -191,7 +191,7 @@ class ElasticClient:
                         query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['name^15', 'acronym^15', 'description^8'])]),
                         functions=organizations_score_functions
                     ),
-                query.Match(title={"query": query_text, 'fuzziness': 'AUTO'})
+                query.Match(title={"query": query_text, 'fuzziness': 'AUTO:4,6'})
             ])
         else:
             s = s.query(query.Q('function_score', query=query.MatchAll(), functions=organizations_score_functions))
@@ -248,7 +248,7 @@ class ElasticClient:
                             operator="and")]),
                         functions=datasets_score_functions
                     ),
-                    query.MultiMatch(query=query_text, type='most_fields', operator="and", fields=['title', 'organization_name'], fuzziness='AUTO')
+                    query.MultiMatch(query=query_text, type='most_fields', operator="and", fields=['title', 'organization_name'], fuzziness='AUTO:4,6')
                 ])
         else:
             s = s.query(query.Q('function_score', query=query.MatchAll(), functions=datasets_score_functions))
@@ -283,7 +283,7 @@ class ElasticClient:
                         query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['title^15', 'description^8', 'organization_name^8'])]),
                         functions=reuses_score_functions
                     ),
-                    query.MultiMatch(query=query_text, type='most_fields', fields=['title', 'organization_name'], fuzziness='AUTO')
+                    query.MultiMatch(query=query_text, type='most_fields', fields=['title', 'organization_name'], fuzziness='AUTO:4,6')
                 ])
         else:
             s = s.query(query.Q('function_score', query=query.MatchAll(), functions=reuses_score_functions))
