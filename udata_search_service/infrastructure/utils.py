@@ -3,6 +3,9 @@ import ssl
 from urllib.request import urlopen
 from tempfile import _TemporaryFileWrapper
 
+from bs4 import BeautifulSoup
+from markdown import markdown
+
 
 def download_catalog(url: str, fd: _TemporaryFileWrapper) -> None:
     ssl._create_default_https_context = ssl._create_unverified_context
@@ -24,9 +27,30 @@ def get_concat_title_org(title: str, acronym: str, organization_name: str) -> st
 
 
 def log2p(value):
-    # Add 2 to the field value and take the common logarithm.
-    # It makes sure that the result is > 0, needed for function score
-    # Using multiply boost mode
+    '''
+    Add 2 to the field value and take the common logarithm.
+    It makes sure that the result is > 0, needed for function score
+    Using multiply boost mode
+    '''
     if not value:
         value = 0
     return log(value + 2)
+
+
+EXCERPT_TOKEN = '<!--- --- -->'
+
+
+def mdstrip(value, length=None, end='…'):
+    '''
+    Truncate and strip tags from a markdown source
+
+    The markdown source is truncated at the excerpt if present and
+    smaller than the required length. Then, all html tags are stripped.
+    '''
+    if not value:
+        return ''
+    if EXCERPT_TOKEN in value:
+        value = value.split(EXCERPT_TOKEN, 1)[0]
+    rendered = markdown(value, wrap=False)
+    text = ''.join(BeautifulSoup(rendered, 'html.parser').findAll(text=True))
+    return text

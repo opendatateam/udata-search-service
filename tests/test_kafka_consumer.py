@@ -2,7 +2,7 @@ import datetime
 import json
 
 from udata_search_service.infrastructure.kafka_consumer import parse_message
-from udata_search_service.infrastructure.utils import get_concat_title_org, log2p
+from udata_search_service.infrastructure.utils import get_concat_title_org, log2p, mdstrip
 
 
 def test_parse_dataset_message():
@@ -52,9 +52,12 @@ def test_parse_dataset_message():
     assert index_name == 'dataset'
 
     # Make sure that these fields are loaded as is
-    for key in ['id', 'title', 'url', 'frequency', 'resources_count', 'description',
+    for key in ['id', 'title', 'url', 'frequency', 'resources_count',
                 'acronym', 'badges', 'tags', 'license', 'owner', 'schema']:
         assert data[key] == message['data'][key]
+
+    # Make sure that markdown fields are stripped
+    assert data["description"] == mdstrip(message['data']["description"])
 
     # Make sure that these fields are log2p-normalized
     for key in ['views', 'followers', 'reuses']:
@@ -112,8 +115,11 @@ def test_parse_reuse_message():
 
     # Make sure that these fields are loaded as is
     for key in ['id', 'title', 'url', 'datasets', 'featured',
-                'description', 'badges', 'tags', 'owner']:
+                'badges', 'tags', 'owner']:
         assert data[key] == message['data'][key]
+
+    # Make sure that markdown fields are stripped
+    assert data["description"] == mdstrip(message['data']["description"])
 
     # Make sure that these fields are log2p-normalized
     for key in ['views', 'followers']:
@@ -154,8 +160,11 @@ def test_parse_organization_message():
     assert index_name == 'organization'
 
     # Make sure that these fields are loaded as is
-    for key in ['id', 'name', 'acronym', 'description', 'url', 'badges', 'orga_sp', 'datasets', 'reuses']:
+    for key in ['id', 'name', 'acronym', 'url', 'badges', 'orga_sp', 'datasets', 'reuses']:
         assert data[key] == message['data'][key]
+
+    # Make sure that markdown fields are stripped
+    assert data["description"] == mdstrip(message['data']["description"])
 
     # Make sure that these fields are log2p-normalized
     assert data["followers"] == log2p(message['data']["followers"])
