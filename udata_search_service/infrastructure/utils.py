@@ -37,10 +37,7 @@ def log2p(value):
     return log(value + 2)
 
 
-EXCERPT_TOKEN = '<!--- --- -->'
-
-
-def mdstrip(value, length=None, end='…'):
+def mdstrip(value):
     '''
     Truncate and strip tags from a markdown source
 
@@ -49,8 +46,6 @@ def mdstrip(value, length=None, end='…'):
     '''
     if not value:
         return ''
-    if EXCERPT_TOKEN in value:
-        value = value.split(EXCERPT_TOKEN, 1)[0]
     rendered = markdown(value, wrap=False)
     text = ''.join(BeautifulSoup(rendered, 'html.parser').findAll(text=True))
     return text
