@@ -214,6 +214,22 @@ def test_search_dataset_with_granularity_filter(app, client, search_client, fake
     assert results_number == 2
 
 
+def test_search_dataset_with_schema_filter(app, client, search_client, faker):
+    for i in range(4):
+        search_client.index_dataset(DatasetFactory(
+            title='data-test-1',
+            schema=['etalab/schema-irve'] if i % 2 else []
+        ))
+
+    # Without this, ElasticSearch does not seem to have the time to index.
+    time.sleep(2)
+
+    results_number, res = search_client.query_datasets('test', 0, 20, {})
+    assert results_number == 4
+    results_number, res = search_client.query_datasets('test', 0, 20, {'schema': 'etalab/schema-irve'})
+    assert results_number == 2
+
+
 def test_search_reuse_with_type_filter(app, client, search_client, faker):
     for i in range(4):
         search_client.index_reuse(ReuseFactory(
@@ -280,17 +296,13 @@ def test_general_search_with_sorting(app, client, search_client, faker):
     assert res[0]['title'] == 'reuse-test-2'
 
 
-def test_search_reuse_with_schema_filter(app, client, search_client, faker):
-    for i in range(4):
-        search_client.index_dataset(DatasetFactory(
-            title='data-test-1',
-            schema=['etalab/schema-irve'] if i % 2 else []
-        ))
+def test_search_dataset_with_synonym(app, client, search_client, faker):
+    search_client.index_dataset(DatasetFactory(
+        title='rp',
+    ))
 
     # Without this, ElasticSearch does not seem to have the time to index.
     time.sleep(2)
 
-    results_number, res = search_client.query_datasets('test', 0, 20, {})
-    assert results_number == 4
-    results_number, res = search_client.query_datasets('test', 0, 20, {'schema': 'etalab/schema-irve'})
-    assert results_number == 2
+    results_number, res = search_client.query_datasets('recensement population', 0, 20, {})
+    assert results_number == 1
