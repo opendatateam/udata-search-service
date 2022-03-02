@@ -15,7 +15,8 @@ class Config:
         "lolf, loi de finance",
         "waldec, RNA, répertoire national des associations",
         "ovq, baromètre des résultats",
-        "contour, découpage"
+        "contour, découpage",
+        "rp, recensement de la population"
     ]
 
 
