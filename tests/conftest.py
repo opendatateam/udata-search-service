@@ -28,28 +28,14 @@ def search_client(app):
 
 @pytest.fixture(autouse=True)
 def db(search_client):
-    suffix_name = '-' + datetime.now().strftime('%Y-%m-%d-%H-%M')
 
-    search_client.delete_index_with_alias('dataset')
-    SearchableDataset._index._name = 'dataset' + suffix_name
-    SearchableDataset.init()
-    Index('dataset' + suffix_name).put_alias(name='dataset')
-
-    search_client.delete_index_with_alias('reuse')
-    SearchableReuse._index._name = 'reuse' + suffix_name
-    SearchableReuse.init()
-    Index('reuse' + suffix_name).put_alias(name='reuse')
-
-    search_client.delete_index_with_alias('organization')
-    SearchableOrganization._index._name = 'organization' + suffix_name
-    SearchableOrganization.init()
-    Index('organization' + suffix_name).put_alias(name='organization')
+    search_client.clean_indices()
 
     yield
 
-    Index('dataset' + suffix_name).delete()
-    Index('reuse' + suffix_name).delete()
-    Index('organization' + suffix_name).delete()
+    SearchableDataset.delete_indices(search_client.es)
+    SearchableReuse.delete_indices(search_client.es)
+    SearchableOrganization.delete_indices(search_client.es)
 
 
 @pytest.fixture

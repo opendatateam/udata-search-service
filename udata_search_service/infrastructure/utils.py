@@ -1,10 +1,13 @@
 from math import log
 import ssl
-from urllib.request import urlopen
+import sys
 from tempfile import _TemporaryFileWrapper
+from urllib.request import urlopen
 
 from bs4 import BeautifulSoup
 from markdown import markdown
+
+IS_TTY = sys.__stdin__.isatty()
 
 
 def download_catalog(url: str, fd: _TemporaryFileWrapper) -> None:
