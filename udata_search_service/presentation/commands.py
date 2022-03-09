@@ -9,14 +9,14 @@ from udata_search_service.infrastructure.migrate import set_alias as set_alias_f
 
 @inject
 def init_es_func(search_client: SearchClient = Provide[Container.search_client]) -> None:
-    click.echo("Setting up indices and aliases.")
+    click.echo("Setting up indices and aliases if they don't exist.")
     search_client.init_indices()
     click.echo("Done.")
 
 
 @inject
 def clean_es_func(search_client: SearchClient = Provide[Container.search_client]) -> None:
-    click.echo("Cleaning and creating indices and aliases.")
+    click.echo("Removing previous indices and intializing new ones.")
     search_client.clean_indices()
     click.echo("Done.")
 
