@@ -18,7 +18,9 @@ dependencies = [
     "kafka-python==2.0.2",
     "pydantic==1.9.0",
     "pytest==6.2.5",
-    "pytest-flask==1.2.0"
+    "pytest-flask==1.2.0",
+    "markdown==3.3.3",
+    "beautifulsoup4==4.10.0"
 ]
 
 [project.urls]
