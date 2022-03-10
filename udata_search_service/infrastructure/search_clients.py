@@ -176,7 +176,7 @@ class ElasticClient:
         organizations_score_functions = [
             query.SF("field_value_factor", field="orga_sp", factor=8, modifier='sqrt', missing=1),
             query.SF("field_value_factor", field="followers", factor=4, modifier='sqrt', missing=1),
-            query.SF("field_value_factor", field="datasets", factor=1, modifier='sqrt', missing=1),
+            query.SF("field_value_factor", field="views", factor=1, modifier='sqrt', missing=1),
         ]
 
         if query_text:
