@@ -10,11 +10,7 @@ publish = make publish
 files =
     README.md
 
-[bump]
-unsuffix = true
-
 [prepare]
-part = patch
 suffix = dev
 
 [changelog]
