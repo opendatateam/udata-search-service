@@ -112,11 +112,11 @@ def test_api_search_pagination_without_query(app, client, search_client, faker):
 
 def test_api_search_with_query(app, client, search_client, faker):
     for i in range(4):
-        title = 'test-{0}'.format(i) if i % 2 else i
-        organization = 'test-{0}'.format(faker.company()) if i % 2 else 'not-{0}'.format(faker.company())
+        title = 'sample-test-{0}'.format(i) if i % 2 else i
+        organization = 'sample-test-{0}'.format(faker.company()) if i % 2 else 'not-{0}'.format(faker.company())
         search_client.index_dataset(DatasetFactory(title=title))
         search_client.index_organization(OrganizationFactory(name=organization))
-        search_client.index_reuse(ReuseFactory(title='test-{0}'.format(i) if i % 2 else 'not-{0}'.format(i)))
+        search_client.index_reuse(ReuseFactory(title='sample-test-{0}'.format(i) if i % 2 else 'not-{0}'.format(i)))
 
     # Without this, ElasticSearch does not seem to have the time to index.
     time.sleep(2)
@@ -128,11 +128,11 @@ def test_api_search_with_query(app, client, search_client, faker):
     resp = client.get(url_for('api.reuse_search'))
     assert resp.json['total'] == 4
 
-    resp = client.get(url_for('api.dataset_search', q='test'))
+    resp = client.get(url_for('api.dataset_search', q='sample-test'))
     assert resp.json['total'] == 2
-    resp = client.get(url_for('api.organization_search', q='test'))
+    resp = client.get(url_for('api.organization_search', q='sample-test'))
     assert resp.json['total'] == 2
-    resp = client.get(url_for('api.reuse_search',  q='test'))
+    resp = client.get(url_for('api.reuse_search',  q='sample-test'))
     assert resp.json['total'] == 2
 
 
