@@ -19,7 +19,7 @@ class Config:
         "rp, recensement de la population"
     ]
 
-    ES_MAX_RESULT_WINDOW = 1000000
+    ES_MAX_RESULT_WINDOW = 100000
 
 
 class Testing(Config):
