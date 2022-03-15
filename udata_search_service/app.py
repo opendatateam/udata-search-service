@@ -15,6 +15,7 @@ def create_app(config: object = Config) -> Flask:
     app.config.from_object(config)
 
     container.config.elasticsearch_url.from_value(app.config['ELASTICSEARCH_URL'])
+    container.config.es_max_result_window.from_value(app.config['ES_MAX_RESULT_WINDOW'])
     container.config.search_synonyms.from_value(app.config['SEARCH_SYNONYMS'])
 
     app.register_blueprint(api.bp)

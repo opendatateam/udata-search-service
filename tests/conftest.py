@@ -23,7 +23,7 @@ def client(app):
 
 @pytest.fixture
 def search_client(app):
-    return ElasticClient(url=app.config['ELASTICSEARCH_URL'])
+    return ElasticClient(url=app.config['ELASTICSEARCH_URL'], max_result_window=app.config['ES_MAX_RESULT_WINDOW'])
 
 
 @pytest.fixture(autouse=True)
