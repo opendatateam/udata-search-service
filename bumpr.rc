@@ -1,0 +1,24 @@
+[bumpr]
+file = udata_search_service/__init__.py
+vcs = git
+commit = true
+tag = true
+tag_format = v{version}
+push = true
+tests = make test
+publish = make publish
+files =
+    README.md
+
+[prepare]
+suffix = dev
+
+[changelog]
+file = CHANGELOG.md
+bump = ## {version} ({date:%Y-%m-%d})
+prepare = ## Current (in progress)
+separator =
+
+[replace]
+dev = ?branch=master
+stable = ?tag=v{version}
