@@ -2,4 +2,4 @@
 
 ## Current (in progress)
 
-- Add bumpr to manage changelog [#23](https://github.com/opendatateam/udata-search-service/pull/23)
+- Initial version of udata-search-service
