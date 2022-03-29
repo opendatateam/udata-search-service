@@ -142,7 +142,7 @@ def consume_messages(consumer, es):
         key = message.key.decode('utf-8')
         topic_short = message.topic.split('-')[0]
 
-        logging.info(f'Message recieved with key: {key} and value: {value}')
+        logging.debug(f'Message recieved with key: {key} and value: {value}')
 
         try:
             message_type, index_name, data = parse_message(topic_short, val_utf8)
@@ -160,12 +160,12 @@ def consume_messages(consumer, es):
                     es.indices.create(index=index_name)
                 es.index(index=index_name, id=key, document=data)
 
-        except ValueError as e:
-            logging.error(f'ValueError when parsing message: {e}')
-        except ConnectionError as e:
-            logging.error(f'ConnectionError with Elastic Client: {e}')
-        except Exception as e:
-            logging.error(f'Exeption when indexing/unindexing: {e}')
+        except ValueError:
+            logging.exception('ValueError when parsing message')
+        except ConnectionError:
+            logging.exception('ConnectionError with Elastic Client')
+        except Exception:
+            logging.exception('Exeption when indexing/unindexing')
 
 
 def consume_kafka():
