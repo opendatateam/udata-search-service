@@ -5,7 +5,7 @@ from typing import Tuple, Optional, List
 
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError
-from elasticsearch_dsl import Date, Document, Float, Integer, Keyword, Text, tokenizer, token_filter, analyzer, query
+from elasticsearch_dsl import Index, Date, Document, Float, Integer, Keyword, Text, tokenizer, token_filter, analyzer, query
 from elasticsearch_dsl.connections import connections
 from udata_search_service.domain.entities import Dataset, Organization, Reuse
 from udata_search_service.config import Config
@@ -31,7 +31,7 @@ dgv_analyzer = analyzer('french_dgv',
 class IndexDocument(Document):
 
     @classmethod
-    def init_index(cls, es_client: Elasticsearch, max_result_window: int, suffix: str) -> None:
+    def init_index(cls, es_client: Elasticsearch, suffix: str) -> None:
         alias = cls._index._name
         pattern = alias + '-*'
 
@@ -40,8 +40,6 @@ class IndexDocument(Document):
 
         if not cls._index.exists():
             es_client.indices.create(index=alias + suffix)
-            es_client.indices.put_settings(index=alias + suffix,
-                                           body={"index": {"max_result_window": max_result_window}})
             es_client.indices.put_alias(index=alias + suffix, name=alias)
 
     @classmethod
@@ -132,9 +130,8 @@ class SearchableDataset(IndexDocument):
 
 class ElasticClient:
 
-    def __init__(self, url: str, max_result_window: int):
+    def __init__(self, url: str):
         self.es = connections.create_connection(hosts=[url])
-        self.max_result_window = max_result_window
 
     def init_indices(self) -> None:
         '''
@@ -143,9 +140,9 @@ class ElasticClient:
         '''
         suffix_name = '-' + datetime.now().strftime('%Y-%m-%d-%H-%M')
 
-        SearchableDataset.init_index(self.es, self.max_result_window, suffix_name)
-        SearchableReuse.init_index(self.es, self.max_result_window, suffix_name)
-        SearchableOrganization.init_index(self.es, self.max_result_window, suffix_name)
+        SearchableDataset.init_index(self.es, suffix_name)
+        SearchableReuse.init_index(self.es, suffix_name)
+        SearchableOrganization.init_index(self.es, suffix_name)
 
     def clean_indices(self) -> None:
         '''

@@ -8,8 +8,7 @@ class Container(containers.DeclarativeContainer):
 
     search_client = providers.Singleton(
         ElasticClient,
-        url=config.elasticsearch_url,
-        max_result_window=config.es_max_result_window
+        url=config.elasticsearch_url
     )
 
     organization_service = providers.Factory(
