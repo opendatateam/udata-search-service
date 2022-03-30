@@ -1,6 +1,6 @@
 # Changelog
 
-## Current (in progress)
+## 1.0.1 (2022-03-30)
 
 - Track total hits in search query
 
