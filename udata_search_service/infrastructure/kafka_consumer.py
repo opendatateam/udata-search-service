@@ -7,6 +7,7 @@ from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import ConnectionError
 from kafka import KafkaConsumer
 
+from udata_search_service.config import Config
 from udata_search_service.domain.entities import Dataset, Organization, Reuse
 from udata_search_service.infrastructure.utils import get_concat_title_org, log2p, mdstrip
 
@@ -146,19 +147,15 @@ def consume_messages(consumer, es):
 
         try:
             message_type, index_name, data = parse_message(topic_short, val_utf8)
+            index_name = Config.ELASTICSEARCH_INDEX_PREFIX + '-' + index_name
 
-            if message_type == KafkaMessageType.INDEX.value:
+            if message_type in [KafkaMessageType.INDEX.value,
+                                KafkaMessageType.REINDEX.value]:
                 es.index(index=index_name, id=key, document=data)
 
             elif message_type == KafkaMessageType.UNINDEX.value:
                 if es.exists_source(index=index_name, id=key):
                     es.delete(index=index_name, id=key)
-
-            elif message_type == KafkaMessageType.REINDEX.value:
-                if not es.indices.exists(index_name):
-                    logging.info(f'Initializing new index {index_name} for reindexation')
-                    es.indices.create(index=index_name)
-                es.index(index=index_name, id=key, document=data)
 
         except ValueError:
             logging.exception('ValueError when parsing message')
