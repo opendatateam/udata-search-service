@@ -71,7 +71,7 @@ class SearchableOrganization(IndexDocument):
     badges = Keyword(multi=True)
 
     class Index:
-        name = Config.ELASTICSEARCH_INDEX_PREFIX + '-organization'
+        name = Config.UDATA_INSTANCE_NAME + '-organization'
 
 
 class SearchableReuse(IndexDocument):
@@ -93,7 +93,7 @@ class SearchableReuse(IndexDocument):
     owner = Keyword()
 
     class Index:
-        name = Config.ELASTICSEARCH_INDEX_PREFIX + '-reuse'
+        name = Config.UDATA_INSTANCE_NAME + '-reuse'
 
 
 class SearchableDataset(IndexDocument):
@@ -125,7 +125,7 @@ class SearchableDataset(IndexDocument):
     schema = Keyword(multi=True)
 
     class Index:
-        name = Config.ELASTICSEARCH_INDEX_PREFIX + '-dataset'
+        name = Config.UDATA_INSTANCE_NAME + '-dataset'
 
 
 class ElasticClient:

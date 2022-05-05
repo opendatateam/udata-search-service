@@ -147,7 +147,7 @@ def consume_messages(consumer, es):
 
         try:
             message_type, index_name, data = parse_message(topic_short, val_utf8)
-            index_name = Config.ELASTICSEARCH_INDEX_PREFIX + '-' + index_name
+            index_name = Config.UDATA_INSTANCE_NAME + '-' + index_name
 
             if message_type in [KafkaMessageType.INDEX.value,
                                 KafkaMessageType.REINDEX.value]:

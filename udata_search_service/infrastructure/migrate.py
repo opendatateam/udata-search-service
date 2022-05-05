@@ -34,7 +34,7 @@ def set_alias(index_suffix_name: str, indices: List[str] = None, delete: bool = 
         sys.exit(-1)
 
     for index in indices:
-        index_alias = Config.ELASTICSEARCH_INDEX_PREFIX + '-' + index
+        index_alias = Config.UDATA_INSTANCE_NAME + '-' + index
         pattern = index_alias + '-*'
         index_name = index_alias + '-' + index_suffix_name
         logging.info('Creating alias "%s" on index "%s"', index_alias, index_name)

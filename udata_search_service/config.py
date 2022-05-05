@@ -6,7 +6,7 @@ class Config:
 
     ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL') or 'http://localhost:9200'
 
-    ELASTICSEARCH_INDEX_PREFIX = os.environ.get('ELASTICSEARCH_INDEX_PREFIX') or 'udata'
+    UDATA_INSTANCE_NAME = os.environ.get('UDATA_INSTANCE_NAME') or 'udata'
 
     SEARCH_SYNONYMS = [
         "AMD, administrateur ministériel des données, AMDAC",
