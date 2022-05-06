@@ -299,7 +299,7 @@ class ElasticClient:
                             operator="and")]),
                         functions=reuses_score_functions
                     ),
-                    query.MultiMatch(query=query_text, type='most_fields', fields=['title', 'organization_name'], fuzziness='AUTO:4,6')
+                    query.MultiMatch(query=query_text, type='most_fields', operator="and", fields=['title', 'organization_name'], fuzziness='AUTO:4,6')
                 ])
         else:
             s = s.query(query.Q('function_score', query=query.MatchAll(), functions=reuses_score_functions))
