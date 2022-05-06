@@ -28,12 +28,11 @@ def set_alias(index_suffix_name: str, indices: List[str] = None, delete: bool = 
     es = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}])
 
     indices = indices or ALL_INDICES
-
-    if unknown_indices := [x for x in indices if x not in ALL_INDICES]:
-        logging.error('Unknown indices: %s', ', '.join(unknown_indices))
-        sys.exit(-1)
-
     for index in indices:
+        if index not in ALL_INDICES:
+            logging.error('Unknown index alias %s', index)
+            sys.exit(-1)
+
         index_alias = Config.UDATA_INSTANCE_NAME + '-' + index
         pattern = index_alias + '-*'
         index_name = index_alias + '-' + index_suffix_name
