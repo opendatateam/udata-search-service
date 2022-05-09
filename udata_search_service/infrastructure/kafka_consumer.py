@@ -52,7 +52,9 @@ def create_kafka_consumer():
         # on startup if Kafka Broker isn't ready yet
         api_version=tuple([int(value) for value in KAFKA_API_VERSION.split('.')])
         )
-    consumer.subscribe(TOPICS + [topic + '-reindex' for topic in TOPICS])
+
+    topics = [Config.UDATA_INSTANCE_NAME + '.' + topic for topic in TOPICS]
+    consumer.subscribe(topics)
     logging.info('Kafka Consumer created')
     return consumer
 
@@ -141,7 +143,7 @@ def consume_messages(consumer, es):
         val_utf8 = value.decode('utf-8').replace('NaN', 'null')
 
         key = message.key.decode('utf-8')
-        topic_short = message.topic.split('-')[0]
+        topic_short = message.topic.split('.')[1]  # Strip UDATA_INSTANCE_NAME out
 
         logging.debug(f'Message recieved with key: {key} and value: {value}')
 
