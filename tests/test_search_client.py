@@ -3,17 +3,22 @@ import time
 
 from udata_search_service.domain.factories import DatasetFactory, OrganizationFactory, ReuseFactory
 
+ext_word_list = ['abc', 'def', 'hij', 'klm', 'nop', 'qrs', 'tuv']
+
 
 def test_general_search_with_and_without_query(app, client, search_client, faker):
     for i in range(4):
         search_client.index_dataset(DatasetFactory(
-            title='test-{0}'.format(i) if i % 2 else faker.word(ext_word_list=['abc', 'def', 'hij', 'klm', 'nop', 'qrs', 'tuv'])
+            title='test-{0}'.format(i) if i % 2 else faker.word(ext_word_list=ext_word_list),
+            description='udata' if i == 1 else faker.word()
         ))
         search_client.index_organization(OrganizationFactory(
-            name='test-{0}'.format(faker.company()) if i % 2 else faker.company()
+            name='test-{0}'.format(faker.company()) if i % 2 else faker.company(),
+            description='udata' if i == 1 else faker.word()
         ))
         search_client.index_reuse(ReuseFactory(
-            title='test-{0}'.format(i) if i % 2 else faker.word(ext_word_list=['abc', 'def', 'hij', 'klm', 'nop', 'qrs', 'tuv'])
+            title='test-{0}'.format(i) if i % 2 else faker.word(ext_word_list=ext_word_list),
+            description='udata' if i == 1 else faker.word()
         ))
     # Without this, ElasticSearch does not seem to have the time to index.
     time.sleep(2)
@@ -25,6 +30,14 @@ def test_general_search_with_and_without_query(app, client, search_client, faker
     assert results_number == 2
     results_number, res = search_client.query_reuses('test', 0, 20, {})
     assert results_number == 2
+
+    # Should return only the object with string 'test' and 'udata' in their titles/names or desc
+    results_number, res = search_client.query_datasets('test udata', 0, 20, {})
+    assert results_number == 1
+    results_number, res = search_client.query_organizations('test udata', 0, 20, {})
+    assert results_number == 1
+    results_number, res = search_client.query_reuses('test udata', 0, 20, {})
+    assert results_number == 1
 
     # Should return all objects, as query text is none
     results_number, res = search_client.query_datasets(None, 0, 20, {})
