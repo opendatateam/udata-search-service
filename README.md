@@ -53,6 +53,13 @@ udata-search-service init-es
 docker-compose run --entrypoint /bin/bash web -c 'udata-search-service init-es'
 ```
 
+Configure your udata to use the search service, by updating the following variables in your udata.cfg.
+Ex in local:
+```
+    SEARCH_SERVICE_API_URL = 'http://127.0.0.1:5000/api/1/'
+    KAFKA_URI = 'localhost:9092'
+```
+
 You can feed the elasticsearch by publishing messages to Kafka.
 Using [udata](https://github.com/opendatateam/udata), when you modify objects,
 indexation messages will be sent and will be consumed by the kafka consumer.
@@ -94,6 +101,23 @@ You can start the web search service with the following command:
 ```
 udata-search-service run
 ```
+
+## Deployment
+
+The project depends on [Kafka](https://kafka.apache.org/documentation/)
+and [ElasticSearch](https://www.elastic.co/guide/index.html) 7.16.
+
+Elasticsearch requires the [Analysis ICU](https://github.com/elastic/elasticsearch-analysis-icu)
+plugin for your specific version.
+On Debian, you can take a look at these
+[instructions](https://www.elastic.co/guide/en/elasticsearch/reference/7.16/deb.html) for installation.
+
+You will need a Kafka broker and zookeeper. You can follow the
+[quick-start instructions](https://kafka.apache.org/documentation/#quickstart) to start all
+services in correct order.
+
+You will need to start a search service app a kafka consumer.
+You can start these using [uWSGI](https://uwsgi-docs.readthedocs.io/).
 
 ## Troubleshooting
 
