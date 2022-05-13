@@ -54,9 +54,9 @@ docker-compose run --entrypoint /bin/bash web -c 'udata-search-service init-es'
 ```
 
 This will create the following indices:
-- {UDATA_INSTANCE_NAME}-dataset-{DATETIME}
-- {UDATA_INSTANCE_NAME}-reuse-{DATETIME}
-- {UDATA_INSTANCE_NAME}-organization-{DATETIME}
+- {UDATA_INSTANCE_NAME}-dataset-{yyyy}-{mm}-{dd}-{HH}-{MM}
+- {UDATA_INSTANCE_NAME}-reuse-{yyyy}-{mm}-{dd}-{HH}-{MM}
+- {UDATA_INSTANCE_NAME}-organization-{yyyy}-{mm}-{dd}-{HH}-{MM}
 
 You can feed the elasticsearch by publishing messages to Kafka.
 Using [udata](https://github.com/opendatateam/udata), when you modify objects,
