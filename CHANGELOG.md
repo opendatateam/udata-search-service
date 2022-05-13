@@ -3,6 +3,8 @@
 ## Current (in progress)
 
 - Add configurable prefix for index [#26](https://github.com/opendatateam/udata-search-service/pull/26)
+- Add cross fields in query search for reuses and organization [#27](https://github.com/opendatateam/udata-search-service/pull/27)
+- Improve Readme with deployment instructions [#28](https://github.com/opendatateam/udata-search-service/pull/28)
 
 ## 1.0.1 (2022-03-30)
 
