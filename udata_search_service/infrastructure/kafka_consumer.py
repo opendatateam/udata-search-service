@@ -53,7 +53,7 @@ def create_kafka_consumer():
         api_version=tuple([int(value) for value in KAFKA_API_VERSION.split('.')])
         )
 
-    topics = [Config.UDATA_INSTANCE_NAME + '.' + topic for topic in TOPICS]
+    topics = [f'{Config.UDATA_INSTANCE_NAME}.{topic}' for topic in TOPICS]
     consumer.subscribe(topics)
     logging.info('Kafka Consumer created')
     return consumer
@@ -143,13 +143,13 @@ def consume_messages(consumer, es):
         val_utf8 = value.decode('utf-8').replace('NaN', 'null')
 
         key = message.key.decode('utf-8')
-        topic_short = message.topic.split('.')[1]  # Strip UDATA_INSTANCE_NAME out
+        topic_short = '.'.join(message.topic.split('.')[1:])  # Strip UDATA_INSTANCE_NAME out
 
         logging.debug(f'Message recieved with key: {key} and value: {value}')
 
         try:
             message_type, index_name, data = parse_message(topic_short, val_utf8)
-            index_name = Config.UDATA_INSTANCE_NAME + '-' + index_name
+            index_name = f'{Config.UDATA_INSTANCE_NAME}-{index_name}'
 
             if message_type in [KafkaMessageType.INDEX.value,
                                 KafkaMessageType.REINDEX.value]:
