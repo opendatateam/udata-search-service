@@ -21,7 +21,7 @@ KAFKA_API_VERSION = os.environ.get('KAFKA_API_VERSION', '2.5.0')
 CONSUMER_LOGGING_LEVEL = int(os.environ.get("CONSUMER_LOGGING_LEVEL", logging.INFO))
 
 # Topics and their corresponding indices have the same name
-TOPICS = [
+MODELS = [
     'dataset',
     'reuse',
     'organization',
@@ -53,7 +53,9 @@ def create_kafka_consumer():
         api_version=tuple([int(value) for value in KAFKA_API_VERSION.split('.')])
         )
 
-    topics = [f'{Config.UDATA_INSTANCE_NAME}.{topic}' for topic in TOPICS]
+    topics = [f'{Config.UDATA_INSTANCE_NAME}.{model}.{message_type.value}'
+              for model in MODELS
+              for message_type in KafkaMessageType]
     consumer.subscribe(topics)
     logging.info('Kafka Consumer created')
     return consumer
@@ -114,15 +116,15 @@ class OrganizationConsumer(Organization):
         return super().load_from_dict(data)
 
 
-def parse_message(topic, val_utf8):
-    if topic == 'dataset':
+def parse_message(model, val_utf8):
+    if model == 'dataset':
         dataclass_consumer = DatasetConsumer
-    elif topic == 'reuse':
+    elif model == 'reuse':
         dataclass_consumer = ReuseConsumer
-    elif topic == 'organization':
+    elif model == 'organization':
         dataclass_consumer = OrganizationConsumer
     else:
-        raise ValueError(f'Model Deserializer not implemented for topic: {topic}')
+        raise ValueError(f'Model Deserializer not implemented for model: {model}')
     try:
         message = json.loads(val_utf8)
         message_type = message.get("meta", {}).get("message_type")
@@ -143,12 +145,15 @@ def consume_messages(consumer, es):
         val_utf8 = value.decode('utf-8').replace('NaN', 'null')
 
         key = message.key.decode('utf-8')
-        topic_short = '.'.join(message.topic.split('.')[1:])  # Strip UDATA_INSTANCE_NAME out
+
+        # Topics follow this pattern {UDATA_INSTANCE_NAME}.{MODEL}.{MESSAGE_TYPE}
+        # Ex: dev.dataset.unindex
+        _, model, _ = message.topic.split('.')
 
         logging.debug(f'Message recieved with key: {key} and value: {value}')
 
         try:
-            message_type, index_name, data = parse_message(topic_short, val_utf8)
+            message_type, index_name, data = parse_message(model, val_utf8)
             index_name = f'{Config.UDATA_INSTANCE_NAME}-{index_name}'
 
             if message_type in [KafkaMessageType.INDEX.value,
