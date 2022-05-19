@@ -5,7 +5,7 @@ from typing import Tuple, Optional, List
 
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError
-from elasticsearch_dsl import Index, Date, Document, Float, Integer, Keyword, Text, tokenizer, token_filter, analyzer, query
+from elasticsearch_dsl import Date, Document, Float, Integer, Keyword, Text, tokenizer, token_filter, analyzer, query
 from elasticsearch_dsl.connections import connections
 from udata_search_service.domain.entities import Dataset, Organization, Reuse
 from udata_search_service.config import Config
@@ -71,7 +71,7 @@ class SearchableOrganization(IndexDocument):
     badges = Keyword(multi=True)
 
     class Index:
-        name = 'organization'
+        name = f'{Config.UDATA_INSTANCE_NAME}-organization'
 
 
 class SearchableReuse(IndexDocument):
@@ -93,7 +93,7 @@ class SearchableReuse(IndexDocument):
     owner = Keyword()
 
     class Index:
-        name = 'reuse'
+        name = f'{Config.UDATA_INSTANCE_NAME}-reuse'
 
 
 class SearchableDataset(IndexDocument):
@@ -125,7 +125,7 @@ class SearchableDataset(IndexDocument):
     schema = Keyword(multi=True)
 
     class Index:
-        name = 'dataset'
+        name = f'{Config.UDATA_INSTANCE_NAME}-dataset'
 
 
 class ElasticClient:

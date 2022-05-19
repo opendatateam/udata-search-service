@@ -7,6 +7,7 @@ from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import ConnectionError
 from kafka import KafkaConsumer
 
+from udata_search_service.config import Config
 from udata_search_service.domain.entities import Dataset, Organization, Reuse
 from udata_search_service.infrastructure.utils import get_concat_title_org, log2p, mdstrip
 
@@ -20,7 +21,7 @@ KAFKA_API_VERSION = os.environ.get('KAFKA_API_VERSION', '2.5.0')
 CONSUMER_LOGGING_LEVEL = int(os.environ.get("CONSUMER_LOGGING_LEVEL", logging.INFO))
 
 # Topics and their corresponding indices have the same name
-TOPICS = [
+MODELS = [
     'dataset',
     'reuse',
     'organization',
@@ -51,7 +52,11 @@ def create_kafka_consumer():
         # on startup if Kafka Broker isn't ready yet
         api_version=tuple([int(value) for value in KAFKA_API_VERSION.split('.')])
         )
-    consumer.subscribe(TOPICS + [topic + '-reindex' for topic in TOPICS])
+
+    topics = [f'{Config.UDATA_INSTANCE_NAME}.{model}.{message_type.value}'
+              for model in MODELS
+              for message_type in KafkaMessageType]
+    consumer.subscribe(topics)
     logging.info('Kafka Consumer created')
     return consumer
 
@@ -111,19 +116,20 @@ class OrganizationConsumer(Organization):
         return super().load_from_dict(data)
 
 
-def parse_message(topic, val_utf8):
-    if topic == 'dataset':
-        dataclass_consumer = DatasetConsumer
-    elif topic == 'reuse':
-        dataclass_consumer = ReuseConsumer
-    elif topic == 'organization':
-        dataclass_consumer = OrganizationConsumer
-    else:
-        raise ValueError(f'Model Deserializer not implemented for topic: {topic}')
+def parse_message(val_utf8):
     try:
         message = json.loads(val_utf8)
-        message_type = message.get("meta", {}).get("message_type")
-        index_name = message.get("meta", {}).get("index")
+        index_name = message["meta"].get("index")
+        model, message_type = message["meta"]["message_type"].split('.')
+        if model == 'dataset':
+            dataclass_consumer = DatasetConsumer
+        elif model == 'reuse':
+            dataclass_consumer = ReuseConsumer
+        elif model == 'organization':
+            dataclass_consumer = OrganizationConsumer
+        else:
+            raise ValueError(f'Model Deserializer not implemented for model: {model}')
+
         if not message.get("data"):
             document = None
         else:
@@ -140,25 +146,20 @@ def consume_messages(consumer, es):
         val_utf8 = value.decode('utf-8').replace('NaN', 'null')
 
         key = message.key.decode('utf-8')
-        topic_short = message.topic.split('-')[0]
 
         logging.debug(f'Message recieved with key: {key} and value: {value}')
 
         try:
-            message_type, index_name, data = parse_message(topic_short, val_utf8)
+            message_type, index_name, data = parse_message(val_utf8)
+            index_name = f'{Config.UDATA_INSTANCE_NAME}-{index_name}'
 
-            if message_type == KafkaMessageType.INDEX.value:
+            if message_type in [KafkaMessageType.INDEX.value,
+                                KafkaMessageType.REINDEX.value]:
                 es.index(index=index_name, id=key, document=data)
 
             elif message_type == KafkaMessageType.UNINDEX.value:
                 if es.exists_source(index=index_name, id=key):
                     es.delete(index=index_name, id=key)
-
-            elif message_type == KafkaMessageType.REINDEX.value:
-                if not es.indices.exists(index_name):
-                    logging.info(f'Initializing new index {index_name} for reindexation')
-                    es.indices.create(index=index_name)
-                es.index(index=index_name, id=key, document=data)
 
         except ValueError:
             logging.exception('ValueError when parsing message')
