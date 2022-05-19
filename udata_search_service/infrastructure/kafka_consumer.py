@@ -116,19 +116,20 @@ class OrganizationConsumer(Organization):
         return super().load_from_dict(data)
 
 
-def parse_message(model, val_utf8):
-    if model == 'dataset':
-        dataclass_consumer = DatasetConsumer
-    elif model == 'reuse':
-        dataclass_consumer = ReuseConsumer
-    elif model == 'organization':
-        dataclass_consumer = OrganizationConsumer
-    else:
-        raise ValueError(f'Model Deserializer not implemented for model: {model}')
+def parse_message(val_utf8):
     try:
         message = json.loads(val_utf8)
-        message_type = message.get("meta", {}).get("message_type")
-        index_name = message.get("meta", {}).get("index")
+        index_name = message["meta"].get("index")
+        model, message_type = message["meta"]["message_type"].split('.')
+        if model == 'dataset':
+            dataclass_consumer = DatasetConsumer
+        elif model == 'reuse':
+            dataclass_consumer = ReuseConsumer
+        elif model == 'organization':
+            dataclass_consumer = OrganizationConsumer
+        else:
+            raise ValueError(f'Model Deserializer not implemented for model: {model}')
+
         if not message.get("data"):
             document = None
         else:
@@ -146,14 +147,10 @@ def consume_messages(consumer, es):
 
         key = message.key.decode('utf-8')
 
-        # Topics follow this pattern {UDATA_INSTANCE_NAME}.{MODEL}.{MESSAGE_TYPE}
-        # Ex: dev.dataset.unindex
-        _, model, _ = message.topic.split('.')
-
         logging.debug(f'Message recieved with key: {key} and value: {value}')
 
         try:
-            message_type, index_name, data = parse_message(model, val_utf8)
+            message_type, index_name, data = parse_message(val_utf8)
             index_name = f'{Config.UDATA_INSTANCE_NAME}-{index_name}'
 
             if message_type in [KafkaMessageType.INDEX.value,

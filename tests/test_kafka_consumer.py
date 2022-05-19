@@ -9,7 +9,7 @@ def test_parse_dataset_message():
     message = {
         'service': 'udata',
         'meta': {
-            'message_type': 'index',
+            'message_type': 'dataset.index',
             'index': 'dataset'
         },
         'data': {
@@ -83,7 +83,7 @@ def test_parse_reuse_message():
     message = {
         'service': 'udata',
         'meta': {
-            'message_type': 'index',
+            'message_type': 'reuse.index',
             'index': 'reuse'
         },        'data': {
             "id": "5cc2dfbe8b4c414c91ffc46d",
@@ -136,7 +136,7 @@ def test_parse_organization_message():
     message = {
         'service': 'udata',
         'meta': {
-            'message_type': 'index',
+            'message_type': 'organization.index',
             'index': 'organization'
         },        'data': {
             "id": "534fff75a3a7292c64a77de4",
