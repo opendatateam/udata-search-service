@@ -169,7 +169,6 @@ class ElasticClient:
 
     def query_organizations(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict]]:
         s = SearchableOrganization.search()
-        s = s.params(track_total_hits=True)
 
         for key, value in filters.items():
             s = s.filter('term', **{key: value})
@@ -213,7 +212,6 @@ class ElasticClient:
 
     def query_datasets(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict]]:
         s = SearchableDataset.search()
-        s = s.params(track_total_hits=True)
 
         for key, value in filters.items():
             if key == 'temporal_coverage_start':
@@ -271,7 +269,6 @@ class ElasticClient:
 
     def query_reuses(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict]]:
         s = SearchableReuse.search()
-        s = s.params(track_total_hits=True)
 
         for key, value in filters.items():
             s = s.filter('term', **{key: value})
