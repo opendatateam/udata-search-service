@@ -1,15 +1,16 @@
 from enum import Enum
-import json
+from typing import Tuple
 import logging
 import os
 
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import ConnectionError
-from kafka import KafkaConsumer
+from udata_event_service.consumer import consume_kafka as core_consume_kafka
 
 from udata_search_service.config import Config
 from udata_search_service.domain.entities import Dataset, Organization, Reuse
 from udata_search_service.infrastructure.utils import get_concat_title_org, log2p, mdstrip
+
 
 ELASTIC_HOST = os.environ.get('ELASTIC_HOST', 'localhost')
 ELASTIC_PORT = os.environ.get('ELASTIC_PORT', '9200')
@@ -39,26 +40,6 @@ def create_elastic_client():
     es = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}])
     logging.info('Elastic Client created')
     return es
-
-
-def create_kafka_consumer():
-    logging.info('Creating Kafka Consumer')
-    consumer = KafkaConsumer(
-        bootstrap_servers=f'{KAFKA_HOST}:{KAFKA_PORT}',
-        group_id='elastic',
-        reconnect_backoff_max_ms=100000,  # TODO: what value to set here?
-
-        # API Version is needed in order to prevent api version guessing leading to an error
-        # on startup if Kafka Broker isn't ready yet
-        api_version=tuple([int(value) for value in KAFKA_API_VERSION.split('.')])
-        )
-
-    topics = [f'{Config.UDATA_INSTANCE_NAME}.{model}.{message_type.value}'
-              for model in MODELS
-              for message_type in KafkaMessageType]
-    consumer.subscribe(topics)
-    logging.info('Kafka Consumer created')
-    return consumer
 
 
 class DatasetConsumer(Dataset):
@@ -116,11 +97,10 @@ class OrganizationConsumer(Organization):
         return super().load_from_dict(data)
 
 
-def parse_message(val_utf8):
+def parse_message(value: dict) -> Tuple[str, str, dict]:
     try:
-        message = json.loads(val_utf8)
-        index_name = message["meta"].get("index")
-        model, message_type = message["meta"]["message_type"].split('.')
+        index_name = value["meta"].get("index")
+        model, message_type = value["meta"]["message_type"].split('.')
         if model == 'dataset':
             dataclass_consumer = DatasetConsumer
         elif model == 'reuse':
@@ -130,48 +110,46 @@ def parse_message(val_utf8):
         else:
             raise ValueError(f'Model Deserializer not implemented for model: {model}')
 
-        if not message.get("data"):
+        if not value.get("data"):
             document = None
         else:
-            document = dataclass_consumer.load_from_dict(message.get("data")).to_dict()
+            document = dataclass_consumer.load_from_dict(value.get("data")).to_dict()
         return message_type, index_name, document
     except Exception as e:
-        raise ValueError(f'Failed to deserialize message: {val_utf8}. Exception raised: {e}')
+        raise ValueError(f'Failed to parse message: {value}. Exception raised: {e}')
 
 
-def consume_messages(consumer, es):
-    logging.info('Ready to consume message')
-    for message in consumer:
-        value = message.value
-        val_utf8 = value.decode('utf-8').replace('NaN', 'null')
+def process_message(key: str, value: dict, es: Elasticsearch=None) -> None:
+    try:
+        message_type, index_name, data = parse_message(value)
+        index_name = f'{Config.UDATA_INSTANCE_NAME}-{index_name}'
+        if message_type in [KafkaMessageType.INDEX.value,
+                            KafkaMessageType.REINDEX.value]:
+            es.index(index=index_name, id=key, document=data)
+        elif message_type == KafkaMessageType.UNINDEX.value:
+            if es.exists_source(index=index_name, id=key):
+                es.delete(index=index_name, id=key)
+    except ValueError:
+        logging.exception('ValueError when parsing message')
+    except ConnectionError:
+        logging.exception('ConnectionError with Elastic Client')
+    except Exception:
+        logging.exception('Exeption when indexing/unindexing')
 
-        key = message.key.decode('utf-8')
-
-        logging.debug(f'Message recieved with key: {key} and value: {value}')
-
-        try:
-            message_type, index_name, data = parse_message(val_utf8)
-            index_name = f'{Config.UDATA_INSTANCE_NAME}-{index_name}'
-
-            if message_type in [KafkaMessageType.INDEX.value,
-                                KafkaMessageType.REINDEX.value]:
-                es.index(index=index_name, id=key, document=data)
-
-            elif message_type == KafkaMessageType.UNINDEX.value:
-                if es.exists_source(index=index_name, id=key):
-                    es.delete(index=index_name, id=key)
-
-        except ValueError:
-            logging.exception('ValueError when parsing message')
-        except ConnectionError:
-            logging.exception('ConnectionError with Elastic Client')
-        except Exception:
-            logging.exception('Exeption when indexing/unindexing')
 
 
 def consume_kafka():
     logging.basicConfig(level=CONSUMER_LOGGING_LEVEL)
 
+    topics = [f'{Config.UDATA_INSTANCE_NAME}.{model}.{message_type.value}'
+              for model in MODELS
+              for message_type in KafkaMessageType]
     es = create_elastic_client()
-    consumer = create_kafka_consumer()
-    consume_messages(consumer, es)
+
+    core_consume_kafka(
+        kafka_uri=f'{KAFKA_HOST}:{KAFKA_PORT}',
+        group_id='elastic',
+        topics=topics,
+        message_processing_func=process_message,
+        es=es
+    )

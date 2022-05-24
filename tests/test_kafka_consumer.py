@@ -45,8 +45,7 @@ def test_parse_dataset_message():
             'schema': ['etalab/schema-irve']
         }
     }
-    val_utf8 = json.dumps(message)
-    message_type, index_name, data = parse_message(val_utf8)
+    message_type, index_name, data = parse_message(message)
 
     assert message_type == 'index'
     assert index_name == 'dataset'
@@ -107,8 +106,7 @@ def test_parse_reuse_message():
             "badges": []
         }
     }
-    val_utf8 = json.dumps(message)
-    message_type, index_name, data = parse_message(val_utf8)
+    message_type, index_name, data = parse_message(message)
 
     assert message_type == 'index'
     assert index_name == 'reuse'
@@ -153,8 +151,7 @@ def test_parse_organization_message():
             "reuses": 0
         }
     }
-    val_utf8 = json.dumps(message)
-    message_type, index_name, data = parse_message(val_utf8)
+    message_type, index_name, data = parse_message(message)
 
     assert message_type == 'index'
     assert index_name == 'organization'
