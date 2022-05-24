@@ -6,9 +6,7 @@ class Config:
 
     ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL') or 'http://localhost:9200'
 
-    DATASET_CATALOG_URL = 'https://www.data.gouv.fr/fr/datasets/r/f868cca6-8da1-4369-a78d-47463f19a9a3'
-    ORG_CATALOG_URL = 'https://www.data.gouv.fr/fr/datasets/r/b7bbfedc-2448-4135-a6c7-104548d396e7'
-    REUSE_CATALOG_URL = 'https://www.data.gouv.fr/fr/datasets/r/970aafa0-3778-4d8b-b9d1-de937525e379'
+    UDATA_INSTANCE_NAME = os.environ.get('UDATA_INSTANCE_NAME') or 'udata'
 
     SEARCH_SYNONYMS = [
         "AMD, administrateur ministériel des données, AMDAC",
