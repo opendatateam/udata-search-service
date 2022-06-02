@@ -110,10 +110,10 @@ def parse_message(value: dict) -> Tuple[str, str, dict]:
         else:
             raise ValueError(f'Model Deserializer not implemented for model: {model}')
 
-        if not value.get("data"):
+        if not value.get("value"):
             document = None
         else:
-            document = dataclass_consumer.load_from_dict(value.get("data")).to_dict()
+            document = dataclass_consumer.load_from_dict(value.get("value")).to_dict()
         return message_type, index_name, document
     except Exception as e:
         raise ValueError(f'Failed to parse message: {value}. Exception raised: {e}')
