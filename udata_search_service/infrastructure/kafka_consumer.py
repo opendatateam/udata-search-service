@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Tuple
 import logging
 import os
+import copy
 
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import ConnectionError
@@ -97,7 +98,8 @@ class OrganizationConsumer(Organization):
         return super().load_from_dict(data)
 
 
-def parse_message(value: dict) -> Tuple[str, str, dict]:
+def parse_message(message: dict) -> Tuple[str, str, dict]:
+    value = copy.deepcopy(message)
     try:
         index_name = value["meta"].get("index")
         model, message_type = value["meta"]["message_type"].split('.')
