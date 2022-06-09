@@ -6,7 +6,7 @@ tag = true
 tag_format = v{version}
 push = true
 tests = make test
-publish = make publish
+publish = make install
 files =
     README.md
 
