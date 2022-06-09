@@ -1,6 +1,6 @@
 # Changelog
 
-## Current (in progress)
+## 1.0.2 (2022-06-09)
 
 - Add configurable prefix for index and prefix/suffix in kafka topics [#26](https://github.com/opendatateam/udata-search-service/pull/26)
 - Add cross fields in query search for reuses and organization [#27](https://github.com/opendatateam/udata-search-service/pull/27)
