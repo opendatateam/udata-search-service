@@ -2,9 +2,14 @@
 
 ## Current (in progress)
 
+- Nothing yet
+
+## 1.0.2 (2022-06-09)
+
 - Add configurable prefix for index and prefix/suffix in kafka topics [#26](https://github.com/opendatateam/udata-search-service/pull/26)
 - Add cross fields in query search for reuses and organization [#27](https://github.com/opendatateam/udata-search-service/pull/27)
 - Improve Readme with deployment instructions [#28](https://github.com/opendatateam/udata-search-service/pull/28)
+- Remove total hits tracking in search query [#29](https://github.com/opendatateam/udata-search-service/pull/29)
 - Externalise Kafka consumer to udata_event_service package. Replace `data` key of messages with `value` [#30](https://github.com/opendatateam/udata-search-service/pull/30)
 
 ## 1.0.1 (2022-03-30)
