@@ -2,7 +2,7 @@
 
 ## Current (in progress)
 
-- Nothing yet
+- Externalise Kafka consumer to udata_event_service package. Replace `data` key of messages with `value` [#30](https://github.com/opendatateam/udata-search-service/pull/30)
 
 ## 1.0.2 (2022-06-09)
 

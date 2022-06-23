@@ -12,7 +12,7 @@ def test_parse_dataset_message():
             'message_type': 'dataset.index',
             'index': 'dataset'
         },
-        'data': {
+        'value': {
             'id': '5c4ae55a634f4117716d5656',
             'title': 'Demandes de valeurs foncières',
             'description': '### Propos liminaires...',
@@ -45,8 +45,7 @@ def test_parse_dataset_message():
             'schema': ['etalab/schema-irve']
         }
     }
-    val_utf8 = json.dumps(message)
-    message_type, index_name, data = parse_message(val_utf8)
+    message_type, index_name, value = parse_message(message)
 
     assert message_type == 'index'
     assert index_name == 'dataset'
@@ -54,29 +53,29 @@ def test_parse_dataset_message():
     # Make sure that these fields are loaded as is
     for key in ['id', 'title', 'url', 'frequency', 'resources_count',
                 'acronym', 'badges', 'tags', 'license', 'owner', 'schema']:
-        assert data[key] == message['data'][key]
+        assert value[key] == message['value'][key]
 
     # Make sure that markdown fields are stripped
-    assert data["description"] == mdstrip(message['data']["description"])
+    assert value["description"] == mdstrip(message['value']["description"])
 
     # Make sure that these fields are log2p-normalized
     for key in ['views', 'followers', 'reuses']:
-        assert data[key] == log2p(message['data'][key])
+        assert value[key] == log2p(message['value'][key])
 
     # Make sure that boolean fields are either 1 or 4
-    assert data['featured'] == 1
-    assert data['orga_sp'] == 4
+    assert value['featured'] == 1
+    assert value['orga_sp'] == 4
 
     # Make sure that all other particular fields are treated accordingly
-    assert data['concat_title_org'] == get_concat_title_org(data['title'], data['acronym'], data['organization_name'])
-    assert data['created_at'].date() == datetime.date(2019, 1, 25)
-    assert data['temporal_coverage_start'].date() == datetime.date(2016, 7, 1)
-    assert data['temporal_coverage_end'].date() == datetime.date(2021, 6, 30)
-    assert data['granularity'] == 'fr:commune'
-    assert data['geozones'] == ['fr:arrondissement:353', 'country-group:world', 'country:fr', 'country-group:ue']
-    assert data['organization'] == message['data']['organization']['id']
-    assert data['organization_name'] == message['data']['organization']['name']
-    assert data['orga_followers'] == log2p(401)
+    assert value['concat_title_org'] == get_concat_title_org(value['title'], value['acronym'], value['organization_name'])
+    assert value['created_at'].date() == datetime.date(2019, 1, 25)
+    assert value['temporal_coverage_start'].date() == datetime.date(2016, 7, 1)
+    assert value['temporal_coverage_end'].date() == datetime.date(2021, 6, 30)
+    assert value['granularity'] == 'fr:commune'
+    assert value['geozones'] == ['fr:arrondissement:353', 'country-group:world', 'country:fr', 'country-group:ue']
+    assert value['organization'] == message['value']['organization']['id']
+    assert value['organization_name'] == message['value']['organization']['name']
+    assert value['orga_followers'] == log2p(401)
 
 
 def test_parse_reuse_message():
@@ -85,7 +84,8 @@ def test_parse_reuse_message():
         'meta': {
             'message_type': 'reuse.index',
             'index': 'reuse'
-        },        'data': {
+        },
+        'value': {
             "id": "5cc2dfbe8b4c414c91ffc46d",
             "title": "Explorateur de données de valeur foncière (DVF)",
             "description": "Cartographie des mutations à titre onéreux (parcelles en bleu).",
@@ -107,8 +107,7 @@ def test_parse_reuse_message():
             "badges": []
         }
     }
-    val_utf8 = json.dumps(message)
-    message_type, index_name, data = parse_message(val_utf8)
+    message_type, index_name, value = parse_message(message)
 
     assert message_type == 'index'
     assert index_name == 'reuse'
@@ -116,20 +115,20 @@ def test_parse_reuse_message():
     # Make sure that these fields are loaded as is
     for key in ['id', 'title', 'url', 'datasets', 'featured',
                 'badges', 'tags', 'owner']:
-        assert data[key] == message['data'][key]
+        assert value[key] == message['value'][key]
 
     # Make sure that markdown fields are stripped
-    assert data["description"] == mdstrip(message['data']["description"])
+    assert value["description"] == mdstrip(message['value']["description"])
 
     # Make sure that these fields are log2p-normalized
     for key in ['views', 'followers']:
-        assert data[key] == log2p(message['data'][key])
+        assert value[key] == log2p(message['value'][key])
 
     # Make sure that all other particular fields are treated accordingly
-    assert data['created_at'].date() == datetime.date(2019, 4, 26)
-    assert data['organization'] == message['data']['organization']['id']
-    assert data['organization_name'] == message['data']['organization']['name']
-    assert data['orga_followers'] == log2p(message['data']['organization']['followers'])
+    assert value['created_at'].date() == datetime.date(2019, 4, 26)
+    assert value['organization'] == message['value']['organization']['id']
+    assert value['organization_name'] == message['value']['organization']['name']
+    assert value['orga_followers'] == log2p(message['value']['organization']['followers'])
 
 
 def test_parse_organization_message():
@@ -138,7 +137,8 @@ def test_parse_organization_message():
         'meta': {
             'message_type': 'organization.index',
             'index': 'organization'
-        },        'data': {
+        },
+        'value': {
             "id": "534fff75a3a7292c64a77de4",
             "name": "Etalab",
             "acronym": None,
@@ -153,22 +153,21 @@ def test_parse_organization_message():
             "reuses": 0
         }
     }
-    val_utf8 = json.dumps(message)
-    message_type, index_name, data = parse_message(val_utf8)
+    message_type, index_name, value = parse_message(message)
 
     assert message_type == 'index'
     assert index_name == 'organization'
 
     # Make sure that these fields are loaded as is
     for key in ['id', 'name', 'acronym', 'url', 'badges', 'orga_sp', 'datasets', 'reuses']:
-        assert data[key] == message['data'][key]
+        assert value[key] == message['value'][key]
 
     # Make sure that markdown fields are stripped
-    assert data["description"] == mdstrip(message['data']["description"])
+    assert value["description"] == mdstrip(message['value']["description"])
 
     # Make sure that these fields are log2p-normalized
-    assert data["followers"] == log2p(message['data']["followers"])
-    assert data["views"] == log2p(message['data']["views"])
+    assert value["followers"] == log2p(message['value']["followers"])
+    assert value["views"] == log2p(message['value']["views"])
 
     # Make sure that all other particular fields are treated accordingly
-    assert data['created_at'].date() == datetime.date(2014, 4, 17)
+    assert value['created_at'].date() == datetime.date(2014, 4, 17)
