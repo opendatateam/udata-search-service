@@ -1,6 +1,8 @@
 import click
 from datetime import datetime
 from fnmatch import fnmatch
+import logging
+import os
 from typing import Tuple, Optional, List
 
 from elasticsearch import Elasticsearch
@@ -10,6 +12,10 @@ from elasticsearch_dsl.connections import connections
 from udata_search_service.domain.entities import Dataset, Organization, Reuse
 from udata_search_service.config import Config
 from udata_search_service.infrastructure.utils import IS_TTY
+
+CONSUMER_LOGGING_LEVEL = int(os.environ.get("CONSUMER_LOGGING_LEVEL", logging.INFO))
+
+logging.basicConfig(level=CONSUMER_LOGGING_LEVEL)
 
 
 # Définition d'un analyzer français (repris ici : https://jolicode.com/blog/construire-un-bon-analyzer-francais-pour-elasticsearch)
@@ -39,6 +45,7 @@ class IndexDocument(Document):
         index_template.save()
 
         if not cls._index.exists():
+            logging.info(f'Creating index {alias + suffix}')
             es_client.indices.create(index=alias + suffix)
             es_client.indices.put_alias(index=alias + suffix, name=alias)
 
@@ -46,6 +53,7 @@ class IndexDocument(Document):
     def delete_indices(cls, es_client: Elasticsearch) -> None:
         alias = cls._index._name
         pattern = alias + '-*'
+        logging.info(f'Deleting indices with pattern {pattern}')
         es_client.indices.delete(index=pattern)
 
     @classmethod
@@ -207,6 +215,11 @@ class ElasticClient:
 
         response = s.execute()
         results_number = response.hits.total.value
+        if not isinstance(response.hits[0], SearchableOrganization):
+            raise ValueError(
+                'Results are not of SearchableOrganization type. It probably means that index analyzers were not correctly set '
+                'using template patterns on index initialization.'
+            )
         res = [hit.to_dict(skip_empty=False) for hit in response.hits]
         return results_number, res
 
@@ -264,6 +277,11 @@ class ElasticClient:
 
         response = s.execute()
         results_number = response.hits.total.value
+        if not isinstance(response.hits[0], SearchableDataset):
+            raise ValueError(
+                'Results are not of SearchableDataset type. It probably means that index analyzers were not correctly set '
+                'using template patterns on index initialization.'
+            )
         res = [hit.to_dict(skip_empty=False) for hit in response.hits]
         return results_number, res
 
@@ -308,6 +326,11 @@ class ElasticClient:
 
         response = s.execute()
         results_number = response.hits.total.value
+        if not isinstance(response.hits[0], SearchableReuse):
+            raise ValueError(
+                'Results are not of SearchableReuse type. It probably means that index analyzers were not correctly set '
+                'using template patterns on index initialization.'
+            )
         res = [hit.to_dict(skip_empty=False) for hit in response.hits]
         return results_number, res
 
