@@ -121,10 +121,18 @@ def parse_message(message: dict) -> Tuple[str, str, dict]:
         raise ValueError(f'Failed to parse message: {value}. Exception raised: {e}')
 
 
-def process_message(key: str, value: dict, es: Elasticsearch=None) -> None:
+def process_message(key: str, value: dict, topic: str, es: Elasticsearch = None) -> None:
     try:
         message_type, index_name, data = parse_message(value)
         index_name = f'{Config.UDATA_INSTANCE_NAME}-{index_name}'
+        if message_type == KafkaMessageType.REINDEX.value:
+            # Initiliaze index matching template pattern
+            if not es.indices.exists(index=index_name):
+                logging.info(f'Initializing new index {index_name} for reindexation')
+                es.indices.create(index=index_name)
+                # Check whether template with analyzer was correctly assigned
+                if 'analysis' not in es.indices.get_settings(index_name)[index_name]['settings']['index']:
+                    logging.error(f'Analyzer was not set using templates when initializing {index_name}')
         if message_type in [KafkaMessageType.INDEX.value,
                             KafkaMessageType.REINDEX.value]:
             es.index(index=index_name, id=key, document=data)
@@ -139,13 +147,14 @@ def process_message(key: str, value: dict, es: Elasticsearch=None) -> None:
         logging.exception('Exeption when indexing/unindexing')
 
 
-
 def consume_kafka():
     logging.basicConfig(level=CONSUMER_LOGGING_LEVEL)
 
     topics = [f'{Config.UDATA_INSTANCE_NAME}.{model}.{message_type.value}'
               for model in MODELS
               for message_type in KafkaMessageType]
+    logging.info(f'Subscribing to the following topics: {topics}')
+
     es = create_elastic_client()
 
     core_consume_kafka(
