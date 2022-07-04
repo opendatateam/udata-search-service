@@ -41,6 +41,7 @@ class IndexDocument(Document):
         alias = cls._index._name
         pattern = alias + '-*'
 
+        logging.info(f'Saving template {alias} on the following pattern: {pattern}')
         index_template = cls._index.as_template(alias, pattern)
         index_template.save()
 
@@ -48,6 +49,8 @@ class IndexDocument(Document):
             logging.info(f'Creating index {alias + suffix}')
             es_client.indices.create(index=alias + suffix)
             es_client.indices.put_alias(index=alias + suffix, name=alias)
+        else:
+            logging.info(f'Index on alias {alias} already exists')
 
     @classmethod
     def delete_indices(cls, es_client: Elasticsearch) -> None:
@@ -215,10 +218,10 @@ class ElasticClient:
 
         response = s.execute()
         results_number = response.hits.total.value
-        if not isinstance(response.hits[0], SearchableOrganization):
+        if response.hits and not isinstance(response.hits[0], SearchableOrganization):
             raise ValueError(
-                'Results are not of SearchableOrganization type. It probably means that index analyzers were not correctly set '
-                'using template patterns on index initialization.'
+                'Results are not of SearchableOrganization type. It probably means that index analyzers '
+                'were not correctly set using template patterns on index initialization.'
             )
         res = [hit.to_dict(skip_empty=False) for hit in response.hits]
         return results_number, res
@@ -277,7 +280,7 @@ class ElasticClient:
 
         response = s.execute()
         results_number = response.hits.total.value
-        if not isinstance(response.hits[0], SearchableDataset):
+        if response.hits and not isinstance(response.hits[0], SearchableDataset):
             raise ValueError(
                 'Results are not of SearchableDataset type. It probably means that index analyzers were not correctly set '
                 'using template patterns on index initialization.'
@@ -326,7 +329,7 @@ class ElasticClient:
 
         response = s.execute()
         results_number = response.hits.total.value
-        if not isinstance(response.hits[0], SearchableReuse):
+        if response.hits and not isinstance(response.hits[0], SearchableReuse):
             raise ValueError(
                 'Results are not of SearchableReuse type. It probably means that index analyzers were not correctly set '
                 'using template patterns on index initialization.'
