@@ -153,6 +153,8 @@ def consume_kafka():
     topics = [f'{Config.UDATA_INSTANCE_NAME}.{model}.{message_type.value}'
               for model in MODELS
               for message_type in KafkaMessageType]
+    logging.info(f'Subscribing to the following topics: {topics}')
+
     es = create_elastic_client()
 
     core_consume_kafka(
