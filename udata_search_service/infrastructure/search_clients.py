@@ -55,7 +55,7 @@ class IndexDocument(Document):
     @classmethod
     def delete_indices(cls, es_client: Elasticsearch) -> None:
         alias = cls._index._name
-        pattern = alias + '-*'
+        pattern = alias + '*'
         logging.info(f'Deleting indices with pattern {pattern}')
         es_client.indices.delete(index=pattern)
 
