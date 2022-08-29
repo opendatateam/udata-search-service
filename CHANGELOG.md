@@ -2,7 +2,7 @@
 
 ## Current (in progress)
 
-- Nothing yet
+- Use redpanda instead of Kafka [#34](https://github.com/opendatateam/udata-search-service/pull/34)
 
 ## 1.0.3 (2022-07-11)
 
