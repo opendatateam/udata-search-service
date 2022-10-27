@@ -1,32 +1,5 @@
 version: "3.8"
 services:
-  broker:
-    # NB: do not use v22 since redpanda.auto_create_topics_enabled is not supported
-    # cf https://cwiki.apache.org/confluence/display/KAFKA/KIP-487%3A+Client-side+Automatic+Topic+Creation+on+Producer
-    # also for more thoughts about this option even in Kafka
-    image: docker.vectorized.io/vectorized/redpanda:v21.11.19
-    container_name: broker
-    command:
-      - redpanda start
-      - --smp 1
-      - --reserve 0M
-      - --overprovisioned
-      - --node-id 0
-      - --set redpanda.auto_create_topics_enabled=true
-      - --kafka-addr PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
-      - --advertise-kafka-addr PLAINTEXT://broker:29092,OUTSIDE://localhost:9092
-      - --pandaproxy-addr 0.0.0.0:8082
-      - --advertise-pandaproxy-addr localhost:8082
-    ports:
-      - 8081:8081
-      - 8082:8082
-      - 9092:9092
-      - 29092:29092
-    healthcheck:
-      test: curl -f localhost:9644/v1/status/ready
-      interval: 1s
-      start_period: 30s
-
   search:
     image: udata/elasticsearch:7.16.2
     container_name: es01
@@ -51,38 +24,6 @@ services:
       - "5000:5000"
     environment:
       ELASTICSEARCH_URL: search:9200
-
-  kafka-consumer:
-    build:
-      context: .
-      dockerfile: Dockerfiles/Dockerfile.consumer
-    container_name: consumer01
-    environment:
-      ELASTIC_HOST: search
-      ELASTIC_PORT: '9200'
-      KAFKA_HOST: broker  # This value depends on your network configuration
-      KAFKA_PORT: 29092
-      KAFKA_API_VERSION: 2.5.0
-      CONSUMER_LOGGING_LEVEL: 20
-
-  console:
-    image: docker.redpanda.com/vectorized/console
-    restart: on-failure
-    entrypoint: /bin/sh
-    command: -c "echo \"$$CONSOLE_CONFIG_FILE\" > /tmp/config.yml; /app/console"
-    environment:
-      CONFIG_FILEPATH: /tmp/config.yml
-      CONSOLE_CONFIG_FILE: |
-        kafka:
-          brokers: ["broker:29092"]
-          schemaRegistry:
-            enabled: true
-            urls: ["http://broker:8081"]
-    ports:
-      - "8080:8080"
-    depends_on:
-      broker:
-        condition: service_healthy
 
 volumes:
   es_data_prod:

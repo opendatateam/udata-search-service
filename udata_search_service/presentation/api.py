@@ -5,6 +5,7 @@ from flask import Blueprint, request, url_for, jsonify, abort
 from pydantic import BaseModel, Field, ValidationError, validator
 from udata_search_service.container import Container
 from udata_search_service.infrastructure.services import DatasetService, OrganizationService, ReuseService
+from udata_search_service.infrastructure.consumers import DatasetConsumer, ReuseConsumer, OrganizationConsumer
 
 
 bp = Blueprint('api', __name__, url_prefix='/api/1')
@@ -99,6 +100,23 @@ def make_response(results, total_pages, results_number, page, page_size, next_ur
     })
 
 
+@bp.route("/datasets/index", methods=["POST"], endpoint='dataset_index')
+@inject
+def dataset_index(dataset_service: DatasetService = Provide[Container.dataset_service]):
+    data = request.json()
+    obj = data["document"]
+    document = DatasetConsumer.load_from_dict(obj).to_dict()
+    dataset_service.feed(document)
+    return 204
+
+
+@bp.route("/datasets/<dataset_id>/unindex", methods=["DELETE"], endpoint='dataset_unindex')
+@inject
+def dataset_unindex(dataset_id: str, dataset_service: DatasetService = Provide[Container.dataset_service]):
+    dataset_service.delete_one(dataset_id)
+    return 204
+
+
 @bp.route("/datasets/", methods=["GET"], endpoint='dataset_search')
 @inject
 def datasets_search(dataset_service: DatasetService = Provide[Container.dataset_service]):
@@ -156,6 +174,23 @@ def get_organization(organization_id: str,
     abort(404, 'organization not found')
 
 
+@bp.route("/organizations/index", methods=["POST"], endpoint='organization_index')
+@inject
+def organization_index(organization_service: OrganizationService = Provide[Container.organization_service]):
+    data = request.json()
+    obj = data["document"]
+    document = OrganizationConsumer.load_from_dict(obj).to_dict()
+    organization_service.feed(document)
+    return 204
+
+
+@bp.route("/organizations/<organization_id>/unindex", methods=["DELETE"], endpoint='organization_unindex')
+@inject
+def organization_unindex(organization_id: str, organization_service: OrganizationService = Provide[Container.organization_service]):
+    organization_service.delete_one(organization_id)
+    return 204
+
+
 @bp.route("/reuses/", methods=["GET"], endpoint='reuse_search')
 @inject
 def reuses_search(reuse_service: ReuseService = Provide[Container.reuse_service]):
@@ -182,3 +217,20 @@ def get_reuse(reuse_id: str, reuse_service: ReuseService = Provide[Container.reu
     if result:
         return jsonify(result)
     abort(404, 'reuse not found')
+
+
+@bp.route("/reuses/index", methods=["POST"], endpoint='reuse_index')
+@inject
+def reuse_index(reuse_service: ReuseService = Provide[Container.reuse_service]):
+    data = request.json()
+    obj = data["document"]
+    document = ReuseConsumer.load_from_dict(obj).to_dict()
+    reuse_service.feed(document)
+    return 204
+
+
+@bp.route("/reuses/<reuse_id>/unindex", methods=["DELETE"], endpoint='reuse_unindex')
+@inject
+def reuse_unindex(reuse_id: str, reuse_service: ReuseService = Provide[Container.reuse_service]):
+    reuse_service.delete_one(reuse_id)
+    return 204

@@ -354,3 +354,21 @@ class ElasticClient:
             return SearchableReuse.get(id=reuse_id).to_dict()
         except NotFoundError:
             return None
+
+    def delete_one_organization(self, organization_id: str) -> None:
+        try:
+            SearchableOrganization.get(id=organization_id).delete()
+        except NotFoundError:
+            return None
+
+    def delete_one_dataset(self, dataset_id: str) -> None:
+        try:
+            SearchableDataset.get(id=dataset_id).delete()
+        except NotFoundError:
+            return None
+
+    def delete_one_reuse(self, reuse_id: str) -> None:
+        try:
+            SearchableReuse.get(id=reuse_id).delete()
+        except NotFoundError:
+            return None
