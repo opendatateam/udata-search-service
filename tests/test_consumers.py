@@ -1,3 +1,4 @@
+import copy
 import datetime
 
 from udata_search_service.infrastructure.consumers import ReuseConsumer, OrganizationConsumer, DatasetConsumer
@@ -37,7 +38,7 @@ def test_parse_dataset_obj():
         'granularity': 'fr:commune',
         'schema': ['etalab/schema-irve']
     }
-    document = DatasetConsumer.load_from_dict(obj).to_dict()
+    document = DatasetConsumer.load_from_dict(copy.deepcopy(obj)).to_dict()
 
     # Make sure that these fields are loaded as is
     for key in ['id', 'title', 'url', 'frequency', 'resources_count',
@@ -85,7 +86,7 @@ def test_parse_reuse_obj():
         "tags": ["application-cartographique", "cadastre", "dgfip", "dvf", "etalab", "foncier", "mutations"],
         "badges": []
     }
-    document = ReuseConsumer.load_from_dict(obj).to_dict()
+    document = ReuseConsumer.load_from_dict(copy.deepcopy(obj)).to_dict()
 
     # Make sure that these fields are loaded as is
     for key in ['id', 'title', 'url', 'datasets', 'featured',
@@ -121,7 +122,7 @@ def test_parse_organization_obj():
         "views": 42,
         "reuses": 0
     }
-    document = OrganizationConsumer.load_from_dict(obj).to_dict()
+    document = OrganizationConsumer.load_from_dict(copy.deepcopy(obj)).to_dict()
 
     # Make sure that these fields are loaded as is
     for key in ['id', 'name', 'acronym', 'url', 'badges', 'orga_sp', 'datasets', 'reuses']:
