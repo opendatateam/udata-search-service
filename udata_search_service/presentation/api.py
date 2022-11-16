@@ -1,14 +1,33 @@
+import logging
 import re
 from typing import Optional
+from elasticsearch import Elasticsearch
 from dependency_injector.wiring import inject, Provide
 from flask import Blueprint, request, url_for, jsonify, abort
 from pydantic import BaseModel, Field, ValidationError, validator
 from udata_search_service.container import Container
+from udata_search_service.config import Config
 from udata_search_service.infrastructure.services import DatasetService, OrganizationService, ReuseService
-from udata_search_service.infrastructure.consumers import DatasetConsumer, ReuseConsumer, OrganizationConsumer
+from udata_search_service.infrastructure.consumers import DatasetConsumer, ReuseConsumer, OrganizationConsumer, EventMessageType, parse_message
 
 
 bp = Blueprint('api', __name__, url_prefix='/api/1')
+
+
+class OrganizationToIndex(BaseModel):
+    id: str
+    name: str
+    description: str
+    acronym: Optional[str] = None
+    url: Optional[str] = None
+    badges: Optional[list] = []
+    created_at: str
+    orga_sp: int
+    datasets: int
+    followers: int
+    reuses: int
+    views: int
+    extras: Optional[dict] = {}
 
 
 class OrganizationArgs(BaseModel):
@@ -27,6 +46,34 @@ class OrganizationArgs(BaseModel):
         if value not in choices:
             raise ValueError('Sort parameter is not in the sorts available choices.')
         return value
+
+
+class DatasetToIndex(BaseModel):
+    id: str
+    title: str
+    description: str
+    acronym: Optional[str] = None
+    url: Optional[str] = None
+    tags: Optional[list] = None
+    license: Optional[str] = None
+    badges: Optional[list] = None
+    frequency: Optional[str] = None
+    created_at: str
+    organization: Optional[dict] = None
+    owner: Optional[dict] = None
+    views: int
+    followers: int
+    reuses: int
+    resources_count: Optional[int] = 0
+    featured: Optional[int] = 0
+    format: Optional[list] = None
+    schema: Optional[list] = None
+    extras: Optional[dict] = None
+    harvest: Optional[dict] = None
+    temporal_coverage_start: Optional[str] = None
+    temporal_coverage_end: Optional[str] = None
+    geozones: Optional[list] = None
+    granularity: Optional[str] = None
 
 
 class DatasetArgs(BaseModel):
@@ -62,6 +109,25 @@ class DatasetArgs(BaseModel):
         if value not in choices:
             raise ValueError('Temporal coverage does not match the right pattern.')
         return value
+
+
+class ReuseToIndex(BaseModel):
+    id: str
+    title: str
+    description: str
+    url: Optional[str] = None
+    badges: Optional[list] = []
+    created_at: str
+    datasets: int
+    followers: int
+    views: int
+    featured: int
+    organization: Optional[dict] = None
+    owner: Optional[dict] = None
+    type: str
+    topic: str
+    tags: Optional[list] = None
+    extras: Optional[dict] = {}
 
 
 class ReuseArgs(BaseModel):
@@ -103,9 +169,12 @@ def make_response(results, total_pages, results_number, page, page_size, next_ur
 @bp.route("/datasets/index", methods=["POST"], endpoint='dataset_index')
 @inject
 def dataset_index(dataset_service: DatasetService = Provide[Container.dataset_service]):
-    data = request.json()
-    obj = data["document"]
-    document = DatasetConsumer.load_from_dict(obj).to_dict()
+    try:
+        validated_obj = DatasetToIndex(**request.json()['data'])
+    except ValidationError as e:
+        abort(400, e)
+
+    document = DatasetConsumer.load_from_dict(validated_obj).to_dict()
     dataset_service.feed(document)
     return 204
 
@@ -177,9 +246,12 @@ def get_organization(organization_id: str,
 @bp.route("/organizations/index", methods=["POST"], endpoint='organization_index')
 @inject
 def organization_index(organization_service: OrganizationService = Provide[Container.organization_service]):
-    data = request.json()
-    obj = data["document"]
-    document = OrganizationConsumer.load_from_dict(obj).to_dict()
+    try:
+        validated_obj = OrganizationToIndex(**request.json()['data'])
+    except ValidationError as e:
+        abort(400, e)
+
+    document = OrganizationConsumer.load_from_dict(validated_obj).to_dict()
     organization_service.feed(document)
     return 204
 
@@ -222,9 +294,12 @@ def get_reuse(reuse_id: str, reuse_service: ReuseService = Provide[Container.reu
 @bp.route("/reuses/index", methods=["POST"], endpoint='reuse_index')
 @inject
 def reuse_index(reuse_service: ReuseService = Provide[Container.reuse_service]):
-    data = request.json()
-    obj = data["document"]
-    document = ReuseConsumer.load_from_dict(obj).to_dict()
+    try:
+        validated_obj = ReuseToIndex(**request.json()['data'])
+    except ValidationError as e:
+        abort(400, e)
+
+    document = ReuseConsumer.load_from_dict(validated_obj).to_dict()
     reuse_service.feed(document)
     return 204
 
@@ -234,3 +309,44 @@ def reuse_index(reuse_service: ReuseService = Provide[Container.reuse_service]):
 def reuse_unindex(reuse_id: str, reuse_service: ReuseService = Provide[Container.reuse_service]):
     reuse_service.delete_one(reuse_id)
     return 204
+
+
+class RequestReindex(BaseModel):
+    key_id: str
+    document: Optional[dict] = None
+    message_type: str
+    index: str
+
+
+@bp.route("/reindex", methods=["POST"], endpoint='reindex')
+@inject
+def general_reindex(es: Elasticsearch = Provide[Container.elastic_client]):
+    try:
+        try:
+            validated_obj = RequestReindex(**request.json())
+        except ValidationError as e:
+            abort(400, e)
+
+        message_type, index_name, data = parse_message(validated_obj)
+        index_name = f'{Config.UDATA_INSTANCE_NAME}-{index_name}'
+        if message_type == EventMessageType.REINDEX.value:
+            # Initiliaze index matching template pattern
+            if not es.indices.exists(index=index_name):
+                logging.info(f'Initializing new index {index_name} for reindexation')
+                es.indices.create(index=index_name)
+                # Check whether template with analyzer was correctly assigned
+                if 'analysis' not in es.indices.get_settings(index_name)[index_name]['settings']['index']:
+                    logging.error(f'Analyzer was not set using templates when initializing {index_name}')
+        if message_type in [EventMessageType.INDEX.value,
+                            EventMessageType.REINDEX.value]:
+            es.index(index=index_name, id=validated_obj.key_id, document=data)
+        elif message_type == EventMessageType.UNINDEX.value:
+            if es.exists_source(index=index_name, id=validated_obj.key_id):
+                es.delete(index=index_name, id=validated_obj.key_id)
+    except ValueError:
+        abort(400, 'ValueError when parsing message')
+    except ConnectionError:
+        abort(500, 'ConnectionError with Elastic Client')
+    except Exception:
+        abort(500, 'Exeption when indexing/unindexing')
+    return 201
