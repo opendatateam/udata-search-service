@@ -60,7 +60,7 @@ class DatasetToIndex(BaseModel):
     frequency: Optional[str] = None
     created_at: str
     organization: Optional[dict] = None
-    owner: Optional[dict] = None
+    owner: Optional[str] = None
     views: int
     followers: int
     reuses: int
@@ -123,7 +123,7 @@ class ReuseToIndex(BaseModel):
     views: int
     featured: int
     organization: Optional[dict] = None
-    owner: Optional[dict] = None
+    owner: Optional[str] = None
     type: str
     topic: str
     tags: Optional[list] = None
@@ -170,20 +170,20 @@ def make_response(results, total_pages, results_number, page, page_size, next_ur
 @inject
 def dataset_index(dataset_service: DatasetService = Provide[Container.dataset_service]):
     try:
-        validated_obj = DatasetToIndex(**request.json()['data'])
+        validated_obj = DatasetToIndex(**request.json['data'])
     except ValidationError as e:
         abort(400, e)
 
-    document = DatasetConsumer.load_from_dict(validated_obj).to_dict()
+    document = DatasetConsumer.load_from_dict(validated_obj.dict())
     dataset_service.feed(document)
-    return 204
+    return jsonify({'data': 'Dataset added to index'})
 
 
 @bp.route("/datasets/<dataset_id>/unindex", methods=["DELETE"], endpoint='dataset_unindex')
 @inject
 def dataset_unindex(dataset_id: str, dataset_service: DatasetService = Provide[Container.dataset_service]):
     dataset_service.delete_one(dataset_id)
-    return 204
+    return jsonify({'data': 'Dataset removed from index'})
 
 
 @bp.route("/datasets/", methods=["GET"], endpoint='dataset_search')
@@ -205,7 +205,7 @@ def datasets_search(dataset_service: DatasetService = Provide[Container.dataset_
                          request_args.page, request_args.page_size, next_url, prev_url)
 
 
-@bp.route("/datasets/<dataset_id>/", methods=["GET"])
+@bp.route("/datasets/<dataset_id>/", methods=["GET"], endpoint='dataset_get_specific')
 @inject
 def get_dataset(dataset_id: str, dataset_service: DatasetService = Provide[Container.dataset_service]):
     result = dataset_service.find_one(dataset_id)
@@ -233,7 +233,7 @@ def organizations_search(organization_service: OrganizationService = Provide[Con
                          request_args.page_size, next_url, prev_url)
 
 
-@bp.route("/organizations/<organization_id>/", methods=["GET"])
+@bp.route("/organizations/<organization_id>/", methods=["GET"], endpoint='organization_get_specific')
 @inject
 def get_organization(organization_id: str,
                      organization_service: OrganizationService = Provide[Container.organization_service]):
@@ -247,20 +247,20 @@ def get_organization(organization_id: str,
 @inject
 def organization_index(organization_service: OrganizationService = Provide[Container.organization_service]):
     try:
-        validated_obj = OrganizationToIndex(**request.json()['data'])
+        validated_obj = OrganizationToIndex(**request.json['data'])
     except ValidationError as e:
         abort(400, e)
 
-    document = OrganizationConsumer.load_from_dict(validated_obj).to_dict()
+    document = OrganizationConsumer.load_from_dict(validated_obj.dict())
     organization_service.feed(document)
-    return 204
+    return jsonify({'data': 'Organization added to index'})
 
 
 @bp.route("/organizations/<organization_id>/unindex", methods=["DELETE"], endpoint='organization_unindex')
 @inject
 def organization_unindex(organization_id: str, organization_service: OrganizationService = Provide[Container.organization_service]):
     organization_service.delete_one(organization_id)
-    return 204
+    return jsonify({'data': 'Organization removed from index'})
 
 
 @bp.route("/reuses/", methods=["GET"], endpoint='reuse_search')
@@ -282,7 +282,7 @@ def reuses_search(reuse_service: ReuseService = Provide[Container.reuse_service]
                          request_args.page_size, next_url, prev_url)
 
 
-@bp.route("/reuses/<reuse_id>/", methods=["GET"])
+@bp.route("/reuses/<reuse_id>/", methods=["GET"], endpoint='reuse_get_specific')
 @inject
 def get_reuse(reuse_id: str, reuse_service: ReuseService = Provide[Container.reuse_service]):
     result = reuse_service.find_one(reuse_id)
@@ -295,20 +295,20 @@ def get_reuse(reuse_id: str, reuse_service: ReuseService = Provide[Container.reu
 @inject
 def reuse_index(reuse_service: ReuseService = Provide[Container.reuse_service]):
     try:
-        validated_obj = ReuseToIndex(**request.json()['data'])
+        validated_obj = ReuseToIndex(**request.json['data'])
     except ValidationError as e:
         abort(400, e)
 
-    document = ReuseConsumer.load_from_dict(validated_obj).to_dict()
+    document = ReuseConsumer.load_from_dict(validated_obj.dict())
     reuse_service.feed(document)
-    return 204
+    return jsonify({'data': 'Reuse added to index'})
 
 
 @bp.route("/reuses/<reuse_id>/unindex", methods=["DELETE"], endpoint='reuse_unindex')
 @inject
 def reuse_unindex(reuse_id: str, reuse_service: ReuseService = Provide[Container.reuse_service]):
     reuse_service.delete_one(reuse_id)
-    return 204
+    return jsonify({'data': 'Reuse removed from index'})
 
 
 class RequestReindex(BaseModel):
@@ -323,11 +323,11 @@ class RequestReindex(BaseModel):
 def general_reindex(es: Elasticsearch = Provide[Container.elastic_client]):
     try:
         try:
-            validated_obj = RequestReindex(**request.json())
+            validated_obj = RequestReindex(**request.json)
         except ValidationError as e:
             abort(400, e)
 
-        message_type, index_name, data = parse_message(validated_obj)
+        message_type, index_name, data = parse_message(validated_obj.dict())
         index_name = f'{Config.UDATA_INSTANCE_NAME}-{index_name}'
         if message_type == EventMessageType.REINDEX.value:
             # Initiliaze index matching template pattern
@@ -349,4 +349,4 @@ def general_reindex(es: Elasticsearch = Provide[Container.elastic_client]):
         abort(500, 'ConnectionError with Elastic Client')
     except Exception:
         abort(500, 'Exeption when indexing/unindexing')
-    return 201
+    return jsonify({'data': f'Reindex done on {index_name}'})

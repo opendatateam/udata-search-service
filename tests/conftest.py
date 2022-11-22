@@ -1,7 +1,4 @@
-from datetime import datetime
-
 from faker import Faker
-from elasticsearch_dsl import Index
 import pytest
 from udata_search_service.app import create_app
 from udata_search_service.config import Testing
