@@ -67,7 +67,7 @@ class DatasetToIndex(BaseModel):
     resources_count: Optional[int] = 0
     featured: Optional[int] = 0
     format: Optional[list] = None
-    schema: Optional[list] = None
+    schema_: Optional[dict] = Field(None, alias="schema")
     extras: Optional[dict] = None
     harvest: Optional[dict] = None
     temporal_coverage_start: Optional[str] = None

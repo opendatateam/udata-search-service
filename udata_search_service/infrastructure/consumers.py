@@ -1,6 +1,7 @@
 import logging
 import os
 from enum import Enum
+from typing import Tuple
 import copy
 
 from udata_search_service.domain.entities import Dataset, Organization, Reuse
@@ -71,7 +72,7 @@ class OrganizationConsumer(Organization):
         return super().load_from_dict(data)
 
 
-def parse_message(message: dict):
+def parse_message(message: dict) -> Tuple[str, str, dict]:
     value = copy.deepcopy(message)
     try:
         index_name = value.get("index")
