@@ -89,7 +89,7 @@ def parse_message(message: dict) -> Tuple[str, str, dict]:
         if not value.get("document"):
             document = None
         else:
-            document = dataclass_consumer.load_from_dict(value.get("value")).to_dict()
+            document = dataclass_consumer.load_from_dict(value.get("document")).to_dict()
         return message_type, index_name, document
     except Exception as e:
         raise ValueError(f'Failed to parse message: {value}. Exception raised: {e}')

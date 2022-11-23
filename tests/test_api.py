@@ -292,6 +292,69 @@ def test_api_search_pagination_without_query(app, client, search_client, faker):
     assert reuse_resp.json['total'] == 4
 
 
+def test_api_reindex(app, client, search_client, faker):
+    obj = {
+        'id': faker.md5(),
+        'title': faker.sentence(),
+        'description': faker.text(),
+        'acronym': faker.company_suffix(),
+        'url': faker.url(),
+        'tags': ['bornes-de-recharge', 'bornes-de-recharge-electrique',
+                 'bornes-electrique', 'bornes-electriques',
+                 'chargeguru', 'irve', 'vehicule-electrique',
+                 'vehicules-electriques', 'voitures-electriques'],
+        'license': 'fr-lo',
+        'badges': [],
+        'frequency': 'unknown',
+        'created_at': faker.past_datetime().isoformat(),
+        'views': faker.random_int(),
+        'followers': faker.random_int(),
+        'reuses': faker.random_int(),
+        'featured': faker.random_int(min=0, max=1),
+        'resources_count': faker.random_int(min=1, max=15),
+        'organization': {
+            'id': faker.md5(),
+            'name': faker.company(),
+            'public_service': faker.random_int(min=0, max=1),
+            'followers': faker.random_int()
+        },
+        'owner': None,
+        'format': ['csv'],
+        'temporal_coverage_start': faker.past_datetime().isoformat(),
+        'temporal_coverage_end': faker.past_datetime().isoformat(),
+    }
+    index_payload = {
+        'key_id': obj['id'],
+        'document': obj,
+        'message_type': 'dataset.index',
+        'index': 'dataset'
+    }
+
+    reindex_resp = client.post(url_for('api.reindex'), json=index_payload)
+    assert reindex_resp.status_code == 200
+
+    time.sleep(2)
+
+    dataset_resp = client.get(url_for('api.dataset_get_specific', dataset_id=obj['id']))
+    assert dataset_resp.status_code == 200
+    assert dataset_resp.json['title'] == obj['title']
+
+    unindex_payload = {
+        'key_id': obj['id'],
+        'document': obj,
+        'message_type': 'dataset.unindex',
+        'index': 'dataset'
+    }
+
+    unreindex_resp = client.post(url_for('api.reindex'), json=unindex_payload)
+    assert unreindex_resp.status_code == 200
+
+    time.sleep(2)
+
+    dataset_get_after_delete_resp = client.get(url_for('api.dataset_get_specific', dataset_id=obj['id']))
+    assert dataset_get_after_delete_resp.status_code == 404
+
+
 def test_api_search_with_query(app, client, search_client, faker):
     for i in range(4):
         title = 'sample-test-{0}'.format(i) if i % 2 else i
