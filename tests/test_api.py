@@ -293,6 +293,7 @@ def test_api_search_pagination_without_query(app, client, search_client, faker):
 
 
 def test_api_reindex(app, client, search_client, faker):
+    index_name = 'dataset'
     obj = {
         'id': faker.md5(),
         'title': faker.sentence(),
@@ -327,11 +328,12 @@ def test_api_reindex(app, client, search_client, faker):
         'key_id': obj['id'],
         'document': obj,
         'message_type': 'dataset.index',
-        'index': 'dataset'
+        'index': index_name
     }
 
     reindex_resp = client.post(url_for('api.reindex'), json=index_payload)
     assert reindex_resp.status_code == 200
+    assert reindex_resp.json['data'] == f"Reindex done on {app.config['UDATA_INSTANCE_NAME']}-{index_name}"
 
     time.sleep(2)
 
@@ -343,11 +345,12 @@ def test_api_reindex(app, client, search_client, faker):
         'key_id': obj['id'],
         'document': obj,
         'message_type': 'dataset.unindex',
-        'index': 'dataset'
+        'index': index_name
     }
 
     unreindex_resp = client.post(url_for('api.reindex'), json=unindex_payload)
     assert unreindex_resp.status_code == 200
+    assert unreindex_resp.json['data'] == f"Reindex done on {app.config['UDATA_INSTANCE_NAME']}-{index_name}"
 
     time.sleep(2)
 
