@@ -1,4 +1,3 @@
-from elasticsearch import Elasticsearch
 from dependency_injector import containers, providers
 from udata_search_service.infrastructure.services import DatasetService, OrganizationService, ReuseService
 from udata_search_service.infrastructure.search_clients import ElasticClient
@@ -6,11 +5,6 @@ from udata_search_service.infrastructure.search_clients import ElasticClient
 
 class Container(containers.DeclarativeContainer):
     config = providers.Configuration()
-
-    elastic_client = providers.Singleton(
-        Elasticsearch,
-        hosts=config.elasticsearch_url
-    )
 
     search_client = providers.Singleton(
         ElasticClient,

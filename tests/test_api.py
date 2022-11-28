@@ -358,6 +358,28 @@ def test_api_reindex(app, client, search_client, faker):
     assert dataset_get_after_delete_resp.status_code == 404
 
 
+def test_api_set_index_alias(app, client, search_client, faker):
+    now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
+    index_name = f"{app.config['UDATA_INSTANCE_NAME']}-dataset-{now}"
+
+    if not search_client.es.indices.exists(index=index_name):
+        search_client.es.indices.create(index=index_name)
+
+    payload = {
+        'index_suffix_name': now,
+        'indices': ['dataset']
+    }
+    set_alias_resp = client.post(url_for('api.set_index_alias'), json=payload)
+    assert set_alias_resp.status_code == 200
+
+    index_alias = f"{app.config['UDATA_INSTANCE_NAME']}-dataset"
+
+    search_client.es.indices.exists_alias(name=index_alias)
+    alias_keys = list(search_client.es.indices.get_alias(name=index_alias))
+
+    assert alias_keys[0] == index_name
+
+
 def test_api_search_with_query(app, client, search_client, faker):
     for i in range(4):
         title = 'sample-test-{0}'.format(i) if i % 2 else i

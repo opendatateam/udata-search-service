@@ -1,14 +1,15 @@
 import logging
 import re
 from typing import Optional
-from elasticsearch import Elasticsearch
 from dependency_injector.wiring import inject, Provide
 from flask import Blueprint, request, url_for, jsonify, abort
 from pydantic import BaseModel, Field, ValidationError, validator
 from udata_search_service.container import Container
 from udata_search_service.config import Config
 from udata_search_service.infrastructure.services import DatasetService, OrganizationService, ReuseService
+from udata_search_service.infrastructure.search_clients import ElasticClient
 from udata_search_service.infrastructure.consumers import DatasetConsumer, ReuseConsumer, OrganizationConsumer, EventMessageType, parse_message
+from udata_search_service.infrastructure.migrate import set_alias as set_alias_func
 
 
 bp = Blueprint('api', __name__, url_prefix='/api/1')
@@ -54,9 +55,9 @@ class DatasetToIndex(BaseModel):
     description: str
     acronym: Optional[str] = None
     url: Optional[str] = None
-    tags: Optional[list] = None
+    tags: Optional[list] = []
     license: Optional[str] = None
-    badges: Optional[list] = None
+    badges: Optional[list] = []
     frequency: Optional[str] = None
     created_at: str
     organization: Optional[dict] = None
@@ -66,13 +67,13 @@ class DatasetToIndex(BaseModel):
     reuses: int
     resources_count: Optional[int] = 0
     featured: Optional[int] = 0
-    format: Optional[list] = None
-    schema_: Optional[dict] = Field(None, alias="schema")
-    extras: Optional[dict] = None
-    harvest: Optional[dict] = None
+    format: Optional[list] = []
+    schema_: Optional[dict] = Field({}, alias="schema")
+    extras: Optional[dict] = {}
+    harvest: Optional[dict] = {}
     temporal_coverage_start: Optional[str] = None
     temporal_coverage_end: Optional[str] = None
-    geozones: Optional[list] = None
+    geozones: Optional[list] = []
     granularity: Optional[str] = None
 
 
@@ -122,11 +123,11 @@ class ReuseToIndex(BaseModel):
     followers: int
     views: int
     featured: int
-    organization: Optional[dict] = None
+    organization: Optional[dict] = {}
     owner: Optional[str] = None
     type: str
     topic: str
-    tags: Optional[list] = None
+    tags: Optional[list] = []
     extras: Optional[dict] = {}
 
 
@@ -313,14 +314,14 @@ def reuse_unindex(reuse_id: str, reuse_service: ReuseService = Provide[Container
 
 class RequestReindex(BaseModel):
     key_id: str
-    document: Optional[dict] = None
+    document: Optional[dict] = {}
     message_type: str
     index: str
 
 
 @bp.route("/reindex", methods=["POST"], endpoint='reindex')
 @inject
-def general_reindex(es: Elasticsearch = Provide[Container.elastic_client]):
+def general_reindex(search_client: ElasticClient = Provide[Container.search_client]):
     try:
         try:
             validated_obj = RequestReindex(**request.json)
@@ -331,18 +332,18 @@ def general_reindex(es: Elasticsearch = Provide[Container.elastic_client]):
         index_name = f'{Config.UDATA_INSTANCE_NAME}-{index_name}'
         if message_type == EventMessageType.REINDEX.value:
             # Initiliaze index matching template pattern
-            if not es.indices.exists(index=index_name):
+            if not search_client.es.indices.exists(index=index_name):
                 logging.info(f'Initializing new index {index_name} for reindexation')
-                es.indices.create(index=index_name)
+                search_client.es.indices.create(index=index_name)
                 # Check whether template with analyzer was correctly assigned
-                if 'analysis' not in es.indices.get_settings(index_name)[index_name]['settings']['index']:
+                if 'analysis' not in search_client.es.indices.get_settings(index_name)[index_name]['settings']['index']:
                     logging.error(f'Analyzer was not set using templates when initializing {index_name}')
         if message_type in [EventMessageType.INDEX.value,
                             EventMessageType.REINDEX.value]:
-            es.index(index=index_name, id=validated_obj.key_id, document=data)
+            search_client.es.index(index=index_name, id=validated_obj.key_id, document=data)
         elif message_type == EventMessageType.UNINDEX.value:
-            if es.exists_source(index=index_name, id=validated_obj.key_id):
-                es.delete(index=index_name, id=validated_obj.key_id)
+            if search_client.es.exists_source(index=index_name, id=validated_obj.key_id):
+                search_client.es.delete(index=index_name, id=validated_obj.key_id)
     except ValueError:
         abort(400, 'ValueError when parsing message')
     except ConnectionError:
@@ -350,3 +351,21 @@ def general_reindex(es: Elasticsearch = Provide[Container.elastic_client]):
     except Exception:
         abort(500, 'Exeption when indexing/unindexing')
     return jsonify({'data': f'Reindex done on {index_name}'})
+
+
+class RequestSetAlias(BaseModel):
+    index_suffix_name: str
+    indices: Optional[list] = []
+
+
+@bp.route("/set-index-alias", methods=["POST"], endpoint='set_index_alias')
+@inject
+def set_index_alias(search_client: ElasticClient = Provide[Container.search_client]):
+    try:
+        validated_obj = RequestSetAlias(**request.json).dict()
+    except ValidationError as e:
+        abort(400, e)
+
+    indices = [index.lower().rstrip('s') for index in (validated_obj['indices'] or [])]
+    set_alias_func(search_client, validated_obj['index_suffix_name'], indices)
+    return jsonify({'data': 'Alias set'})
