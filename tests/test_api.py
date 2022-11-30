@@ -374,7 +374,7 @@ def test_api_set_index_alias(app, client, search_client, faker):
 
     index_alias = f"{app.config['UDATA_INSTANCE_NAME']}-dataset"
 
-    search_client.es.indices.exists_alias(name=index_alias)
+    assert search_client.es.indices.exists_alias(name=index_alias)
     alias_keys = list(search_client.es.indices.get_alias(name=index_alias))
 
     assert alias_keys[0] == index_name
