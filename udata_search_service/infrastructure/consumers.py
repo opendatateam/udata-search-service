@@ -1,20 +1,11 @@
 import logging
 import os
-from enum import Enum
-from typing import Tuple
-import copy
 
 from udata_search_service.domain.entities import Dataset, Organization, Reuse
 from udata_search_service.infrastructure.utils import get_concat_title_org, log2p, mdstrip
 
 
 CONSUMER_LOGGING_LEVEL = int(os.environ.get("CONSUMER_LOGGING_LEVEL", logging.INFO))
-
-
-class EventMessageType(Enum):
-    INDEX = 'index'
-    REINDEX = 'reindex'
-    UNINDEX = 'unindex'
 
 
 class DatasetConsumer(Dataset):
@@ -70,26 +61,3 @@ class OrganizationConsumer(Organization):
         data["followers"] = log2p(data.get("followers", 0))
         data["views"] = log2p(data.get("views", 0))
         return super().load_from_dict(data)
-
-
-def parse_message(message: dict) -> Tuple[str, str, dict]:
-    value = copy.deepcopy(message)
-    try:
-        index_name = value.get("index")
-        model, message_type = value["message_type"].split('.')
-        if model == 'dataset':
-            dataclass_consumer = DatasetConsumer
-        elif model == 'reuse':
-            dataclass_consumer = ReuseConsumer
-        elif model == 'organization':
-            dataclass_consumer = OrganizationConsumer
-        else:
-            raise ValueError(f'Model Deserializer not implemented for model: {model}')
-
-        if not value.get("document"):
-            document = None
-        else:
-            document = dataclass_consumer.load_from_dict(value.get("document")).to_dict()
-        return message_type, index_name, document
-    except Exception as e:
-        raise ValueError(f'Failed to parse message: {value}. Exception raised: {e}')

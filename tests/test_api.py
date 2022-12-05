@@ -38,7 +38,12 @@ def test_api_dataset_index_unindex(app, client, search_client, faker):
         'harvest': {}
     }
 
-    index_resp = client.post(url_for('api.dataset_index'), json={'data': dataset})
+    query = {
+        'document': dataset,
+        'index': None
+    }
+
+    index_resp = client.post(url_for('api.dataset_index'), json=query)
     assert index_resp.status_code == 200
 
     time.sleep(2)
@@ -74,7 +79,59 @@ def test_api_dataset_index_unindex(app, client, search_client, faker):
     assert dataset_search_after_delete_resp.json['total'] == 0
 
 
-def test_api_orgt_index_unindex(app, client, search_client, faker):
+def test_api_dataset_index_on_another_index(app, client, search_client, faker):
+    now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
+    index_name = f"{app.config['UDATA_INSTANCE_NAME']}-dataset-{now}"
+    if not search_client.es.indices.exists(index=index_name):
+        search_client.es.indices.create(index=index_name)
+
+    dataset = {
+        'id': faker.md5(),
+        'title': faker.sentence(),
+        'description': faker.text(),
+        'acronym': faker.company_suffix(),
+        'url': faker.url(),
+        'created_at': faker.past_datetime().isoformat(),
+        'views': faker.random_int(),
+        'followers': faker.random_int(),
+        'reuses': faker.random_int(),
+        'featured': faker.random_int(min=0, max=1),
+        'resources_count': faker.random_int(min=1, max=15),
+        'organization': {
+            'id': faker.md5(),
+            'name': faker.company(),
+            'public_service': faker.random_int(min=0, max=1),
+            'followers': faker.random_int()
+        },
+        'format': ['pdf'],
+        'frequency': 'unknown',
+        'badges': [],
+        'tags': [],
+        'license': faker.word(),
+        'temporal_coverage_start': faker.past_datetime().isoformat(),
+        'temporal_coverage_end': faker.past_datetime().isoformat(),
+        'granularity': faker.word(),
+        'geozones': [],
+        'owner': None,
+        'extras': {},
+        'harvest': {}
+    }
+
+    query = {
+        'document': dataset,
+        'index': index_name
+    }
+
+    index_resp = client.post(url_for('api.dataset_index'), json=query)
+    assert index_resp.status_code == 200
+
+    time.sleep(2)
+
+    resp = search_client.es.get(index=index_name, id=dataset['id'])
+    assert resp['_source']['title'] == dataset['title']
+
+
+def test_api_org_index_unindex(app, client, search_client, faker):
     org = {
         'id': faker.md5(),
         'name': faker.company(),
@@ -90,7 +147,12 @@ def test_api_orgt_index_unindex(app, client, search_client, faker):
         'extras': {},
     }
 
-    index_resp = client.post(url_for('api.organization_index'), json={'data': org})
+    query = {
+        'document': org,
+        'index': None
+    }
+
+    index_resp = client.post(url_for('api.organization_index'), json=query)
     assert index_resp.status_code == 200
 
     time.sleep(2)
@@ -126,6 +188,41 @@ def test_api_orgt_index_unindex(app, client, search_client, faker):
     assert organization_search_after_delete_resp.json['total'] == 0
 
 
+def test_api_org_index_on_another_index(app, client, search_client, faker):
+    now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
+    index_name = f"{app.config['UDATA_INSTANCE_NAME']}-organization-{now}"
+    if not search_client.es.indices.exists(index=index_name):
+        search_client.es.indices.create(index=index_name)
+
+    org = {
+        'id': faker.md5(),
+        'name': faker.company(),
+        'description': faker.text(),
+        'url': faker.url(),
+        'created_at': faker.past_datetime().isoformat(),
+        'views': faker.random_int(),
+        'orga_sp': faker.random_int(),
+        'followers': faker.random_int(),
+        'datasets': faker.random_int(),
+        'reuses': faker.random_int(),
+        'badges': [],
+        'extras': {},
+    }
+
+    query = {
+        'document': org,
+        'index': index_name
+    }
+
+    index_resp = client.post(url_for('api.organization_index'), json=query)
+    assert index_resp.status_code == 200
+
+    time.sleep(2)
+
+    resp = search_client.es.get(index=index_name, id=org['id'])
+    assert resp['_source']['name'] == org['name']
+
+
 def test_api_reuse_index_unindex(app, client, search_client, faker):
     reuse = {
         'id': faker.md5(),
@@ -151,7 +248,12 @@ def test_api_reuse_index_unindex(app, client, search_client, faker):
         'topic': faker.word()
     }
 
-    index_resp = client.post(url_for('api.reuse_index'), json={'data': reuse})
+    query = {
+        'document': reuse,
+        'index': None
+    }
+
+    index_resp = client.post(url_for('api.reuse_index'), json=query)
     assert index_resp.status_code == 200
 
     time.sleep(2)
@@ -185,6 +287,50 @@ def test_api_reuse_index_unindex(app, client, search_client, faker):
     assert reuse_search_after_delete_resp.json['page_size'] == 20
     assert reuse_search_after_delete_resp.json['total_pages'] == 1
     assert reuse_search_after_delete_resp.json['total'] == 0
+
+
+def test_api_reuse_index_on_another_index(app, client, search_client, faker):
+    now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
+    index_name = f"{app.config['UDATA_INSTANCE_NAME']}-reuse-{now}"
+    if not search_client.es.indices.exists(index=index_name):
+        search_client.es.indices.create(index=index_name)
+
+    reuse = {
+        'id': faker.md5(),
+        'title': faker.sentence(),
+        'description': faker.text(),
+        'url': faker.url(),
+        'badges': [],
+        'created_at': faker.past_datetime().isoformat(),
+        'datasets': faker.random_int(),
+        'views': faker.random_int(),
+        'followers': faker.random_int(),
+        'featured': faker.random_int(min=0, max=1),
+        'organization': {
+            'id': faker.md5(),
+            'name': faker.company(),
+            'public_service': faker.random_int(min=0, max=1),
+            'followers': faker.random_int()
+        },
+        'tags': [],
+        'owner': None,
+        'extras': {},
+        'type': faker.word(),
+        'topic': faker.word()
+    }
+
+    query = {
+        'document': reuse,
+        'index': index_name
+    }
+
+    index_resp = client.post(url_for('api.reuse_index'), json=query)
+    assert index_resp.status_code == 200
+
+    time.sleep(2)
+
+    resp = search_client.es.get(index=index_name, id=reuse['id'])
+    assert resp['_source']['title'] == reuse['title']
 
 
 def test_api_search_without_query(app, client, search_client, faker):
@@ -292,70 +438,17 @@ def test_api_search_pagination_without_query(app, client, search_client, faker):
     assert reuse_resp.json['total'] == 4
 
 
-def test_api_reindex(app, client, search_client, faker):
-    index_name = 'dataset'
-    obj = {
-        'id': faker.md5(),
-        'title': faker.sentence(),
-        'description': faker.text(),
-        'acronym': faker.company_suffix(),
-        'url': faker.url(),
-        'tags': ['bornes-de-recharge', 'bornes-de-recharge-electrique',
-                 'bornes-electrique', 'bornes-electriques',
-                 'chargeguru', 'irve', 'vehicule-electrique',
-                 'vehicules-electriques', 'voitures-electriques'],
-        'license': 'fr-lo',
-        'badges': [],
-        'frequency': 'unknown',
-        'created_at': faker.past_datetime().isoformat(),
-        'views': faker.random_int(),
-        'followers': faker.random_int(),
-        'reuses': faker.random_int(),
-        'featured': faker.random_int(min=0, max=1),
-        'resources_count': faker.random_int(min=1, max=15),
-        'organization': {
-            'id': faker.md5(),
-            'name': faker.company(),
-            'public_service': faker.random_int(min=0, max=1),
-            'followers': faker.random_int()
-        },
-        'owner': None,
-        'format': ['csv'],
-        'temporal_coverage_start': faker.past_datetime().isoformat(),
-        'temporal_coverage_end': faker.past_datetime().isoformat(),
-    }
-    index_payload = {
-        'key_id': obj['id'],
-        'document': obj,
-        'message_type': 'dataset.index',
+def test_api_create_index(app, client, search_client, faker):
+    now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
+    index_name = f"{app.config['UDATA_INSTANCE_NAME']}-dataset-{now}"
+
+    payload = {
         'index': index_name
     }
+    set_alias_resp = client.post(url_for('api.create_index'), json=payload)
+    assert set_alias_resp.status_code == 200
 
-    reindex_resp = client.post(url_for('api.reindex'), json=index_payload)
-    assert reindex_resp.status_code == 200
-    assert reindex_resp.json['data'] == f"Reindex done on {app.config['UDATA_INSTANCE_NAME']}-{index_name}"
-
-    time.sleep(2)
-
-    dataset_resp = client.get(url_for('api.dataset_get_specific', dataset_id=obj['id']))
-    assert dataset_resp.status_code == 200
-    assert dataset_resp.json['title'] == obj['title']
-
-    unindex_payload = {
-        'key_id': obj['id'],
-        'document': obj,
-        'message_type': 'dataset.unindex',
-        'index': index_name
-    }
-
-    unreindex_resp = client.post(url_for('api.reindex'), json=unindex_payload)
-    assert unreindex_resp.status_code == 200
-    assert unreindex_resp.json['data'] == f"Reindex done on {app.config['UDATA_INSTANCE_NAME']}-{index_name}"
-
-    time.sleep(2)
-
-    dataset_get_after_delete_resp = client.get(url_for('api.dataset_get_specific', dataset_id=obj['id']))
-    assert dataset_get_after_delete_resp.status_code == 404
+    assert search_client.es.indices.exists(index=index_name)
 
 
 def test_api_set_index_alias(app, client, search_client, faker):
@@ -403,6 +496,7 @@ def test_api_set_index_alias(app, client, search_client, faker):
         alias_keys = list(search_client.es.indices.get_alias(name=index_alias))
 
         assert alias_keys[0] == index_name
+
 
 def test_api_search_with_query(app, client, search_client, faker):
     for i in range(4):

@@ -8,27 +8,11 @@ from udata_search_service.container import Container
 from udata_search_service.config import Config
 from udata_search_service.infrastructure.services import DatasetService, OrganizationService, ReuseService
 from udata_search_service.infrastructure.search_clients import ElasticClient
-from udata_search_service.infrastructure.consumers import DatasetConsumer, ReuseConsumer, OrganizationConsumer, EventMessageType, parse_message
+from udata_search_service.infrastructure.consumers import DatasetConsumer, ReuseConsumer, OrganizationConsumer
 from udata_search_service.infrastructure.migrate import set_alias as set_alias_func
 
 
 bp = Blueprint('api', __name__, url_prefix='/api/1')
-
-
-class OrganizationToIndex(BaseModel):
-    id: str
-    name: str
-    description: str
-    acronym: Optional[str] = None
-    url: Optional[str] = None
-    badges: Optional[list] = []
-    created_at: str
-    orga_sp: int
-    datasets: int
-    followers: int
-    reuses: int
-    views: int
-    extras: Optional[dict] = {}
 
 
 class OrganizationArgs(BaseModel):
@@ -47,34 +31,6 @@ class OrganizationArgs(BaseModel):
         if value not in choices:
             raise ValueError('Sort parameter is not in the sorts available choices.')
         return value
-
-
-class DatasetToIndex(BaseModel):
-    id: str
-    title: str
-    description: str
-    acronym: Optional[str] = None
-    url: Optional[str] = None
-    tags: Optional[list] = []
-    license: Optional[str] = None
-    badges: Optional[list] = []
-    frequency: Optional[str] = None
-    created_at: str
-    organization: Optional[dict] = None
-    owner: Optional[str] = None
-    views: int
-    followers: int
-    reuses: int
-    resources_count: Optional[int] = 0
-    featured: Optional[int] = 0
-    format: Optional[list] = []
-    schema_: Optional[dict] = Field({}, alias="schema")
-    extras: Optional[dict] = {}
-    harvest: Optional[dict] = {}
-    temporal_coverage_start: Optional[str] = None
-    temporal_coverage_end: Optional[str] = None
-    geozones: Optional[list] = []
-    granularity: Optional[str] = None
 
 
 class DatasetArgs(BaseModel):
@@ -110,25 +66,6 @@ class DatasetArgs(BaseModel):
         if value not in choices:
             raise ValueError('Temporal coverage does not match the right pattern.')
         return value
-
-
-class ReuseToIndex(BaseModel):
-    id: str
-    title: str
-    description: str
-    url: Optional[str] = None
-    badges: Optional[list] = []
-    created_at: str
-    datasets: int
-    followers: int
-    views: int
-    featured: int
-    organization: Optional[dict] = {}
-    owner: Optional[str] = None
-    type: str
-    topic: str
-    tags: Optional[list] = []
-    extras: Optional[dict] = {}
 
 
 class ReuseArgs(BaseModel):
@@ -167,24 +104,59 @@ def make_response(results, total_pages, results_number, page, page_size, next_ur
     })
 
 
+class DatasetToIndex(BaseModel):
+    id: str
+    title: str
+    description: str
+    acronym: Optional[str] = None
+    url: Optional[str] = None
+    tags: Optional[list] = []
+    license: Optional[str] = None
+    badges: Optional[list] = []
+    frequency: Optional[str] = None
+    created_at: str
+    organization: Optional[dict] = None
+    owner: Optional[str] = None
+    views: int
+    followers: int
+    reuses: int
+    resources_count: Optional[int] = 0
+    featured: Optional[int] = 0
+    format: Optional[list] = []
+    schema_: Optional[dict] = Field({}, alias="schema")
+    extras: Optional[dict] = {}
+    harvest: Optional[dict] = {}
+    temporal_coverage_start: Optional[str] = None
+    temporal_coverage_end: Optional[str] = None
+    geozones: Optional[list] = []
+    granularity: Optional[str] = None
+
+
+class RequestDatasetIndex(BaseModel):
+    document: DatasetToIndex
+    index: Optional[str] = None
+
+
 @bp.route("/datasets/index", methods=["POST"], endpoint='dataset_index')
 @inject
 def dataset_index(dataset_service: DatasetService = Provide[Container.dataset_service]):
     try:
-        validated_obj = DatasetToIndex(**request.json['data'])
+        validated_obj = RequestDatasetIndex(**request.json)
     except ValidationError as e:
         abort(400, e)
 
-    document = DatasetConsumer.load_from_dict(validated_obj.dict())
-    dataset_service.feed(document)
+    document = DatasetConsumer.load_from_dict(validated_obj.document.dict())
+    dataset_service.feed(document, validated_obj.index)
     return jsonify({'data': 'Dataset added to index'})
 
 
 @bp.route("/datasets/<dataset_id>/unindex", methods=["DELETE"], endpoint='dataset_unindex')
 @inject
 def dataset_unindex(dataset_id: str, dataset_service: DatasetService = Provide[Container.dataset_service]):
-    dataset_service.delete_one(dataset_id)
-    return jsonify({'data': 'Dataset removed from index'})
+    result = dataset_service.delete_one(dataset_id)
+    if result:
+        return jsonify({'data': f'Dataset {result} removed from index'})
+    abort(404, 'reuse not found')
 
 
 @bp.route("/datasets/", methods=["GET"], endpoint='dataset_search')
@@ -244,24 +216,47 @@ def get_organization(organization_id: str,
     abort(404, 'organization not found')
 
 
+class OrganizationToIndex(BaseModel):
+    id: str
+    name: str
+    description: str
+    acronym: Optional[str] = None
+    url: Optional[str] = None
+    badges: Optional[list] = []
+    created_at: str
+    orga_sp: int
+    datasets: int
+    followers: int
+    reuses: int
+    views: int
+    extras: Optional[dict] = {}
+
+
+class RequestOrganizationIndex(BaseModel):
+    document: OrganizationToIndex
+    index: Optional[str] = None
+
+
 @bp.route("/organizations/index", methods=["POST"], endpoint='organization_index')
 @inject
 def organization_index(organization_service: OrganizationService = Provide[Container.organization_service]):
     try:
-        validated_obj = OrganizationToIndex(**request.json['data'])
+        validated_obj = RequestOrganizationIndex(**request.json)
     except ValidationError as e:
         abort(400, e)
 
-    document = OrganizationConsumer.load_from_dict(validated_obj.dict())
-    organization_service.feed(document)
+    document = OrganizationConsumer.load_from_dict(validated_obj.document.dict())
+    organization_service.feed(document, validated_obj.index)
     return jsonify({'data': 'Organization added to index'})
 
 
 @bp.route("/organizations/<organization_id>/unindex", methods=["DELETE"], endpoint='organization_unindex')
 @inject
 def organization_unindex(organization_id: str, organization_service: OrganizationService = Provide[Container.organization_service]):
-    organization_service.delete_one(organization_id)
-    return jsonify({'data': 'Organization removed from index'})
+    result = organization_service.delete_one(organization_id)
+    if result:
+        return jsonify({'data': f'Organization {result} removed from index'})
+    abort(404, 'reuse not found')
 
 
 @bp.route("/reuses/", methods=["GET"], endpoint='reuse_search')
@@ -292,65 +287,70 @@ def get_reuse(reuse_id: str, reuse_service: ReuseService = Provide[Container.reu
     abort(404, 'reuse not found')
 
 
+class ReuseToIndex(BaseModel):
+    id: str
+    title: str
+    description: str
+    url: Optional[str] = None
+    badges: Optional[list] = []
+    created_at: str
+    datasets: int
+    followers: int
+    views: int
+    featured: int
+    organization: Optional[dict] = {}
+    owner: Optional[str] = None
+    type: str
+    topic: str
+    tags: Optional[list] = []
+    extras: Optional[dict] = {}
+
+
+class RequestReuseIndex(BaseModel):
+    document: ReuseToIndex
+    index: Optional[str] = None
+
+
 @bp.route("/reuses/index", methods=["POST"], endpoint='reuse_index')
 @inject
 def reuse_index(reuse_service: ReuseService = Provide[Container.reuse_service]):
     try:
-        validated_obj = ReuseToIndex(**request.json['data'])
+        validated_obj = RequestReuseIndex(**request.json)
     except ValidationError as e:
         abort(400, e)
 
-    document = ReuseConsumer.load_from_dict(validated_obj.dict())
-    reuse_service.feed(document)
+    document = ReuseConsumer.load_from_dict(validated_obj.document.dict())
+    reuse_service.feed(document, validated_obj.index)
     return jsonify({'data': 'Reuse added to index'})
 
 
 @bp.route("/reuses/<reuse_id>/unindex", methods=["DELETE"], endpoint='reuse_unindex')
 @inject
 def reuse_unindex(reuse_id: str, reuse_service: ReuseService = Provide[Container.reuse_service]):
-    reuse_service.delete_one(reuse_id)
-    return jsonify({'data': 'Reuse removed from index'})
+    result = reuse_service.delete_one(reuse_id)
+    if result:
+        return jsonify({'data': f'Reuse {result} removed from index'})
+    abort(404, 'reuse not found')
 
 
-class RequestReindex(BaseModel):
-    key_id: str
-    document: Optional[dict] = {}
-    message_type: str
-    index: str
-
-
-@bp.route("/reindex", methods=["POST"], endpoint='reindex')
+@bp.route("/create-index", methods=["POST"], endpoint='create_index')
 @inject
-def general_reindex(search_client: ElasticClient = Provide[Container.search_client]):
+def create_index(search_client: ElasticClient = Provide[Container.search_client]):
     try:
-        try:
-            validated_obj = RequestReindex(**request.json)
-        except ValidationError as e:
-            abort(400, e)
+        index_name = request.json['index']
+    except KeyError:
+        abort(400, 'Missing index in payload')
 
-        message_type, index_name, data = parse_message(validated_obj.dict())
-        index_name = f'{Config.UDATA_INSTANCE_NAME}-{index_name}'
-        if message_type == EventMessageType.REINDEX.value:
-            # Initiliaze index matching template pattern
-            if not search_client.es.indices.exists(index=index_name):
-                logging.info(f'Initializing new index {index_name} for reindexation')
-                search_client.es.indices.create(index=index_name)
-                # Check whether template with analyzer was correctly assigned
-                if 'analysis' not in search_client.es.indices.get_settings(index_name)[index_name]['settings']['index']:
-                    logging.error(f'Analyzer was not set using templates when initializing {index_name}')
-        if message_type in [EventMessageType.INDEX.value,
-                            EventMessageType.REINDEX.value]:
-            search_client.es.index(index=index_name, id=validated_obj.key_id, document=data)
-        elif message_type == EventMessageType.UNINDEX.value:
-            if search_client.es.exists_source(index=index_name, id=validated_obj.key_id):
-                search_client.es.delete(index=index_name, id=validated_obj.key_id)
-    except ValueError:
-        abort(400, 'ValueError when parsing message')
-    except ConnectionError:
-        abort(500, 'ConnectionError with Elastic Client')
-    except Exception:
-        abort(500, 'Exeption when indexing/unindexing')
-    return jsonify({'data': f'Reindex done on {index_name}'})
+    index_name = f'{Config.UDATA_INSTANCE_NAME}-{index_name}'
+    # Initiliaze index matching template pattern
+    if not search_client.es.indices.exists(index=index_name):
+        logging.info(f'Initializing new index {index_name} for reindexation')
+        search_client.es.indices.create(index=index_name)
+        # Check whether template with analyzer was correctly assigned
+        if 'analysis' not in search_client.es.indices.get_settings(index_name)[index_name]['settings']['index']:
+            logging.error(f'Analyzer was not set using templates when initializing {index_name}')
+        return jsonify({'data': f'Index {index_name} created'})
+    return jsonify({'data': f'Index {index_name} already exists'})
 
 
 class RequestSetAlias(BaseModel):

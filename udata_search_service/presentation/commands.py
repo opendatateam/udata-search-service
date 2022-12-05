@@ -3,7 +3,6 @@ from flask.cli import with_appcontext
 from dependency_injector.wiring import inject, Provide
 from udata_search_service.container import Container
 from udata_search_service.domain.interfaces import SearchClient
-from udata_search_service.infrastructure.migrate import set_alias as set_alias_func
 
 
 @inject
@@ -32,16 +31,6 @@ def clean_es_command() -> None:
     clean_es_func()
 
 
-@click.command("set-alias")
-@click.argument("index_suffix_to_use")
-@click.argument('indices', nargs=-1, metavar='[<index> ...]')
-@with_appcontext
-def set_alias_command(index_suffix_to_use, indices=None) -> None:
-    indices = [index.lower().rstrip('s') for index in (indices or [])]
-    set_alias_func(index_suffix_to_use, indices)
-
-
 def init_app(cli):
     cli.add_command(init_es)
     cli.add_command(clean_es_command)
-    cli.add_command(set_alias_command)
