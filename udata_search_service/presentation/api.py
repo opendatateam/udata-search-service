@@ -146,7 +146,8 @@ def dataset_index(dataset_service: DatasetService = Provide[Container.dataset_se
         abort(400, e)
 
     document = DatasetConsumer.load_from_dict(validated_obj.document.dict())
-    dataset_service.feed(document, validated_obj.index)
+    index_name = f'{Config.UDATA_INSTANCE_NAME}-{validated_obj.index}' if validated_obj.index else None
+    dataset_service.feed(document, index_name)
     return jsonify({'data': 'Dataset added to index'})
 
 
@@ -246,7 +247,8 @@ def organization_index(organization_service: OrganizationService = Provide[Conta
         abort(400, e)
 
     document = OrganizationConsumer.load_from_dict(validated_obj.document.dict())
-    organization_service.feed(document, validated_obj.index)
+    index_name = f'{Config.UDATA_INSTANCE_NAME}-{validated_obj.index}' if validated_obj.index else None
+    organization_service.feed(document, index_name)
     return jsonify({'data': 'Organization added to index'})
 
 
@@ -320,7 +322,8 @@ def reuse_index(reuse_service: ReuseService = Provide[Container.reuse_service]):
         abort(400, e)
 
     document = ReuseConsumer.load_from_dict(validated_obj.document.dict())
-    reuse_service.feed(document, validated_obj.index)
+    index_name = f'{Config.UDATA_INSTANCE_NAME}-{validated_obj.index}' if validated_obj.index else None
+    reuse_service.feed(document, index_name)
     return jsonify({'data': 'Reuse added to index'})
 
 
