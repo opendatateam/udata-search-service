@@ -139,7 +139,7 @@ class RequestDatasetIndex(BaseModel):
 
 @bp.route("/datasets/index", methods=["POST"], endpoint='dataset_index')
 @inject
-def dataset_index(dataset_service: DatasetService = Provide[Container.dataset_service]):
+def dataset_index(dataset_service: DatasetService = Provide[Container.dataset_service], search_client: ElasticClient = Provide[Container.search_client]):
     try:
         validated_obj = RequestDatasetIndex(**request.json)
     except ValidationError as e:
@@ -147,6 +147,8 @@ def dataset_index(dataset_service: DatasetService = Provide[Container.dataset_se
 
     document = DatasetConsumer.load_from_dict(validated_obj.document.dict())
     index_name = f'{Config.UDATA_INSTANCE_NAME}-{validated_obj.index}' if validated_obj.index else None
+    if index_name and not search_client.es.indices.exists(index=index_name):
+        abort(404, 'Index does not exist')
     dataset_service.feed(document, index_name)
     return jsonify({'data': 'Dataset added to index'})
 
@@ -240,7 +242,7 @@ class RequestOrganizationIndex(BaseModel):
 
 @bp.route("/organizations/index", methods=["POST"], endpoint='organization_index')
 @inject
-def organization_index(organization_service: OrganizationService = Provide[Container.organization_service]):
+def organization_index(organization_service: OrganizationService = Provide[Container.organization_service], search_client: ElasticClient = Provide[Container.search_client]):
     try:
         validated_obj = RequestOrganizationIndex(**request.json)
     except ValidationError as e:
@@ -248,6 +250,8 @@ def organization_index(organization_service: OrganizationService = Provide[Conta
 
     document = OrganizationConsumer.load_from_dict(validated_obj.document.dict())
     index_name = f'{Config.UDATA_INSTANCE_NAME}-{validated_obj.index}' if validated_obj.index else None
+    if index_name and not search_client.es.indices.exists(index=index_name):
+        abort(404, 'Index does not exist')
     organization_service.feed(document, index_name)
     return jsonify({'data': 'Organization added to index'})
 
@@ -315,7 +319,7 @@ class RequestReuseIndex(BaseModel):
 
 @bp.route("/reuses/index", methods=["POST"], endpoint='reuse_index')
 @inject
-def reuse_index(reuse_service: ReuseService = Provide[Container.reuse_service]):
+def reuse_index(reuse_service: ReuseService = Provide[Container.reuse_service], search_client: ElasticClient = Provide[Container.search_client]):
     try:
         validated_obj = RequestReuseIndex(**request.json)
     except ValidationError as e:
@@ -323,6 +327,9 @@ def reuse_index(reuse_service: ReuseService = Provide[Container.reuse_service]):
 
     document = ReuseConsumer.load_from_dict(validated_obj.document.dict())
     index_name = f'{Config.UDATA_INSTANCE_NAME}-{validated_obj.index}' if validated_obj.index else None
+    if index_name and not search_client.es.indices.exists(index=index_name):
+        abort(404, 'Index does not exist')
+        
     reuse_service.feed(document, index_name)
     return jsonify({'data': 'Reuse added to index'})
 

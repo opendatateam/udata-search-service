@@ -82,8 +82,8 @@ def test_api_dataset_index_unindex(app, client, search_client, faker):
 def test_api_dataset_index_on_another_index(app, client, search_client, faker):
     now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
     index_name = f"test-dataset-{now}"
-    if not search_client.es.indices.exists(index=index_name):
-        search_client.es.indices.create(index=index_name)
+    if not search_client.es.indices.exists(index=f"{app.config['UDATA_INSTANCE_NAME']}-{index_name}"):
+        search_client.es.indices.create(index=f"{app.config['UDATA_INSTANCE_NAME']}-{index_name}")
 
     dataset = {
         'id': faker.md5(),
@@ -191,8 +191,8 @@ def test_api_org_index_unindex(app, client, search_client, faker):
 def test_api_org_index_on_another_index(app, client, search_client, faker):
     now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
     index_name = f"test-organization-{now}"
-    if not search_client.es.indices.exists(index=index_name):
-        search_client.es.indices.create(index=index_name)
+    if not search_client.es.indices.exists(index=f"{app.config['UDATA_INSTANCE_NAME']}-{index_name}"):
+        search_client.es.indices.create(index=f"{app.config['UDATA_INSTANCE_NAME']}-{index_name}")
 
     org = {
         'id': faker.md5(),
@@ -292,8 +292,8 @@ def test_api_reuse_index_unindex(app, client, search_client, faker):
 def test_api_reuse_index_on_another_index(app, client, search_client, faker):
     now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
     index_name = f"test-reuse-{now}"
-    if not search_client.es.indices.exists(index=index_name):
-        search_client.es.indices.create(index=index_name)
+    if not search_client.es.indices.exists(index=f"{app.config['UDATA_INSTANCE_NAME']}-{index_name}"):
+        search_client.es.indices.create(index=f"{app.config['UDATA_INSTANCE_NAME']}-{index_name}")
 
     reuse = {
         'id': faker.md5(),
