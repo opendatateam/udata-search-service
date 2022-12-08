@@ -35,7 +35,8 @@ def test_api_dataset_index_unindex(app, client, search_client, faker):
         'geozones': [],
         'owner': None,
         'extras': {},
-        'harvest': {}
+        'harvest': {},
+        'schema': [faker.word(), faker.word()]
     }
 
     query = {
@@ -114,7 +115,8 @@ def test_api_dataset_index_on_another_index(app, client, search_client, faker):
         'geozones': [],
         'owner': None,
         'extras': {},
-        'harvest': {}
+        'harvest': {},
+        'schema': [faker.word(), faker.word()]
     }
 
     query = {
