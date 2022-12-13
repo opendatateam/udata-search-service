@@ -36,5 +36,14 @@ def db(search_client):
 
 
 @pytest.fixture
+def db_clear(search_client):
+    search_client.es.indices.delete(index="*")
+
+    yield
+
+    search_client.es.indices.delete(index="*")
+
+
+@pytest.fixture
 def faker():
     return Faker()

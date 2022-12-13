@@ -79,7 +79,7 @@ def test_api_dataset_index_unindex(app, client, search_client, faker):
     assert dataset_search_after_delete_resp.json['total'] == 0
 
 
-def test_api_dataset_index_on_another_index(app, client, search_client, faker):
+def test_api_dataset_index_on_another_index(app, client, search_client, faker, db_clear):
     now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
     index_name = f"test-dataset-{now}"
     if not search_client.es.indices.exists(index=f"{app.config['UDATA_INSTANCE_NAME']}-{index_name}"):
@@ -188,7 +188,7 @@ def test_api_org_index_unindex(app, client, search_client, faker):
     assert organization_search_after_delete_resp.json['total'] == 0
 
 
-def test_api_org_index_on_another_index(app, client, search_client, faker):
+def test_api_org_index_on_another_index(app, client, search_client, faker, db_clear):
     now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
     index_name = f"test-organization-{now}"
     if not search_client.es.indices.exists(index=f"{app.config['UDATA_INSTANCE_NAME']}-{index_name}"):
@@ -289,7 +289,7 @@ def test_api_reuse_index_unindex(app, client, search_client, faker):
     assert reuse_search_after_delete_resp.json['total'] == 0
 
 
-def test_api_reuse_index_on_another_index(app, client, search_client, faker):
+def test_api_reuse_index_on_another_index(app, client, search_client, faker, db_clear):
     now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
     index_name = f"test-reuse-{now}"
     if not search_client.es.indices.exists(index=f"{app.config['UDATA_INSTANCE_NAME']}-{index_name}"):
@@ -438,7 +438,7 @@ def test_api_search_pagination_without_query(app, client, search_client, faker):
     assert reuse_resp.json['total'] == 4
 
 
-def test_api_create_index(app, client, search_client, faker):
+def test_api_create_index(app, client, search_client, faker, db_clear):
     now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
     index_name = f"test-dataset-{now}"
 
@@ -451,7 +451,7 @@ def test_api_create_index(app, client, search_client, faker):
     assert search_client.es.indices.exists(index=f"{app.config['UDATA_INSTANCE_NAME']}-{index_name}")
 
 
-def test_api_set_index_alias(app, client, search_client, faker):
+def test_api_set_index_alias(app, client, search_client, faker, db_clear):
     now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
     index_name = f"{app.config['UDATA_INSTANCE_NAME']}-dataset-{now}"
 

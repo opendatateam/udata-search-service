@@ -329,7 +329,7 @@ def reuse_index(reuse_service: ReuseService = Provide[Container.reuse_service], 
     index_name = f'{Config.UDATA_INSTANCE_NAME}-{validated_obj.index}' if validated_obj.index else None
     if index_name and not search_client.es.indices.exists(index=index_name):
         abort(404, 'Index does not exist')
-        
+
     reuse_service.feed(document, index_name)
     return jsonify({'data': 'Reuse added to index'})
 
