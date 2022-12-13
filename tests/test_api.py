@@ -45,6 +45,9 @@ def test_api_dataset_index_unindex(app, client, search_client, faker):
         'index': None
     }
 
+    index_resp = client.post(url_for('api.dataset_index'), json={'document': dataset, 'index': 'random-non-existing-index'})
+    assert index_resp.status_code == 404
+
     index_resp = client.post(url_for('api.dataset_index'), json=query)
     assert index_resp.status_code == 200
 
@@ -156,6 +159,9 @@ def test_api_org_index_unindex(app, client, search_client, faker):
         'index': None
     }
 
+    index_resp = client.post(url_for('api.organization_index'), json={'document': org, 'index': 'random-non-existing-index'})
+    assert index_resp.status_code == 404
+
     index_resp = client.post(url_for('api.organization_index'), json=query)
     assert index_resp.status_code == 200
 
@@ -256,6 +262,9 @@ def test_api_reuse_index_unindex(app, client, search_client, faker):
         'document': reuse,
         'index': None
     }
+
+    index_resp = client.post(url_for('api.reuse_index'), json={'document': reuse, 'index': 'random-non-existing-index'})
+    assert index_resp.status_code == 404
 
     index_resp = client.post(url_for('api.reuse_index'), json=query)
     assert index_resp.status_code == 200
