@@ -3,6 +3,7 @@
 ## Current (in progress)
 
 - Use redpanda instead of Kafka [#34](https://github.com/opendatateam/udata-search-service/pull/34)
+- Remove Kafka integration and use HTTP calls instead [#35](https://github.com/opendatateam/udata-search-service/pull/35)
 
 ## 1.0.3 (2022-07-11)
 

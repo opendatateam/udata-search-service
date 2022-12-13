@@ -169,14 +169,14 @@ class ElasticClient:
 
         self.init_indices()
 
-    def index_organization(self, to_index: Organization) -> None:
-        SearchableOrganization(meta={'id': to_index.id}, **to_index.to_dict()).save(skip_empty=False)
+    def index_organization(self, to_index: Organization, index: str = None) -> None:
+        SearchableOrganization(meta={'id': to_index.id}, **to_index.to_dict()).save(skip_empty=False, index=index)
 
-    def index_dataset(self, to_index: Dataset) -> None:
-        SearchableDataset(meta={'id': to_index.id}, **to_index.to_dict()).save(skip_empty=False)
+    def index_dataset(self, to_index: Dataset, index: str = None) -> None:
+        SearchableDataset(meta={'id': to_index.id}, **to_index.to_dict()).save(skip_empty=False, index=index)
 
-    def index_reuse(self, to_index: Reuse) -> None:
-        SearchableReuse(meta={'id': to_index.id}, **to_index.to_dict()).save(skip_empty=False)
+    def index_reuse(self, to_index: Reuse, index: str = None) -> None:
+        SearchableReuse(meta={'id': to_index.id}, **to_index.to_dict()).save(skip_empty=False, index=index)
 
     def query_organizations(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict]]:
         s = SearchableOrganization.search()
@@ -352,5 +352,26 @@ class ElasticClient:
     def find_one_reuse(self, reuse_id: str) -> Optional[dict]:
         try:
             return SearchableReuse.get(id=reuse_id).to_dict()
+        except NotFoundError:
+            return None
+
+    def delete_one_organization(self, organization_id: str) -> Optional[str]:
+        try:
+            SearchableOrganization.get(id=organization_id).delete()
+            return organization_id
+        except NotFoundError:
+            return None
+
+    def delete_one_dataset(self, dataset_id: str) -> Optional[str]:
+        try:
+            SearchableDataset.get(id=dataset_id).delete()
+            return dataset_id
+        except NotFoundError:
+            return None
+
+    def delete_one_reuse(self, reuse_id: str) -> Optional[str]:
+        try:
+            SearchableReuse.get(id=reuse_id).delete()
+            return reuse_id
         except NotFoundError:
             return None

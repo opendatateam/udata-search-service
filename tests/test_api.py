@@ -5,6 +5,347 @@ from flask import url_for
 from udata_search_service.domain.factories import DatasetFactory, OrganizationFactory, ReuseFactory
 
 
+def test_api_dataset_index_unindex(app, client, search_client, faker):
+    dataset = {
+        'id': faker.md5(),
+        'title': faker.sentence(),
+        'description': faker.text(),
+        'acronym': faker.company_suffix(),
+        'url': faker.url(),
+        'created_at': faker.past_datetime().isoformat(),
+        'views': faker.random_int(),
+        'followers': faker.random_int(),
+        'reuses': faker.random_int(),
+        'featured': faker.random_int(min=0, max=1),
+        'resources_count': faker.random_int(min=1, max=15),
+        'organization': {
+            'id': faker.md5(),
+            'name': faker.company(),
+            'public_service': faker.random_int(min=0, max=1),
+            'followers': faker.random_int()
+        },
+        'format': ['pdf'],
+        'frequency': 'unknown',
+        'badges': [],
+        'tags': [faker.word()],
+        'license': faker.word(),
+        'temporal_coverage_start': faker.past_datetime().isoformat(),
+        'temporal_coverage_end': faker.past_datetime().isoformat(),
+        'granularity': faker.word(),
+        'geozones': [{'id': faker.word(), 'name': faker.word(), 'keys': [faker.random_int()]},
+                     {'id': faker.word()}],
+        'owner': None,
+        'extras': {},
+        'harvest': {},
+        'schema': [faker.word(), faker.word()]
+    }
+
+    query = {
+        'document': dataset,
+        'index': None
+    }
+
+    index_resp = client.post(url_for('api.dataset_index'), json={'document': dataset, 'index': 'random-non-existing-index'})
+    assert index_resp.status_code == 404
+
+    index_resp = client.post(url_for('api.dataset_index'), json=query)
+    assert index_resp.status_code == 200
+
+    time.sleep(2)
+
+    dataset_resp = client.get(url_for('api.dataset_get_specific', dataset_id=dataset['id']))
+    assert dataset_resp.status_code == 200
+    assert dataset_resp.json['title'] == dataset['title']
+
+    dataset_search_resp = client.get(url_for('api.dataset_search'))
+    assert len(dataset_search_resp.json['data']) == 1
+    assert dataset_search_resp.json['next_page'] is None
+    assert dataset_search_resp.json['page'] == 1
+    assert dataset_search_resp.json['previous_page'] is None
+    assert dataset_search_resp.json['page_size'] == 20
+    assert dataset_search_resp.json['total_pages'] == 1
+    assert dataset_search_resp.json['total'] == 1
+
+    deletion_resp = client.delete(url_for('api.dataset_unindex', dataset_id=dataset['id']))
+    assert deletion_resp.status_code == 200
+
+    time.sleep(2)
+
+    dataset_get_after_delete_resp = client.get(url_for('api.dataset_get_specific', dataset_id=dataset['id']))
+    assert dataset_get_after_delete_resp.status_code == 404
+
+    dataset_search_after_delete_resp = client.get(url_for('api.dataset_search'))
+    assert len(dataset_search_after_delete_resp.json['data']) == 0
+    assert dataset_search_after_delete_resp.json['next_page'] is None
+    assert dataset_search_after_delete_resp.json['page'] == 1
+    assert dataset_search_after_delete_resp.json['previous_page'] is None
+    assert dataset_search_after_delete_resp.json['page_size'] == 20
+    assert dataset_search_after_delete_resp.json['total_pages'] == 1
+    assert dataset_search_after_delete_resp.json['total'] == 0
+
+
+def test_api_dataset_index_on_another_index(app, client, search_client, faker):
+    now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
+    index_name = f"test-dataset-{now}"
+    if not search_client.es.indices.exists(index=f"{app.config['UDATA_INSTANCE_NAME']}-{index_name}"):
+        search_client.es.indices.create(index=f"{app.config['UDATA_INSTANCE_NAME']}-{index_name}")
+
+    dataset = {
+        'id': faker.md5(),
+        'title': faker.sentence(),
+        'description': faker.text(),
+        'acronym': faker.company_suffix(),
+        'url': faker.url(),
+        'created_at': faker.past_datetime().isoformat(),
+        'views': faker.random_int(),
+        'followers': faker.random_int(),
+        'reuses': faker.random_int(),
+        'featured': faker.random_int(min=0, max=1),
+        'resources_count': faker.random_int(min=1, max=15),
+        'organization': {
+            'id': faker.md5(),
+            'name': faker.company(),
+            'public_service': faker.random_int(min=0, max=1),
+            'followers': faker.random_int()
+        },
+        'format': ['pdf'],
+        'frequency': 'unknown',
+        'badges': [],
+        'tags': [faker.word()],
+        'license': faker.word(),
+        'temporal_coverage_start': faker.past_datetime().isoformat(),
+        'temporal_coverage_end': faker.past_datetime().isoformat(),
+        'granularity': faker.word(),
+        'geozones': [{'id': faker.word(), 'name': faker.word(), 'keys': [faker.random_int()]},
+                     {'id': faker.word()}],
+        'owner': None,
+        'extras': {},
+        'harvest': {},
+        'schema': [faker.word(), faker.word()]
+    }
+
+    query = {
+        'document': dataset,
+        'index': index_name
+    }
+
+    index_resp = client.post(url_for('api.dataset_index'), json=query)
+    assert index_resp.status_code == 200
+
+    time.sleep(2)
+
+    resp = search_client.es.get(index=f"{app.config['UDATA_INSTANCE_NAME']}-{index_name}", id=dataset['id'])
+    assert resp['_source']['title'] == dataset['title']
+
+
+def test_api_org_index_unindex(app, client, search_client, faker):
+    org = {
+        'id': faker.md5(),
+        'name': faker.company(),
+        'description': faker.text(),
+        'url': faker.url(),
+        'created_at': faker.past_datetime().isoformat(),
+        'views': faker.random_int(),
+        'orga_sp': faker.random_int(),
+        'followers': faker.random_int(),
+        'datasets': faker.random_int(),
+        'reuses': faker.random_int(),
+        'badges': [],
+        'extras': {},
+    }
+
+    query = {
+        'document': org,
+        'index': None
+    }
+
+    index_resp = client.post(url_for('api.organization_index'), json={'document': org, 'index': 'random-non-existing-index'})
+    assert index_resp.status_code == 404
+
+    index_resp = client.post(url_for('api.organization_index'), json=query)
+    assert index_resp.status_code == 200
+
+    time.sleep(2)
+
+    organization_resp = client.get(url_for('api.organization_get_specific', organization_id=org['id']))
+    assert organization_resp.status_code == 200
+    assert organization_resp.json['name'] == org['name']
+
+    organization_search_resp = client.get(url_for('api.organization_search'))
+    assert len(organization_search_resp.json['data']) == 1
+    assert organization_search_resp.json['next_page'] is None
+    assert organization_search_resp.json['page'] == 1
+    assert organization_search_resp.json['previous_page'] is None
+    assert organization_search_resp.json['page_size'] == 20
+    assert organization_search_resp.json['total_pages'] == 1
+    assert organization_search_resp.json['total'] == 1
+
+    deletion_resp = client.delete(url_for('api.organization_unindex', organization_id=org['id']))
+    assert deletion_resp.status_code == 200
+
+    time.sleep(2)
+
+    organization_get_after_delete_resp = client.get(url_for('api.organization_get_specific', organization_id=org['id']))
+    assert organization_get_after_delete_resp.status_code == 404
+
+    organization_search_after_delete_resp = client.get(url_for('api.organization_search'))
+    assert len(organization_search_after_delete_resp.json['data']) == 0
+    assert organization_search_after_delete_resp.json['next_page'] is None
+    assert organization_search_after_delete_resp.json['page'] == 1
+    assert organization_search_after_delete_resp.json['previous_page'] is None
+    assert organization_search_after_delete_resp.json['page_size'] == 20
+    assert organization_search_after_delete_resp.json['total_pages'] == 1
+    assert organization_search_after_delete_resp.json['total'] == 0
+
+
+def test_api_org_index_on_another_index(app, client, search_client, faker):
+    now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
+    index_name = f"test-organization-{now}"
+    if not search_client.es.indices.exists(index=f"{app.config['UDATA_INSTANCE_NAME']}-{index_name}"):
+        search_client.es.indices.create(index=f"{app.config['UDATA_INSTANCE_NAME']}-{index_name}")
+
+    org = {
+        'id': faker.md5(),
+        'name': faker.company(),
+        'description': faker.text(),
+        'url': faker.url(),
+        'created_at': faker.past_datetime().isoformat(),
+        'views': faker.random_int(),
+        'orga_sp': faker.random_int(),
+        'followers': faker.random_int(),
+        'datasets': faker.random_int(),
+        'reuses': faker.random_int(),
+        'badges': [],
+        'extras': {},
+    }
+
+    query = {
+        'document': org,
+        'index': index_name
+    }
+
+    index_resp = client.post(url_for('api.organization_index'), json=query)
+    assert index_resp.status_code == 200
+
+    time.sleep(2)
+
+    resp = search_client.es.get(index=f"{app.config['UDATA_INSTANCE_NAME']}-{index_name}", id=org['id'])
+    assert resp['_source']['name'] == org['name']
+
+
+def test_api_reuse_index_unindex(app, client, search_client, faker):
+    reuse = {
+        'id': faker.md5(),
+        'title': faker.sentence(),
+        'description': faker.text(),
+        'url': faker.url(),
+        'badges': [],
+        'created_at': faker.past_datetime().isoformat(),
+        'datasets': faker.random_int(),
+        'views': faker.random_int(),
+        'followers': faker.random_int(),
+        'featured': faker.random_int(min=0, max=1),
+        'organization': {
+            'id': faker.md5(),
+            'name': faker.company(),
+            'public_service': faker.random_int(min=0, max=1),
+            'followers': faker.random_int()
+        },
+        'tags': [],
+        'owner': None,
+        'extras': {},
+        'type': faker.word(),
+        'topic': faker.word()
+    }
+
+    query = {
+        'document': reuse,
+        'index': None
+    }
+
+    index_resp = client.post(url_for('api.reuse_index'), json={'document': reuse, 'index': 'random-non-existing-index'})
+    assert index_resp.status_code == 404
+
+    index_resp = client.post(url_for('api.reuse_index'), json=query)
+    assert index_resp.status_code == 200
+
+    time.sleep(2)
+
+    reuse_resp = client.get(url_for('api.reuse_get_specific', reuse_id=reuse['id']))
+    assert reuse_resp.status_code == 200
+    assert reuse_resp.json['title'] == reuse['title']
+
+    reuse_search_resp = client.get(url_for('api.reuse_search'))
+    assert len(reuse_search_resp.json['data']) == 1
+    assert reuse_search_resp.json['next_page'] is None
+    assert reuse_search_resp.json['page'] == 1
+    assert reuse_search_resp.json['previous_page'] is None
+    assert reuse_search_resp.json['page_size'] == 20
+    assert reuse_search_resp.json['total_pages'] == 1
+    assert reuse_search_resp.json['total'] == 1
+
+    deletion_resp = client.delete(url_for('api.reuse_unindex', reuse_id=reuse['id']))
+    assert deletion_resp.status_code == 200
+
+    time.sleep(2)
+
+    reuse_get_after_delete_resp = client.get(url_for('api.reuse_get_specific', reuse_id=reuse['id']))
+    assert reuse_get_after_delete_resp.status_code == 404
+
+    reuse_search_after_delete_resp = client.get(url_for('api.reuse_search'))
+    assert len(reuse_search_after_delete_resp.json['data']) == 0
+    assert reuse_search_after_delete_resp.json['next_page'] is None
+    assert reuse_search_after_delete_resp.json['page'] == 1
+    assert reuse_search_after_delete_resp.json['previous_page'] is None
+    assert reuse_search_after_delete_resp.json['page_size'] == 20
+    assert reuse_search_after_delete_resp.json['total_pages'] == 1
+    assert reuse_search_after_delete_resp.json['total'] == 0
+
+
+def test_api_reuse_index_on_another_index(app, client, search_client, faker):
+    now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
+    index_name = f"test-reuse-{now}"
+    if not search_client.es.indices.exists(index=f"{app.config['UDATA_INSTANCE_NAME']}-{index_name}"):
+        search_client.es.indices.create(index=f"{app.config['UDATA_INSTANCE_NAME']}-{index_name}")
+
+    reuse = {
+        'id': faker.md5(),
+        'title': faker.sentence(),
+        'description': faker.text(),
+        'url': faker.url(),
+        'badges': [],
+        'created_at': faker.past_datetime().isoformat(),
+        'datasets': faker.random_int(),
+        'views': faker.random_int(),
+        'followers': faker.random_int(),
+        'featured': faker.random_int(min=0, max=1),
+        'organization': {
+            'id': faker.md5(),
+            'name': faker.company(),
+            'public_service': faker.random_int(min=0, max=1),
+            'followers': faker.random_int()
+        },
+        'tags': [],
+        'owner': None,
+        'extras': {},
+        'type': faker.word(),
+        'topic': faker.word()
+    }
+
+    query = {
+        'document': reuse,
+        'index': index_name
+    }
+
+    index_resp = client.post(url_for('api.reuse_index'), json=query)
+    assert index_resp.status_code == 200
+
+    time.sleep(2)
+
+    resp = search_client.es.get(index=f"{app.config['UDATA_INSTANCE_NAME']}-{index_name}", id=reuse['id'])
+    assert resp['_source']['title'] == reuse['title']
+
+
 def test_api_search_without_query(app, client, search_client, faker):
     for i in range(4):
         search_client.index_dataset(DatasetFactory())
@@ -108,6 +449,66 @@ def test_api_search_pagination_without_query(app, client, search_client, faker):
     assert reuse_resp.json['page_size'] == 2
     assert reuse_resp.json['total_pages'] == 2
     assert reuse_resp.json['total'] == 4
+
+
+def test_api_create_index(app, client, search_client, faker):
+    now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
+    index_name = f"test-dataset-{now}"
+
+    payload = {
+        'index': index_name
+    }
+    set_alias_resp = client.post(url_for('api.create_index'), json=payload)
+    assert set_alias_resp.status_code == 200
+
+    assert search_client.es.indices.exists(index=f"{app.config['UDATA_INSTANCE_NAME']}-{index_name}")
+
+
+def test_api_set_index_alias(app, client, search_client, faker):
+    now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
+    index_name = f"{app.config['UDATA_INSTANCE_NAME']}-dataset-{now}"
+
+    if not search_client.es.indices.exists(index=index_name):
+        search_client.es.indices.create(index=index_name)
+
+    payload = {
+        'index_suffix_name': now,
+        'indices': ['dataset']
+    }
+    set_alias_resp = client.post(url_for('api.set_index_alias'), json=payload)
+    assert set_alias_resp.status_code == 200
+
+    index_alias = f"{app.config['UDATA_INSTANCE_NAME']}-dataset"
+
+    assert search_client.es.indices.exists_alias(name=index_alias)
+    alias_keys = list(search_client.es.indices.get_alias(name=index_alias))
+
+    assert alias_keys[0] == index_name
+
+
+    now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M')
+
+    for index in ['dataset', 'reuse', 'organization']:
+        index_name = f"{app.config['UDATA_INSTANCE_NAME']}-{index}-{now}"
+        if not search_client.es.indices.exists(index=index_name):
+            search_client.es.indices.create(index=index_name)
+
+    payload = {
+        'index_suffix_name': now,
+        'indices': []
+    }
+    set_alias_resp = client.post(url_for('api.set_index_alias'), json=payload)
+    assert set_alias_resp.status_code == 200
+
+    for index in ['dataset', 'reuse', 'organization']:
+
+        index_alias = f"{app.config['UDATA_INSTANCE_NAME']}-{index}"
+        index_name = f"{app.config['UDATA_INSTANCE_NAME']}-{index}-{now}"
+
+        search_client.es.indices.exists_alias(name=index_alias)
+        alias_keys = list(search_client.es.indices.get_alias(name=index_alias))
+
+        assert alias_keys[0] == index_name
 
 
 def test_api_search_with_query(app, client, search_client, faker):

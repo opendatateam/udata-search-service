@@ -2,7 +2,7 @@
 
 A search service for udata.
 The idea is to have search service separated from the udata MongoDB.
-The indexation update is made using real-time messages with Kafka.
+The indexation update is made using real-time HTTP messages.
 
 See the following architecture schema:
 ![Udata Search Service architecture schema](docs/udata-search-service-schema.png "Udata Search Service architecture schema")
@@ -39,9 +39,6 @@ docker-compose up
 
 This will start:
 - an elasticsearch
-- a kafka broker
-- a zookeper
-- a kafka consumer
 - a search app
 
 Initialize the elasticsearch indices on setup.
@@ -62,12 +59,10 @@ Configure your udata to use the search service, by updating the following variab
 Ex in local:
 ```
     SEARCH_SERVICE_API_URL = 'http://127.0.0.1:5000/api/1/'
-    KAFKA_URI = 'localhost:9092'
 ```
 
-You can feed the elasticsearch by publishing messages to Kafka.
 Using [udata](https://github.com/opendatateam/udata), when you modify objects,
-indexation messages will be sent and will be consumed by the kafka consumer.
+indexation messages will be sent to the search app and will be consumed by the API.
 If you want to reindex your local mongo base in udata, you can run:
 ```
 cd $WORKSPACE/udata/
@@ -98,12 +93,6 @@ make deps
 make install
 ```
 
-You can start the Elasticsearch and Kafak broker and zookeper using the docker compose.
-You can start the consumer locally with the following command:
-```
-udata-search-service consume-kafka
-```
-
 You can start the web search service with the following command:
 ```
 udata-search-service run
@@ -111,20 +100,12 @@ udata-search-service run
 
 ## Deployment
 
-The project depends on [Kafka](https://kafka.apache.org/documentation/)
-and [ElasticSearch](https://www.elastic.co/guide/index.html) 7.16.
+The project depends on [ElasticSearch](https://www.elastic.co/guide/index.html) 7.16.
 
 Elasticsearch requires the [Analysis ICU](https://github.com/elastic/elasticsearch-analysis-icu)
 plugin for your specific version.
 On Debian, you can take a look at these
 [instructions](https://www.elastic.co/guide/en/elasticsearch/reference/7.16/deb.html) for installation.
-
-You will need a Kafka broker and zookeeper. You can follow the
-[quick-start instructions](https://kafka.apache.org/documentation/#quickstart) to start all
-services in correct order.
-
-You will need to start a search service app a kafka consumer.
-You can start these using [uWSGI](https://uwsgi-docs.readthedocs.io/).
 
 ## Troubleshooting
 

@@ -8,8 +8,8 @@ class OrganizationService:
     def __init__(self, search_client: ElasticClient):
         self.search_client = search_client
 
-    def feed(self, organization: Organization) -> None:
-        self.search_client.index_organization(organization)
+    def feed(self, organization: Organization, index: str = None) -> None:
+        self.search_client.index_organization(organization, index)
 
     def search(self, filters: dict) -> Tuple[List[Organization], int, int]:
         page = filters.pop('page')
@@ -35,6 +35,9 @@ class OrganizationService:
         except TypeError:
             return None
 
+    def delete_one(self, organization_id: str) -> Optional[str]:
+        return self.search_client.delete_one_organization(organization_id)
+
     @staticmethod
     def format_filters(filters):
         filtered = {k: v for k, v in filters.items() if v is not None}
@@ -53,8 +56,8 @@ class DatasetService:
     def __init__(self, search_client: ElasticClient):
         self.search_client = search_client
 
-    def feed(self, dataset: Dataset) -> None:
-        self.search_client.index_dataset(dataset)
+    def feed(self, dataset: Dataset, index: str = None) -> None:
+        self.search_client.index_dataset(dataset, index)
 
     def search(self, filters: dict) -> Tuple[List[Dataset], int, int]:
         page = filters.pop('page')
@@ -79,6 +82,9 @@ class DatasetService:
             return Dataset.load_from_dict(self.search_client.find_one_dataset(dataset_id))
         except TypeError:
             return None
+
+    def delete_one(self, dataset_id: str) -> Optional[str]:
+        return self.search_client.delete_one_dataset(dataset_id)
 
     @staticmethod
     def format_filters(filters):
@@ -108,8 +114,8 @@ class ReuseService:
     def __init__(self, search_client: ElasticClient):
         self.search_client = search_client
 
-    def feed(self, reuse: Reuse) -> None:
-        self.search_client.index_reuse(reuse)
+    def feed(self, reuse: Reuse, index: str = None) -> None:
+        self.search_client.index_reuse(reuse, index)
 
     def search(self, filters: dict) -> Tuple[List[Reuse], int, int]:
         page = filters.pop('page')
@@ -134,6 +140,9 @@ class ReuseService:
             return Reuse.load_from_dict(self.search_client.find_one_reuse(reuse_id))
         except TypeError:
             return None
+
+    def delete_one(self, reuse_id: str) -> Optional[str]:
+        return self.search_client.delete_one_reuse(reuse_id)
 
     @staticmethod
     def format_filters(filters):

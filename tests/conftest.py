@@ -1,7 +1,4 @@
-from datetime import datetime
-
 from faker import Faker
-from elasticsearch_dsl import Index
 import pytest
 from udata_search_service.app import create_app
 from udata_search_service.config import Testing
@@ -33,9 +30,7 @@ def db(search_client):
 
     yield
 
-    SearchableDataset.delete_indices(search_client.es)
-    SearchableReuse.delete_indices(search_client.es)
-    SearchableOrganization.delete_indices(search_client.es)
+    search_client.es.indices.delete(index="*")
 
 
 @pytest.fixture
