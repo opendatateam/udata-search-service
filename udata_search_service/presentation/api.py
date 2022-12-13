@@ -123,7 +123,7 @@ class DatasetToIndex(BaseModel):
     resources_count: Optional[int] = 0
     featured: Optional[int] = 0
     format: Optional[list] = []
-    schema_: Optional[dict] = Field({}, alias="schema")
+    schema_: Optional[list] = Field([], alias="schema")
     extras: Optional[dict] = {}
     harvest: Optional[dict] = {}
     temporal_coverage_start: Optional[str] = None

@@ -14,6 +14,9 @@ class DatasetConsumer(Dataset):
         # Strip markdown
         data["description"] = mdstrip(data["description"])
 
+        # Retrieve schema renamed as schema_
+        data["schema"] = data.get("schema_") or data.get("schema")
+
         organization = data["organization"]
         data["organization"] = organization.get('id') if organization else None
         data["orga_followers"] = organization.get('followers') if organization else None

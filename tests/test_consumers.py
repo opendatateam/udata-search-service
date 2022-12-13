@@ -36,17 +36,20 @@ def test_parse_dataset_obj():
                      {'id': 'country:fr'},
                      {'id': 'country-group:ue'}],
         'granularity': 'fr:commune',
-        'schema': ['etalab/schema-irve']
+        'schema_': ['etalab/schema-irve']
     }
     document = DatasetConsumer.load_from_dict(copy.deepcopy(obj)).to_dict()
 
     # Make sure that these fields are loaded as is
     for key in ['id', 'title', 'url', 'frequency', 'resources_count',
-                'acronym', 'badges', 'tags', 'license', 'owner', 'schema']:
+                'acronym', 'badges', 'tags', 'license', 'owner']:
         assert document[key] == obj[key]
 
     # Make sure that markdown fields are stripped
     assert document["description"] == mdstrip(obj["description"])
+
+    # Make sure schema keyword is retrieved correctly
+    assert document["schema"] == obj["schema_"]
 
     # Make sure that these fields are log2p-normalized
     for key in ['views', 'followers', 'reuses']:

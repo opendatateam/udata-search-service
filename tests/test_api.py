@@ -27,15 +27,17 @@ def test_api_dataset_index_unindex(app, client, search_client, faker):
         'format': ['pdf'],
         'frequency': 'unknown',
         'badges': [],
-        'tags': [],
+        'tags': [faker.word()],
         'license': faker.word(),
         'temporal_coverage_start': faker.past_datetime().isoformat(),
         'temporal_coverage_end': faker.past_datetime().isoformat(),
         'granularity': faker.word(),
-        'geozones': [],
+        'geozones': [{'id': faker.word(), 'name': faker.word(), 'keys': [faker.random_int()]},
+                     {'id': faker.word()}],
         'owner': None,
         'extras': {},
-        'harvest': {}
+        'harvest': {},
+        'schema': [faker.word(), faker.word()]
     }
 
     query = {
@@ -106,15 +108,17 @@ def test_api_dataset_index_on_another_index(app, client, search_client, faker, d
         'format': ['pdf'],
         'frequency': 'unknown',
         'badges': [],
-        'tags': [],
+        'tags': [faker.word()],
         'license': faker.word(),
         'temporal_coverage_start': faker.past_datetime().isoformat(),
         'temporal_coverage_end': faker.past_datetime().isoformat(),
         'granularity': faker.word(),
-        'geozones': [],
+        'geozones': [{'id': faker.word(), 'name': faker.word(), 'keys': [faker.random_int()]},
+                     {'id': faker.word()}],
         'owner': None,
         'extras': {},
-        'harvest': {}
+        'harvest': {},
+        'schema': [faker.word(), faker.word()]
     }
 
     query = {
