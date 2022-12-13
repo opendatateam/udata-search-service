@@ -30,17 +30,6 @@ def db(search_client):
 
     yield
 
-    SearchableDataset.delete_indices(search_client.es)
-    SearchableReuse.delete_indices(search_client.es)
-    SearchableOrganization.delete_indices(search_client.es)
-
-
-@pytest.fixture
-def db_clear(search_client):
-    search_client.es.indices.delete(index="*")
-
-    yield
-
     search_client.es.indices.delete(index="*")
 
 
