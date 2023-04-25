@@ -309,6 +309,28 @@ def test_general_search_with_sorting(app, client, search_client, faker):
     assert res[0]['title'] == 'reuse-test-2'
 
 
+def test_general_search_with_sorting_last_update(app, client, search_client, faker):
+    search_client.index_dataset(DatasetFactory(
+        title='data-test-1',
+        last_update=datetime.date(2021, 12, 2)
+    ))
+    search_client.index_dataset(DatasetFactory(
+        title='data-test-2',
+        last_update=datetime.date(2022, 12, 2)
+    ))
+    search_client.index_dataset(DatasetFactory(
+        title='data-test-3',
+        last_update=datetime.date(2023, 12, 2)
+    ))
+    # Without this, ElasticSearch does not seem to have the time to index.
+    time.sleep(2)
+
+    results_number, res = search_client.query_datasets(None, 0, 20, {}, sort='-last_update')
+    assert res[0]['title'] == 'data-test-3'
+    results_number, res = search_client.query_datasets(None, 0, 20, {}, sort='last_update')
+    assert res[0]['title'] == 'data-test-1'
+
+
 def test_search_dataset_with_synonym(app, client, search_client, faker):
     search_client.index_dataset(DatasetFactory(
         title='rp',
