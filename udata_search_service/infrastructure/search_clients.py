@@ -112,6 +112,7 @@ class SearchableDataset(IndexDocument):
     acronym = Text()
     url = Text()
     created_at = Date()
+    last_update = Date()
     tags = Keyword(multi=True)
     license = Keyword()
     badges = Keyword(multi=True)

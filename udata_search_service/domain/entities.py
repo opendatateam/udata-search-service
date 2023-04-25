@@ -44,6 +44,7 @@ class Dataset(EntityBase):
     title: str
     url: str
     created_at: datetime.date
+    last_update: datetime.date
     frequency: str
     format: List[str]
     views: int
@@ -73,6 +74,8 @@ class Dataset(EntityBase):
     def __post_init__(self):
         if isinstance(self.created_at, str):
             self.created_at = isoparse(self.created_at)
+        if isinstance(self.last_update, str):
+            self.last_update = isoparse(self.last_update)
         if isinstance(self.temporal_coverage_start, str):
             self.temporal_coverage_start = isoparse(self.temporal_coverage_start)
         if isinstance(self.temporal_coverage_end, str):

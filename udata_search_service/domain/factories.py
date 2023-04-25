@@ -14,6 +14,7 @@ class DatasetFactory(factory.Factory):
     acronym = factory.Faker('company_suffix')
     url = factory.Faker('url')
     created_at = factory.LazyFunction(datetime.datetime.now)
+    last_update = factory.LazyFunction(datetime.datetime.now)
     orga_sp = 4
     orga_followers = factory.Faker('random_int')
     views = factory.Faker('random_int')
