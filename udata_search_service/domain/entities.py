@@ -44,7 +44,6 @@ class Dataset(EntityBase):
     title: str
     url: str
     created_at: datetime.date
-    last_update: datetime.date = None
     frequency: str
     format: List[str]
     views: int
@@ -55,6 +54,7 @@ class Dataset(EntityBase):
     concat_title_org: str
     description: str
 
+    last_update: datetime.date = None
     acronym: str = None
     badges: List[str] = None
     tags: List[str] = None
