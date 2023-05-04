@@ -54,6 +54,7 @@ class Dataset(EntityBase):
     concat_title_org: str
     description: str
 
+    last_update: datetime.date = None
     acronym: str = None
     badges: List[str] = None
     tags: List[str] = None
@@ -73,6 +74,8 @@ class Dataset(EntityBase):
     def __post_init__(self):
         if isinstance(self.created_at, str):
             self.created_at = isoparse(self.created_at)
+        if isinstance(self.last_update, str):
+            self.last_update = isoparse(self.last_update)
         if isinstance(self.temporal_coverage_start, str):
             self.temporal_coverage_start = isoparse(self.temporal_coverage_start)
         if isinstance(self.temporal_coverage_end, str):

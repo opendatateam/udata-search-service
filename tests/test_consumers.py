@@ -17,6 +17,7 @@ def test_parse_dataset_obj():
         'badges': [],
         'frequency': 'semiannual',
         'created_at': '2019-01-25T11:30:50',
+        'last_update': '2020-02-27T12:32:50',
         'views': 7806,
         'followers': 72,
         'reuses': 45,
@@ -58,6 +59,7 @@ def test_parse_dataset_obj():
     # Make sure that all other particular fields are treated accordingly
     assert document['concat_title_org'] == get_concat_title_org(document['title'], document['acronym'], document['organization_name'])
     assert document['created_at'].date() == datetime.date(2019, 1, 25)
+    assert document['last_update'].date() == datetime.date(2020, 2, 27)
     assert document['temporal_coverage_start'].date() == datetime.date(2016, 7, 1)
     assert document['temporal_coverage_end'].date() == datetime.date(2021, 6, 30)
     assert document['granularity'] == 'fr:commune'

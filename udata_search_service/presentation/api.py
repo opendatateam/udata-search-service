@@ -60,7 +60,7 @@ class DatasetArgs(BaseModel):
     @validator('sort')
     def sort_validate(cls, value):
         sorts = [
-            'created', 'reuses', 'followers', 'views'
+            'created', 'last_update', 'reuses', 'followers', 'views'
         ]
         choices = sorts + ['-' + k for k in sorts]
         if value not in choices:
@@ -115,6 +115,7 @@ class DatasetToIndex(BaseModel):
     badges: Optional[list] = []
     frequency: Optional[str] = None
     created_at: str
+    last_update: str
     organization: Optional[dict] = None
     owner: Optional[str] = None
     views: int
