@@ -150,7 +150,7 @@ class ElasticClient:
         Create templates based on Document mappings and map patterns.
         Create time-based index matchin the template patterns.
         '''
-        suffix_name = '-' + datetime.now().strftime('%Y-%m-%d-%H-%M')
+        suffix_name = '-' + datetime.utcnow().strftime('%Y-%m-%d-%H-%M')
 
         SearchableDataset.init_index(self.es, suffix_name)
         SearchableReuse.init_index(self.es, suffix_name)

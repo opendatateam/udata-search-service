@@ -13,8 +13,8 @@ class DatasetFactory(factory.Factory):
     description = factory.Faker('text')
     acronym = factory.Faker('company_suffix')
     url = factory.Faker('url')
-    created_at = factory.LazyFunction(datetime.datetime.now)
-    last_update = factory.LazyFunction(datetime.datetime.now)
+    created_at = factory.LazyFunction(datetime.datetime.utcnow)
+    last_update = factory.LazyFunction(datetime.datetime.utcnow)
     orga_sp = 4
     orga_followers = factory.Faker('random_int')
     views = factory.Faker('random_int')
@@ -46,7 +46,7 @@ class OrganizationFactory(factory.Factory):
     description = factory.Faker('text')
     url = factory.Faker('url')
     orga_sp = 4
-    created_at = factory.LazyFunction(datetime.datetime.now)
+    created_at = factory.LazyFunction(datetime.datetime.utcnow)
     followers = factory.Faker('random_int')
     datasets = factory.Faker('random_int')
     views = factory.Faker('random_int')
@@ -61,7 +61,7 @@ class ReuseFactory(factory.Factory):
     title = factory.Faker('sentence')
     description = factory.Faker('text')
     url = factory.Faker('url')
-    created_at = factory.LazyFunction(datetime.datetime.now)
+    created_at = factory.LazyFunction(datetime.datetime.utcnow)
     orga_followers = factory.Faker('random_int')
     views = factory.Faker('random_int')
     followers = factory.Faker('random_int')
