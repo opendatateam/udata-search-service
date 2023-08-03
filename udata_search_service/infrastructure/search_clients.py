@@ -135,6 +135,7 @@ class SearchableDataset(IndexDocument):
     organization_name = Text(analyzer=dgv_analyzer)
     owner = Keyword()
     schema = Keyword(multi=True)
+    topics = Keyword(multi=True)
 
     class Index:
         name = f'{Config.UDATA_INSTANCE_NAME}-dataset'

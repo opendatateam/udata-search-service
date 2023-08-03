@@ -64,6 +64,7 @@ class Dataset(EntityBase):
     granularity: str = None
     geozones: List[str] = None
     schema: List[str] = None
+    topics: List[str] = None
 
     orga_sp: int = None
     orga_followers: int = None
