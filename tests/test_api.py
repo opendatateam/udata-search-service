@@ -577,6 +577,21 @@ def test_api_search_with_tag_filter(app, client, search_client, faker):
     assert resp.json['total'] == 2
 
 
+def test_api_search_with_topic_filter(app, client, search_client, faker):
+    for i in range(4):
+        search_client.index_dataset(DatasetFactory(topics=['test_topic'] if i % 2 else ['not_test_topic']))
+
+    # Without this, ElasticSearch does not seem to have the time to index.
+    time.sleep(2)
+
+    # Filter is singular, we test the feature that maps it to the plural field of the entity.
+    resp = client.get(url_for('api.dataset_search'))
+    assert resp.json['total'] == 4
+
+    resp = client.get(url_for('api.dataset_search', topic='test_topic'))
+    assert resp.json['total'] == 2
+
+
 def test_api_dataset_search_with_geozone_filter(app, client, search_client, faker):
     for i in range(4):
         search_client.index_dataset(DatasetFactory(
