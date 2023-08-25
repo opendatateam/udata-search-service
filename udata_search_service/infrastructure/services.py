@@ -94,6 +94,8 @@ class DatasetService:
             filters['temporal_coverage_end'] = parts[11:]
         if filters['tag']:
             filters['tags'] = filters.pop('tag')
+        if filters['topic']:
+            filters['topics'] = filters.pop('topic')
         if filters['geozone']:
             filters['geozones'] = filters.pop('geozone')
         if filters['schema_']:

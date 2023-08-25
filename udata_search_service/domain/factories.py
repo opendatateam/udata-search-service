@@ -29,6 +29,7 @@ class DatasetFactory(factory.Factory):
     concat_title_org = factory.LazyAttribute(lambda obj: f'{obj.title} {obj.acronym} {obj.organization_name}')
     badges = []
     tags = []
+    topics = []
     license = factory.Faker('word')
     temporal_coverage_start = factory.Faker('past_datetime')
     temporal_coverage_end = factory.Faker('past_datetime')
