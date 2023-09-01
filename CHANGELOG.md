@@ -1,5 +1,9 @@
 # Changelog
 
+## Current (in progress)
+
+- Nothing yet
+
 ## 2.0.2 (2023-09-01)
 
 - Add dataset's topics in index [#43](https://github.com/opendatateam/udata-search-service/pull/43)
