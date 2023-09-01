@@ -2,7 +2,7 @@
 
 ## Current (in progress)
 
-- Nothing yet
+- Add dataset's topics in index [#43](https://github.com/opendatateam/udata-search-service/pull/43)
 
 ## 2.0.1 (2023-05-16)
 
