@@ -4,7 +4,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: udata/circleci:2-alpine
+      - image: udata/circleci:py3.11-bookworm
       - image: udata/elasticsearch:7.16.2
         environment:
           node.name: es01
@@ -61,7 +61,7 @@ jobs:
 
   publish:
     docker:
-      - image: udata/circleci:2-alpine
+      - image: udata/circleci:py3.11-bookworm
     steps:
       - attach_workspace:
           at: .
