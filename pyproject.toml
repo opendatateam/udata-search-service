@@ -8,7 +8,7 @@ authors = [{name = "Opendata Team", email = "opendatateam@data.gouv.fr"}]
 readme = "README.md"
 dynamic = ["version", "description"]
 dependencies = [
-    "dependency-injector==4.36.0",
+    "dependency-injector==4.41.0",
     "elasticsearch==7.15.0",
     "elasticsearch_dsl==7.4.0",
     "factory-boy==3.2.1",
