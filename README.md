@@ -63,23 +63,17 @@ Ex in local:
 
 Using [udata](https://github.com/opendatateam/udata), when you modify objects,
 indexation messages will be sent to the search app and will be consumed by the API.
+
 If you want to reindex your local mongo base in udata, you can run:
 ```
 cd $WORKSPACE/udata/
 source ./venv/bin/activate
 udata search index
 ```
-
 Make sure to have the corresponding UDATA_INSTANCE_NAME specified in your udata settings.
 
-After a reindexation, you'll need to change the alias by using the following command:
-```
-# Locally
-udata-search-service set-alias <index-suffix>
-
-# In the docker context
-docker-compose run --entrypoint /bin/bash web -c 'udata-search-service set-alias <index-suffix>'
-```
+You can specify the option `--reindex` to start indexation on new indexes.
+At the end of this reindexation by udata, `/set-index-alias` route is called to change the alias accordingly.
 
 You can query the search service with the search service api, ex: http://localhost:5000/api/1/datasets/?q=toilettes%20à%20rennes
 
