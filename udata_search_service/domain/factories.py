@@ -73,3 +73,16 @@ class ReuseFactory(factory.Factory):
     type = factory.Faker('word')
     topic = factory.Faker('word')
     owner = factory.Faker('md5')
+
+
+class DataserviceFactory(factory.Factory):
+    class Meta:
+        model = Reuse
+
+    id = factory.Faker('md5')
+    title = factory.Faker('sentence')
+    description = factory.Faker('text')
+    created_at = factory.LazyFunction(datetime.datetime.utcnow)
+    organization = factory.Faker('md5')
+    organization_name = factory.Faker('company')
+    owner = factory.Faker('md5')

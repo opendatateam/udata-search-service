@@ -107,3 +107,19 @@ class Reuse(EntityBase):
     def __post_init__(self):
         if isinstance(self.created_at, str):
             self.created_at = isoparse(self.created_at)
+
+
+@dataclasses.dataclass
+class Dataservice(EntityBase):
+    id: str
+    title: str
+    description: str
+    created_at: datetime.date
+    organization: str = None
+    organization_name: str = None
+    owner: str = None
+    tags: List[str] = None
+
+    def __post_init__(self):
+        if isinstance(self.created_at, str):
+            self.created_at = isoparse(self.created_at)

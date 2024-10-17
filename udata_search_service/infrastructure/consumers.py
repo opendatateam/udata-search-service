@@ -1,7 +1,7 @@
 import logging
 import os
 
-from udata_search_service.domain.entities import Dataset, Organization, Reuse
+from udata_search_service.domain.entities import Dataset, Organization, Reuse, Dataservice
 from udata_search_service.infrastructure.utils import get_concat_title_org, log2p, mdstrip
 
 
@@ -63,4 +63,17 @@ class OrganizationConsumer(Organization):
 
         data["followers"] = log2p(data.get("followers", 0))
         data["views"] = log2p(data.get("views", 0))
+        return super().load_from_dict(data)
+
+
+class DataserviceConsumer(Dataservice):
+    @classmethod
+    def load_from_dict(cls, data):
+        # Strip markdown
+        data["description"] = mdstrip(data["description"])
+
+
+        organization = data["organization"]
+        data["organization"] = organization.get('id') if organization else None
+
         return super().load_from_dict(data)
