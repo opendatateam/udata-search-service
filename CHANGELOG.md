@@ -2,7 +2,7 @@
 
 ## Current (in progress)
 
-- Nothing yet
+- Add badge organization filter on dataset & reuse [#49](https://github.com/opendatateam/udata-search-service/pull/49)
 
 ## 2.1.0 (2024-10-07)
 
