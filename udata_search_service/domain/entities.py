@@ -114,7 +114,10 @@ class Dataservice(EntityBase):
     id: str
     title: str
     description: str
+    description_length: float
     created_at: datetime.date
+
+    orga_followers: int = None
     organization: str = None
     organization_name: str = None
     owner: str = None

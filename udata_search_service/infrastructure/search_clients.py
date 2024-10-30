@@ -363,11 +363,17 @@ class ElasticClient:
         for key, value in filters.items():
             s = s.filter('term', **{key: value})
 
+        dataservices_score_functions = [
+            query.SF("field_value_factor", field="description_length", factor=1, modifier='sqrt', missing=1),
+            query.SF("field_value_factor", field="orga_followers", factor=1, modifier='sqrt', missing=1),
+        ]
+
         if query_text:
             s = s.query('bool', should=[
                     query.Q(
                         'function_score',
-                        query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['title^15', 'description^8', 'organization_name^8'])])
+                        query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['title^15', 'description^8', 'organization_name^8'])]),
+                        functions=dataservices_score_functions
                     ),
                     query.Q(
                         'function_score',
@@ -375,12 +381,13 @@ class ElasticClient:
                             query=query_text,
                             type='cross_fields',
                             fields=['title^7', 'description^4', 'organization_name^4'],
-                            operator="and")])
+                            operator="and")]),
+                        functions=dataservices_score_functions
                     ),
                     query.MultiMatch(query=query_text, type='most_fields', operator="and", fields=['title', 'organization_name'], fuzziness='AUTO:4,6')
                 ])
         else:
-            s = s.query(query.Q('function_score', query=query.MatchAll()))
+            s = s.query(query.Q('function_score', query=query.MatchAll(), functions=dataservices_score_functions))
 
         if sort:
             s = s.sort(sort, {'_score': {'order': 'desc'}})

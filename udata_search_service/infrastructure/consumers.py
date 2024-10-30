@@ -71,9 +71,15 @@ class DataserviceConsumer(Dataservice):
     def load_from_dict(cls, data):
         # Strip markdown
         data["description"] = mdstrip(data["description"])
-
+        data["description_length"] = len(data["description"])
 
         organization = data["organization"]
         data["organization"] = organization.get('id') if organization else None
+        data["orga_followers"] = organization.get('followers') if organization else None
+        data["organization_name"] = organization.get('name') if organization else None
+
+        # Normalize values
+        data["orga_followers"] = log2p(data.get("orga_followers", 0))
+        data["description_length"] = log2p(data["description_length"])
 
         return super().load_from_dict(data)

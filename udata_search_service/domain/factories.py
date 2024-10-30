@@ -82,6 +82,7 @@ class DataserviceFactory(factory.Factory):
     id = factory.Faker('md5')
     title = factory.Faker('sentence')
     description = factory.Faker('text')
+    description_length = factory.Faker("random_int")
     created_at = factory.LazyFunction(datetime.datetime.utcnow)
     organization = factory.Faker('md5')
     organization_name = factory.Faker('company')
