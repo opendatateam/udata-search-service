@@ -76,6 +76,8 @@ class SearchableDataservice(IndexDocument):
     description = Text(analyzer=dgv_analyzer)
     organization_name = Text(analyzer=dgv_analyzer)
     owner = Keyword()
+    followers = Float()
+    description_length = Float()
 
     class Index:
         name = f'{Config.UDATA_INSTANCE_NAME}-dataservice'
@@ -365,6 +367,7 @@ class ElasticClient:
 
         dataservices_score_functions = [
             query.SF("field_value_factor", field="description_length", factor=1, modifier='sqrt', missing=1),
+            query.SF("field_value_factor", field="followers", factor=4, modifier='sqrt', missing=1),
             query.SF("field_value_factor", field="orga_followers", factor=1, modifier='sqrt', missing=1),
         ]
 

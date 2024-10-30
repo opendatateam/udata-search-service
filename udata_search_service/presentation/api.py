@@ -399,6 +399,7 @@ class DataserviceToIndex(BaseModel):
     title: str
     description: str
     created_at: str
+    followers: int = None
     organization: Optional[dict] = {}
     owner: Optional[str] = None
     tags: Optional[list] = []
@@ -410,13 +411,9 @@ class RequestDataserviceIndex(BaseModel):
     index: Optional[str] = None
 
 
-
 @bp.route("/dataservices/index", methods=["POST"], endpoint='dataservice_index')
 @inject
 def dataservice_index(dataservice_service: DataserviceService = Provide[Container.dataservice_service], search_client: ElasticClient = Provide[Container.search_client]):
-    print("coucoucoucouxxx")
-    print(request.json)
-    print(RequestDataserviceIndex(**request.json))
     try:
         validated_obj = RequestDataserviceIndex(**request.json)
     except ValidationError as e:

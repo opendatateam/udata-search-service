@@ -79,6 +79,7 @@ class DataserviceConsumer(Dataservice):
         data["organization_name"] = organization.get('name') if organization else None
 
         # Normalize values
+        data["followers"] = log2p(data.get("followers", 0))
         data["orga_followers"] = log2p(data.get("orga_followers", 0))
         data["description_length"] = log2p(data["description_length"])
 
