@@ -363,6 +363,7 @@ def test_api_dataservice_index_unindex(app, client, search_client, faker):
         },
         "owner": None,
         "tags": [],
+        "is_restricted": False,
         "extras":
         {
             "availability_url": "",
@@ -436,6 +437,7 @@ def test_api_dataservice_index_on_another_index(app, client, search_client, fake
         },
         "owner": None,
         "tags": [],
+        "is_restricted": False,
         "extras":
         {
             "availability_url": "",

@@ -183,7 +183,6 @@ class DataserviceService:
         self.format_filters(filters)
 
         results_number, search_results = self.search_client.query_dataservices(search_text, offset, page_size, filters, sort)
-        print(search_results)
         results = [Dataservice.load_from_dict(hit) for hit in search_results]
         total_pages = round(results_number / page_size) or 1
         return results, results_number, total_pages

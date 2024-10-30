@@ -101,6 +101,7 @@ class DataserviceArgs(BaseModel):
     tag: Optional[str] = None
     organization: Optional[str] = None
     owner: Optional[str] = None
+    is_restricted: Optional[bool] = None
 
     @validator('sort')
     def sort_validate(cls, value):
@@ -404,6 +405,7 @@ class DataserviceToIndex(BaseModel):
     owner: Optional[str] = None
     tags: Optional[list] = []
     extras: Optional[dict] = {}
+    is_restricted: Optional[bool] = None
 
 
 class RequestDataserviceIndex(BaseModel):

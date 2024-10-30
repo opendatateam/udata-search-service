@@ -136,6 +136,7 @@ def test_parse_dataservice_obj():
             "ines",
             "verification"
         ],
+        "is_restricted": False,
         "extras":
         {
             "availability_url": "",
@@ -147,7 +148,7 @@ def test_parse_dataservice_obj():
     document = DataserviceConsumer.load_from_dict(copy.deepcopy(obj)).to_dict()
 
     # Make sure that these fields are loaded as is
-    for key in ['id', 'title', 'tags', 'owner']:
+    for key in ['id', 'title', 'tags', 'owner', 'is_restricted']:
         assert document[key] == obj[key]
 
     # Make sure that markdown fields are stripped

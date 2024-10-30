@@ -300,6 +300,23 @@ def test_search_reuse_with_topic_filter(app, client, search_client, faker):
     assert results_number == 2
 
 
+def test_search_dataservice_with_is_restricted_filter(app, client, search_client, faker):
+    for i in range(4):
+        search_client.index_dataservice(DataserviceFactory(
+            is_restricted=bool(i % 2)
+        ))
+
+    # Without this, ElasticSearch does not seem to have the time to index.
+    time.sleep(2)
+
+    results_number, res = search_client.query_dataservices(None, 0, 20, {})
+    assert results_number == 4
+    results_number, res = search_client.query_dataservices(None, 0, 20, {'is_restricted': True})
+    assert results_number == 2
+    results_number, res = search_client.query_dataservices(None, 0, 20, {'is_restricted': False})
+    assert results_number == 2
+
+
 def test_general_search_with_sorting(app, client, search_client, faker):
     search_client.index_dataset(DatasetFactory(
         title='data-test-1',
