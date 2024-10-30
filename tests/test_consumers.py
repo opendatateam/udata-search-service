@@ -27,7 +27,8 @@ def test_parse_dataset_obj():
             'id': '534fff8ea3a7292c64a77f02',
             'name': 'Ministère de l\'économie, des finances et de la relance',
             'public_service': 1,
-            'followers': 401},
+            'followers': 401,
+            'badges': ["public-service"]},
         'owner': None,
         'format': ['pdf', 'pdf', 'pdf', 'pdf', 'txt', 'txt', 'txt', 'txt', 'txt', 'txt'],
         'temporal_coverage_start': '2016-07-01T00:00:00',
@@ -66,6 +67,7 @@ def test_parse_dataset_obj():
     assert document['geozones'] == ['fr:arrondissement:353', 'country-group:world', 'country:fr', 'country-group:ue']
     assert document['organization'] == obj['organization']['id']
     assert document['organization_name'] == obj['organization']['name']
+    assert document['organization_badges'] == obj['organization']['badges']
     assert document['orga_followers'] == log2p(401)
 
 
@@ -84,7 +86,8 @@ def test_parse_reuse_obj():
             "id": "534fff75a3a7292c64a77de4",
             "name": "Etalab",
             "public_service": 1,
-            "followers": 357},
+            "followers": 357,
+            'badges': ["public-service"]},
         "owner": None,
         "type": "application",
         "topic": "housing_and_development",
@@ -109,6 +112,7 @@ def test_parse_reuse_obj():
     assert document['created_at'].date() == datetime.date(2019, 4, 26)
     assert document['organization'] == obj['organization']['id']
     assert document['organization_name'] == obj['organization']['name']
+    assert document['organization_badges'] == obj['organization']['badges']
     assert document['orga_followers'] == log2p(obj['organization']['followers'])
 
 
