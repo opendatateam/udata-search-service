@@ -101,6 +101,7 @@ class SearchableReuse(IndexDocument):
     organization = Keyword()
     description = Text(analyzer=dgv_analyzer)
     organization_name = Text(analyzer=dgv_analyzer)
+    organization_badges = Keyword(multi=True)
     owner = Keyword()
 
     class Index:
@@ -133,6 +134,7 @@ class SearchableDataset(IndexDocument):
     description = Text(analyzer=dgv_analyzer)
     organization = Keyword()
     organization_name = Text(analyzer=dgv_analyzer)
+    organization_badges = Keyword(multi=True)
     owner = Keyword()
     schema = Keyword(multi=True)
     topics = Keyword(multi=True)

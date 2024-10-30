@@ -41,6 +41,7 @@ class DatasetArgs(BaseModel):
     tag: Optional[str] = None
     badge: Optional[str] = None
     organization: Optional[str] = None
+    organization_badge: Optional[str] = None
     owner: Optional[str] = None
     license: Optional[str] = None
     geozone: Optional[str] = None
@@ -77,6 +78,7 @@ class ReuseArgs(BaseModel):
     tag: Optional[str] = None
     badge: Optional[str] = None
     organization: Optional[str] = None
+    organization_badge: Optional[str] = None
     owner: Optional[str] = None
     type: Optional[str] = None
     featured: Optional[str] = None

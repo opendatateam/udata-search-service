@@ -22,6 +22,7 @@ class DatasetConsumer(Dataset):
         data["orga_followers"] = organization.get('followers') if organization else None
         data["orga_sp"] = organization.get('public_service') if organization else None
         data["organization_name"] = organization.get('name') if organization else None
+        data["organization_badges"] = organization.get('badges') if organization else None
 
         data["concat_title_org"] = get_concat_title_org(data["title"], data['acronym'], data['organization_name'])
         data["geozones"] = [zone.get("id") for zone in data.get("geozones", [])]
@@ -47,6 +48,7 @@ class ReuseConsumer(Reuse):
         data["organization"] = organization.get('id') if organization else None
         data["orga_followers"] = organization.get('followers') if organization else None
         data["organization_name"] = organization.get('name') if organization else None
+        data["organization_badges"] = organization.get('badges') if organization else None
 
         # Normalize values
         data["views"] = log2p(data.get("views", 0))
