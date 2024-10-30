@@ -190,12 +190,12 @@ class DataserviceService:
 
     def find_one(self, dataservice_id: str) -> Optional[Dataservice]:
         try:
-            return Dataservice.load_from_dict(self.search_client.find_one_reuse(dataservice_id))
+            return Dataservice.load_from_dict(self.search_client.find_one_dataservice(dataservice_id))
         except TypeError:
             return None
 
     def delete_one(self, dataservice_id: str) -> Optional[str]:
-        return self.search_client.delete_one_reuse(dataservice_id)
+        return self.search_client.delete_one_dataservice(dataservice_id)
 
     @staticmethod
     def format_filters(filters):

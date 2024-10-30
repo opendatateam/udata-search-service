@@ -391,7 +391,7 @@ def get_dataservice(dataservice_id: str, dataservice_service: DataserviceService
     result = dataservice_service.find_one(dataservice_id)
     if result:
         return jsonify(result)
-    abort(404, 'reuse not found')
+    abort(404, 'dataservice not found')
 
 
 class DataserviceToIndex(BaseModel):

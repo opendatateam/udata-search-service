@@ -1,7 +1,7 @@
 import datetime
 import factory
 
-from udata_search_service.domain.entities import Dataset, Organization, Reuse
+from udata_search_service.domain.entities import Dataservice, Dataset, Organization, Reuse
 
 
 class DatasetFactory(factory.Factory):
@@ -77,7 +77,7 @@ class ReuseFactory(factory.Factory):
 
 class DataserviceFactory(factory.Factory):
     class Meta:
-        model = Reuse
+        model = Dataservice
 
     id = factory.Faker('md5')
     title = factory.Faker('sentence')

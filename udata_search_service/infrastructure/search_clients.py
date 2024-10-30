@@ -454,7 +454,7 @@ class ElasticClient:
 
     def delete_one_dataservice(self, dataservice_id: str) -> Optional[str]:
         try:
-            SearchableReuse.get(id=dataservice_id).delete()
+            SearchableDataservice.get(id=dataservice_id).delete()
             return dataservice_id
         except NotFoundError:
             return None
