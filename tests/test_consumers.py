@@ -1,7 +1,7 @@
 import copy
 import datetime
 
-from udata_search_service.infrastructure.consumers import ReuseConsumer, OrganizationConsumer, DatasetConsumer
+from udata_search_service.infrastructure.consumers import ReuseConsumer, OrganizationConsumer, DataserviceConsumer, DatasetConsumer
 from udata_search_service.infrastructure.utils import get_concat_title_org, log2p, mdstrip
 
 
@@ -110,6 +110,59 @@ def test_parse_reuse_obj():
     assert document['organization'] == obj['organization']['id']
     assert document['organization_name'] == obj['organization']['name']
     assert document['orga_followers'] == log2p(obj['organization']['followers'])
+
+
+def test_parse_dataservice_obj():
+    obj = {
+        "id": "670786ec0e65e6a0c784bf24",
+        "title": "API INES",
+        "description": "### À quoi sert l'API INES ?\n\nL’API INES (Identifiant National dans l'Enseignement Supérieur) permet la vérification et l’immatriculation des étudiants dans l’enseignement supérieur.\nLa vérification s’effectue à partir des données d’état civil de l’étudiant et permet de récupérer son identifiant national étudiant unique s’il est déjà immatriculé.\nL’immatriculation permet d’obtenir un identifiant national unique pour l’étudiant, qui lui sera associé durant tout son parcours d’étudiant.\n\nINES permet une immatriculation unique de tout étudiant:\n- dans l’ensemble des établissements, indépendamment de ses mobilités\n- dans tous les autres systèmes d’information sur les étudiants\nL'identifiant national de l’étudiant est une donnée pivot pour mettre en relation l’ensemble des SI les concernant, qu’ils émanent des établissements, du Ministère de l'Enseignement Supérieur et de la Recherche et des administrations publics (StatutEtudiant, remontées SISE), ou des opérateurs (PARCOURSUP, CNOUS…).\n\n\n## Principales données disponibles\n\nL’API s’adresse à tous les établissements proposant une formation dans l’enseignement supérieur et aux systèmes d’information dans l'enseignement supérieur, comme les plateformes de candidature aux établissements d’enseignement supérieur ou le CNOUS.\n\nL’obtention d’un identifiant national étudiant (INE) d’INES se fait à partir des données d’état civil de l’étudiant.\n\nUne authentification (identifiants d’accès directement fourni par le MESR aux établissements) est nécessaire. Sinon, il n’y a pas de restriction particulière quant à l’utilisation de cette API.\n\n[Lien des documentations supplémentaires](https://ines.enseignementsup-recherche.gouv.fr)",
+        "created_at": "2024-10-10T07:49:00",
+        "followers": 0,
+        "organization":
+        {
+            "id": "534fff90a3a7292c64a77f45",
+            "name": "Ministère de l'Enseignement supérieur et de la Recherche",
+            "public_service": 1,
+            "followers": 152
+        },
+        "owner": None,
+        "tags":
+        [
+            "education",
+            "enseignement",
+            "identifiant",
+            "immatriculation",
+            "ines",
+            "verification"
+        ],
+        "extras":
+        {
+            "availability_url": "",
+            "is_franceconnect": False,
+            "public_cible":
+            []
+        }
+    }
+    document = DataserviceConsumer.load_from_dict(copy.deepcopy(obj)).to_dict()
+
+    # Make sure that these fields are loaded as is
+    for key in ['id', 'title', 'tags', 'owner']:
+        assert document[key] == obj[key]
+
+    # Make sure that markdown fields are stripped
+    assert document["description"] == mdstrip(obj["description"])
+
+    # Make sure that these fields are log2p-normalized
+    for key in ['followers']:
+        assert document[key] == log2p(obj[key])
+
+    # Make sure that all other particular fields are treated accordingly
+    assert document['created_at'].date() == datetime.date(2024, 10, 10)
+    assert document['organization'] == obj['organization']['id']
+    assert document['organization_name'] == obj['organization']['name']
+    assert document['orga_followers'] == log2p(obj['organization']['followers'])
+    assert document['description_length'] == log2p(len(mdstrip(obj['description'])))
 
 
 def test_parse_organization_obj():
