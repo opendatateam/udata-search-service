@@ -60,6 +60,7 @@ def test_api_dataset_index_unindex(app, client, faker):
 
     dataset_search_resp = client.get(url_for('api.dataset_search'))
     assert len(dataset_search_resp.json['data']) == 1
+    assert dataset_search_resp.json['data'][0]['title'] == dataset['title']
     assert dataset_search_resp.json['next_page'] is None
     assert dataset_search_resp.json['page'] == 1
     assert dataset_search_resp.json['previous_page'] is None
@@ -175,6 +176,7 @@ def test_api_org_index_unindex(app, client, faker):
 
     organization_search_resp = client.get(url_for('api.organization_search'))
     assert len(organization_search_resp.json['data']) == 1
+    assert organization_search_resp.json['data'][0]['name'] == org['name']
     assert organization_search_resp.json['next_page'] is None
     assert organization_search_resp.json['page'] == 1
     assert organization_search_resp.json['previous_page'] is None
@@ -279,6 +281,7 @@ def test_api_reuse_index_unindex(app, client, faker):
 
     reuse_search_resp = client.get(url_for('api.reuse_search'))
     assert len(reuse_search_resp.json['data']) == 1
+    assert reuse_search_resp.json['data'][0]['title'] == reuse['title']
     assert reuse_search_resp.json['next_page'] is None
     assert reuse_search_resp.json['page'] == 1
     assert reuse_search_resp.json['previous_page'] is None
@@ -392,6 +395,7 @@ def test_api_dataservice_index_unindex(app, client, faker):
 
     dataservice_search_resp = client.get(url_for('api.dataservice_search'))
     assert len(dataservice_search_resp.json['data']) == 1
+    assert dataservice_search_resp.json['data'][0]['title'] == dataservice['title']
     assert dataservice_search_resp.json['next_page'] is None
     assert dataservice_search_resp.json['page'] == 1
     assert dataservice_search_resp.json['previous_page'] is None
