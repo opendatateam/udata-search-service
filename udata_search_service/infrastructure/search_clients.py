@@ -201,10 +201,10 @@ class ElasticClient:
         SearchableDataservice(meta={'id': to_index.id}, **to_index.to_dict()).save(skip_empty=False, index=index)
 
     def query_organizations(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict]]:
-        s = SearchableOrganization.search()
+        search = SearchableOrganization.search()
 
         for key, value in filters.items():
-            s = s.filter('term', **{key: value})
+            search = search.filter('term', **{key: value})
 
         organizations_score_functions = [
             query.SF("field_value_factor", field="orga_sp", factor=8, modifier='sqrt', missing=1),
@@ -213,7 +213,7 @@ class ElasticClient:
         ]
 
         if query_text:
-            s = s.query('bool', should=[
+            search = search.query('bool', should=[
                     query.Q(
                         'function_score',
                         query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['name^15', 'acronym^15', 'description^8'])]),
@@ -231,14 +231,14 @@ class ElasticClient:
                     query.Match(title={"query": query_text, 'fuzziness': 'AUTO:4,6'}),
             ])
         else:
-            s = s.query(query.Q('function_score', query=query.MatchAll(), functions=organizations_score_functions))
+            search = search.query(query.Q('function_score', query=query.MatchAll(), functions=organizations_score_functions))
 
         if sort:
-            s = s.sort(sort, {'_score': {'order': 'desc'}})
+            search = search.sort(sort, {'_score': {'order': 'desc'}})
 
-        s = s[offset:(offset + page_size)]
+        search = search[offset:(offset + page_size)]
 
-        response = s.execute()
+        response = search.execute()
         results_number = response.hits.total.value
         if response.hits and not isinstance(response.hits[0], SearchableOrganization):
             raise ValueError(
@@ -249,15 +249,15 @@ class ElasticClient:
         return results_number, res
 
     def query_datasets(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict]]:
-        s = SearchableDataset.search()
+        search = SearchableDataset.search()
 
         for key, value in filters.items():
             if key == 'temporal_coverage_start':
-                s = s.filter('range', **{'temporal_coverage_start': {'lte': value}})
+                search = search.filter('range', **{'temporal_coverage_start': {'lte': value}})
             elif key == 'temporal_coverage_end':
-                s = s.filter('range', **{'temporal_coverage_end': {'gte': value}})
+                search = search.filter('range', **{'temporal_coverage_end': {'gte': value}})
             else:
-                s = s.filter('term', **{key: value})
+                search = search.filter('term', **{key: value})
 
         datasets_score_functions = [
             query.SF("field_value_factor", field="orga_sp", factor=8, modifier='sqrt', missing=1),
@@ -268,7 +268,7 @@ class ElasticClient:
         ]
 
         if query_text:
-            s = s.query(
+            search = search.query(
                 'bool',
                 should=[
                     query.Q(
@@ -293,14 +293,14 @@ class ElasticClient:
                     query.MultiMatch(query=query_text, type='most_fields', operator="and", fields=['title', 'organization_name'], fuzziness='AUTO:4,6')
                 ])
         else:
-            s = s.query(query.Q('function_score', query=query.MatchAll(), functions=datasets_score_functions))
+            search = search.query(query.Q('function_score', query=query.MatchAll(), functions=datasets_score_functions))
 
         if sort:
-            s = s.sort(sort, {'_score': {'order': 'desc'}})
+            search = search.sort(sort, {'_score': {'order': 'desc'}})
 
-        s = s[offset:(offset + page_size)]
+        search = search[offset:(offset + page_size)]
 
-        response = s.execute()
+        response = search.execute()
         results_number = response.hits.total.value
         if response.hits and not isinstance(response.hits[0], SearchableDataset):
             raise ValueError(
@@ -311,10 +311,10 @@ class ElasticClient:
         return results_number, res
 
     def query_reuses(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict]]:
-        s = SearchableReuse.search()
+        search = SearchableReuse.search()
 
         for key, value in filters.items():
-            s = s.filter('term', **{key: value})
+            search = search.filter('term', **{key: value})
 
         reuses_score_functions = [
             query.SF("field_value_factor", field="views", factor=4, modifier='sqrt', missing=1),
@@ -324,7 +324,7 @@ class ElasticClient:
         ]
 
         if query_text:
-            s = s.query('bool', should=[
+            search = search.query('bool', should=[
                     query.Q(
                         'function_score',
                         query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['title^15', 'description^8', 'organization_name^8'])]),
@@ -342,14 +342,14 @@ class ElasticClient:
                     query.MultiMatch(query=query_text, type='most_fields', operator="and", fields=['title', 'organization_name'], fuzziness='AUTO:4,6')
                 ])
         else:
-            s = s.query(query.Q('function_score', query=query.MatchAll(), functions=reuses_score_functions))
+            search = search.query(query.Q('function_score', query=query.MatchAll(), functions=reuses_score_functions))
 
         if sort:
-            s = s.sort(sort, {'_score': {'order': 'desc'}})
+            search = search.sort(sort, {'_score': {'order': 'desc'}})
 
-        s = s[offset:(offset + page_size)]
+        search = search[offset:(offset + page_size)]
 
-        response = s.execute()
+        response = search.execute()
         results_number = response.hits.total.value
         if response.hits and not isinstance(response.hits[0], SearchableReuse):
             raise ValueError(
@@ -360,10 +360,10 @@ class ElasticClient:
         return results_number, res
 
     def query_dataservices(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict]]:
-        s = SearchableDataservice.search()
+        search = SearchableDataservice.search()
 
         for key, value in filters.items():
-            s = s.filter('term', **{key: value})
+            search = search.filter('term', **{key: value})
 
         dataservices_score_functions = [
             query.SF("field_value_factor", field="description_length", factor=1, modifier='sqrt', missing=1),
@@ -372,7 +372,7 @@ class ElasticClient:
         ]
 
         if query_text:
-            s = s.query('bool', should=[
+            search = search.query('bool', should=[
                     query.Q(
                         'function_score',
                         query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['title^15', 'description^8', 'organization_name^8'])]),
@@ -390,14 +390,14 @@ class ElasticClient:
                     query.MultiMatch(query=query_text, type='most_fields', operator="and", fields=['title', 'organization_name'], fuzziness='AUTO:4,6')
                 ])
         else:
-            s = s.query(query.Q('function_score', query=query.MatchAll(), functions=dataservices_score_functions))
+            search = search.query(query.Q('function_score', query=query.MatchAll(), functions=dataservices_score_functions))
 
         if sort:
-            s = s.sort(sort, {'_score': {'order': 'desc'}})
+            search = search.sort(sort, {'_score': {'order': 'desc'}})
 
-        s = s[offset:(offset + page_size)]
+        search = search[offset:(offset + page_size)]
 
-        response = s.execute()
+        response = search.execute()
         results_number = response.hits.total.value
         if response.hits and not isinstance(response.hits[0], SearchableDataservice):
             raise ValueError(
