@@ -353,6 +353,17 @@ def test_general_search_with_sorting(app, client, search_client, faker):
     # Without this, ElasticSearch does not seem to have the time to index.
     time.sleep(2)
 
+    # Sort ascending
+    results_number, res = search_client.query_datasets(None, 0, 20, {}, sort='followers')
+    assert res[0]['title'] == 'data-test-1'
+    results_number, res = search_client.query_organizations(None, 0, 20, {}, sort='followers')
+    assert res[0]['name'] == 'org-test-1'
+    results_number, res = search_client.query_reuses(None, 0, 20, {}, sort='followers')
+    assert res[0]['title'] == 'reuse-test-1'
+    results_number, res = search_client.query_dataservices(None, 0, 20, {}, sort='followers')
+    assert res[0]['title'] == 'dataservice-test-1'
+
+    # Sort descending
     results_number, res = search_client.query_datasets(None, 0, 20, {}, sort='-followers')
     assert res[0]['title'] == 'data-test-2'
     results_number, res = search_client.query_organizations(None, 0, 20, {}, sort='-followers')
