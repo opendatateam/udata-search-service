@@ -5,7 +5,7 @@ from flask import url_for
 from udata_search_service.domain.factories import DatasetFactory, OrganizationFactory, ReuseFactory
 
 
-def test_api_dataset_index_unindex(app, client, search_client, faker):
+def test_api_dataset_index_unindex(app, client, faker):
     dataset = {
         'id': faker.md5(),
         'title': faker.sentence(),
@@ -140,7 +140,7 @@ def test_api_dataset_index_on_another_index(app, client, search_client, faker):
     assert resp['_source']['title'] == dataset['title']
 
 
-def test_api_org_index_unindex(app, client, search_client, faker):
+def test_api_org_index_unindex(app, client, faker):
     org = {
         'id': faker.md5(),
         'name': faker.company(),
@@ -235,7 +235,7 @@ def test_api_org_index_on_another_index(app, client, search_client, faker):
     assert resp['_source']['name'] == org['name']
 
 
-def test_api_reuse_index_unindex(app, client, search_client, faker):
+def test_api_reuse_index_unindex(app, client, faker):
     reuse = {
         'id': faker.md5(),
         'title': faker.sentence(),
@@ -348,7 +348,7 @@ def test_api_reuse_index_on_another_index(app, client, search_client, faker):
     assert resp['_source']['title'] == reuse['title']
 
 
-def test_api_dataservice_index_unindex(app, client, search_client, faker):
+def test_api_dataservice_index_unindex(app, client, faker):
     dataservice = {
         "id": faker.md5(),
         "title": faker.sentence(),
