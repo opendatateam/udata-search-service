@@ -2,6 +2,10 @@
 
 ## Current (in progress)
 
+- Nothing yet
+
+## 2.1.0 (2024-10-07)
+
 - Upgrade Flask to 2.2.5 [#44](https://github.com/opendatateam/udata-search-service/pull/44)
 - Upgrade to Python 3.11 [#45](https://github.com/opendatateam/udata-search-service/pull/45)
 
