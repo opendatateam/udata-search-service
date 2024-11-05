@@ -2,7 +2,8 @@
 
 ## Current (in progress)
 
-- Nothing yet
+- Add dataservices search [#48](https://github.com/opendatateam/udata-search-service/pull/48)
+    * :warning: you will need to init ES indices with `udata-search-service init-es` and index dataservices on udata side with `udata search index dataservice`
 
 ## 2.1.0 (2024-10-07)
 
