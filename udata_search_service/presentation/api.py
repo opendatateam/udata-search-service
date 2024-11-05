@@ -6,9 +6,9 @@ from flask import Blueprint, request, url_for, jsonify, abort
 from pydantic import BaseModel, Field, ValidationError, validator
 from udata_search_service.container import Container
 from udata_search_service.config import Config
-from udata_search_service.infrastructure.services import DatasetService, OrganizationService, ReuseService
+from udata_search_service.infrastructure.services import DatasetService, OrganizationService, ReuseService, DataserviceService
 from udata_search_service.infrastructure.search_clients import ElasticClient
-from udata_search_service.infrastructure.consumers import DatasetConsumer, ReuseConsumer, OrganizationConsumer
+from udata_search_service.infrastructure.consumers import DatasetConsumer, ReuseConsumer, OrganizationConsumer, DataserviceConsumer
 from udata_search_service.infrastructure.migrate import set_alias as set_alias_func
 
 
@@ -90,6 +90,27 @@ class ReuseArgs(BaseModel):
         choices = sorts + ['-' + k for k in sorts]
         if value not in choices:
             raise ValueError('Temporal coverage does not match the right pattern.')
+        return value
+
+
+class DataserviceArgs(BaseModel):
+    q: Optional[str] = None
+    page: Optional[int] = 1
+    page_size: Optional[int] = 20
+    sort: Optional[str] = None
+    tag: Optional[str] = None
+    organization: Optional[str] = None
+    owner: Optional[str] = None
+    is_restricted: Optional[bool] = None
+
+    @validator('sort')
+    def sort_validate(cls, value):
+        sorts = [
+            'created',
+        ]
+        choices = sorts + ['-' + k for k in sorts]
+        if value not in choices:
+            raise ValueError('Sort parameter is not in the sorts available choices.')
         return value
 
 
@@ -344,6 +365,78 @@ def reuse_unindex(reuse_id: str, reuse_service: ReuseService = Provide[Container
     if result:
         return jsonify({'data': f'Reuse {result} removed from index'})
     abort(404, 'reuse not found')
+
+
+@bp.route("/dataservices/", methods=["GET"], endpoint='dataservice_search')
+@inject
+def dataservices_search(dataservice_service: DataserviceService = Provide[Container.dataservice_service]):
+    try:
+        request_args = DataserviceArgs(**request.args)
+    except ValidationError as e:
+        abort(400, e)
+
+    results, results_number, total_pages = dataservice_service.search(request_args.dict())
+
+    next_url = url_for('api.dataservice_search', q=request_args.q, page=request_args.page + 1,
+                       page_size=request_args.page_size, _external=True)
+    prev_url = url_for('api.dataservice_search', q=request_args.q, page=request_args.page - 1,
+                       page_size=request_args.page_size, _external=True)
+
+    return make_response(results, total_pages, results_number, request_args.page,
+                         request_args.page_size, next_url, prev_url)
+
+
+@bp.route("/dataservices/<dataservice_id>/", methods=["GET"], endpoint='dataservice_get_specific')
+@inject
+def get_dataservice(dataservice_id: str, dataservice_service: DataserviceService = Provide[Container.dataservice_service]):
+    result = dataservice_service.find_one(dataservice_id)
+    if result:
+        return jsonify(result)
+    abort(404, 'dataservice not found')
+
+
+class DataserviceToIndex(BaseModel):
+    id: str
+    title: str
+    description: str
+    created_at: str
+    followers: int = None
+    organization: Optional[dict] = {}
+    owner: Optional[str] = None
+    tags: Optional[list] = []
+    extras: Optional[dict] = {}
+    is_restricted: Optional[bool] = None
+
+
+class RequestDataserviceIndex(BaseModel):
+    document: DataserviceToIndex
+    index: Optional[str] = None
+
+
+@bp.route("/dataservices/index", methods=["POST"], endpoint='dataservice_index')
+@inject
+def dataservice_index(dataservice_service: DataserviceService = Provide[Container.dataservice_service], search_client: ElasticClient = Provide[Container.search_client]):
+    try:
+        validated_obj = RequestDataserviceIndex(**request.json)
+    except ValidationError as e:
+        abort(400, e)
+
+    document = DataserviceConsumer.load_from_dict(validated_obj.document.dict())
+    index_name = f'{Config.UDATA_INSTANCE_NAME}-{validated_obj.index}' if validated_obj.index else None
+    if index_name and not search_client.es.indices.exists(index=index_name):
+        abort(404, 'Index does not exist')
+
+    dataservice_service.feed(document, index_name)
+    return jsonify({'data': 'Dataservice added to index'})
+
+
+@bp.route("/dataservices/<dataservice_id>/unindex", methods=["DELETE"], endpoint='dataservice_unindex')
+@inject
+def dataservice_unindex(dataservice_id: str, dataservice_service: DataserviceService = Provide[Container.dataservice_service]):
+    result = dataservice_service.delete_one(dataservice_id)
+    if result:
+        return jsonify({'data': f'Dataservice {result} removed from index'})
+    abort(404, 'dataservice not found')
 
 
 @bp.route("/create-index", methods=["POST"], endpoint='create_index')

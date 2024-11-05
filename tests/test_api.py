@@ -5,7 +5,7 @@ from flask import url_for
 from udata_search_service.domain.factories import DatasetFactory, OrganizationFactory, ReuseFactory
 
 
-def test_api_dataset_index_unindex(app, client, search_client, faker):
+def test_api_dataset_index_unindex(app, client, faker):
     dataset = {
         'id': faker.md5(),
         'title': faker.sentence(),
@@ -60,6 +60,7 @@ def test_api_dataset_index_unindex(app, client, search_client, faker):
 
     dataset_search_resp = client.get(url_for('api.dataset_search'))
     assert len(dataset_search_resp.json['data']) == 1
+    assert dataset_search_resp.json['data'][0]['title'] == dataset['title']
     assert dataset_search_resp.json['next_page'] is None
     assert dataset_search_resp.json['page'] == 1
     assert dataset_search_resp.json['previous_page'] is None
@@ -140,7 +141,7 @@ def test_api_dataset_index_on_another_index(app, client, search_client, faker):
     assert resp['_source']['title'] == dataset['title']
 
 
-def test_api_org_index_unindex(app, client, search_client, faker):
+def test_api_org_index_unindex(app, client, faker):
     org = {
         'id': faker.md5(),
         'name': faker.company(),
@@ -175,6 +176,7 @@ def test_api_org_index_unindex(app, client, search_client, faker):
 
     organization_search_resp = client.get(url_for('api.organization_search'))
     assert len(organization_search_resp.json['data']) == 1
+    assert organization_search_resp.json['data'][0]['name'] == org['name']
     assert organization_search_resp.json['next_page'] is None
     assert organization_search_resp.json['page'] == 1
     assert organization_search_resp.json['previous_page'] is None
@@ -235,7 +237,7 @@ def test_api_org_index_on_another_index(app, client, search_client, faker):
     assert resp['_source']['name'] == org['name']
 
 
-def test_api_reuse_index_unindex(app, client, search_client, faker):
+def test_api_reuse_index_unindex(app, client, faker):
     reuse = {
         'id': faker.md5(),
         'title': faker.sentence(),
@@ -279,6 +281,7 @@ def test_api_reuse_index_unindex(app, client, search_client, faker):
 
     reuse_search_resp = client.get(url_for('api.reuse_search'))
     assert len(reuse_search_resp.json['data']) == 1
+    assert reuse_search_resp.json['data'][0]['title'] == reuse['title']
     assert reuse_search_resp.json['next_page'] is None
     assert reuse_search_resp.json['page'] == 1
     assert reuse_search_resp.json['previous_page'] is None
@@ -346,6 +349,120 @@ def test_api_reuse_index_on_another_index(app, client, search_client, faker):
 
     resp = search_client.es.get(index=f"{app.config['UDATA_INSTANCE_NAME']}-{index_name}", id=reuse['id'])
     assert resp['_source']['title'] == reuse['title']
+
+
+def test_api_dataservice_index_unindex(app, client, faker):
+    dataservice = {
+        "id": faker.md5(),
+        "title": faker.sentence(),
+        "description": faker.text(),
+        "created_at": faker.past_datetime().isoformat(),
+        "followers": faker.random_int(),
+        'organization': {
+            'id': faker.md5(),
+            'name': faker.company(),
+            'public_service': faker.random_int(min=0, max=1),
+            'followers': faker.random_int()
+        },
+        "owner": None,
+        "tags": [],
+        "is_restricted": False,
+        "extras":
+        {
+            "availability_url": "",
+            "is_franceconnect": False,
+            "public_cible":
+            []
+        }
+    }
+
+    query = {
+        'document': dataservice,
+        'index': None
+    }
+
+    index_resp = client.post(url_for('api.dataservice_index'), json={'document': dataservice, 'index': 'random-non-existing-index'})
+    assert index_resp.status_code == 404
+
+    index_resp = client.post(url_for('api.dataservice_index'), json=query)
+    assert index_resp.status_code == 200
+
+    time.sleep(2)
+
+    dataservice_resp = client.get(url_for('api.dataservice_get_specific', dataservice_id=dataservice['id']))
+    assert dataservice_resp.status_code == 200
+    assert dataservice_resp.json['title'] == dataservice['title']
+
+    dataservice_search_resp = client.get(url_for('api.dataservice_search'))
+    assert len(dataservice_search_resp.json['data']) == 1
+    assert dataservice_search_resp.json['data'][0]['title'] == dataservice['title']
+    assert dataservice_search_resp.json['next_page'] is None
+    assert dataservice_search_resp.json['page'] == 1
+    assert dataservice_search_resp.json['previous_page'] is None
+    assert dataservice_search_resp.json['page_size'] == 20
+    assert dataservice_search_resp.json['total_pages'] == 1
+    assert dataservice_search_resp.json['total'] == 1
+
+    deletion_resp = client.delete(url_for('api.dataservice_unindex', dataservice_id=dataservice['id']))
+    assert deletion_resp.status_code == 200
+
+    time.sleep(2)
+
+    dataservice_get_after_delete_resp = client.get(url_for('api.dataservice_get_specific', dataservice_id=dataservice['id']))
+    assert dataservice_get_after_delete_resp.status_code == 404
+
+    dataservice_search_after_delete_resp = client.get(url_for('api.dataservice_search'))
+    assert len(dataservice_search_after_delete_resp.json['data']) == 0
+    assert dataservice_search_after_delete_resp.json['next_page'] is None
+    assert dataservice_search_after_delete_resp.json['page'] == 1
+    assert dataservice_search_after_delete_resp.json['previous_page'] is None
+    assert dataservice_search_after_delete_resp.json['page_size'] == 20
+    assert dataservice_search_after_delete_resp.json['total_pages'] == 1
+    assert dataservice_search_after_delete_resp.json['total'] == 0
+
+
+def test_api_dataservice_index_on_another_index(app, client, search_client, faker):
+    now = datetime.datetime.utcnow().strftime('%Y-%m-%d-%H-%M')
+    index_name = f"test-dataservice-{now}"
+    if not search_client.es.indices.exists(index=f"{app.config['UDATA_INSTANCE_NAME']}-{index_name}"):
+        search_client.es.indices.create(index=f"{app.config['UDATA_INSTANCE_NAME']}-{index_name}")
+
+    dataservice = {
+        "id": faker.md5(),
+        "title": faker.sentence(),
+        "description": faker.text(),
+        "created_at": faker.past_datetime().isoformat(),
+        "followers": faker.random_int(),
+        'organization': {
+            'id': faker.md5(),
+            'name': faker.company(),
+            'public_service': faker.random_int(min=0, max=1),
+            'followers': faker.random_int()
+        },
+        "owner": None,
+        "tags": [],
+        "is_restricted": False,
+        "extras":
+        {
+            "availability_url": "",
+            "is_franceconnect": False,
+            "public_cible":
+            []
+        }
+    }
+
+    query = {
+        'document': dataservice,
+        'index': index_name
+    }
+
+    index_resp = client.post(url_for('api.dataservice_index'), json=query)
+    assert index_resp.status_code == 200
+
+    time.sleep(2)
+
+    resp = search_client.es.get(index=f"{app.config['UDATA_INSTANCE_NAME']}-{index_name}", id=dataservice['id'])
+    assert resp['_source']['title'] == dataservice['title']
 
 
 def test_api_search_without_query(app, client, search_client, faker):

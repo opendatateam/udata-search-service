@@ -13,6 +13,7 @@ ALL_INDICES = [
     'dataset',
     'reuse',
     'organization',
+    'dataservice',
 ]
 
 
