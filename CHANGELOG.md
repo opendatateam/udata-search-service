@@ -1,6 +1,6 @@
 # Changelog
 
-## Current (in progress)
+## 2.2.0 (2024-11-07)
 
 - Add badge organization filter on dataset & reuse [#49](https://github.com/opendatateam/udata-search-service/pull/49)
 - Add dataservices search [#48](https://github.com/opendatateam/udata-search-service/pull/48)
