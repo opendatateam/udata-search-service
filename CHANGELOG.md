@@ -2,8 +2,12 @@
 
 ## Current (in progress)
 
+- Add badge organization filter on dataset & reuse [#49](https://github.com/opendatateam/udata-search-service/pull/49)
 - Add dataservices search [#48](https://github.com/opendatateam/udata-search-service/pull/48)
-    * :warning: you will need to init ES indices with `udata-search-service init-es` and index dataservices on udata side with `udata search index dataservice`
+
+:warning: To use these new features, you will need to:
+    - init ES indices with `udata-search-service init-es` 
+    - index datasets and dataservices on udata side with `udata search index dataset` and `udata search index dataservice`
 
 ## 2.1.0 (2024-10-07)
 

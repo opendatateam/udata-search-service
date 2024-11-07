@@ -110,6 +110,28 @@ def test_search_with_orga_id_filter(app, client, search_client, faker):
     assert results_number == 1
 
 
+def test_search_with_orga_badge_filter(app, client, search_client, faker):
+    for i in range(4):
+        search_client.index_dataset(DatasetFactory(
+            organization_badges=["public-service"] if i % 2 else []
+        ))
+        search_client.index_reuse(ReuseFactory(
+            organization_badges=["public-service"] if i % 2 else []
+        ))
+
+    # Without this, ElasticSearch does not seem to have the time to index.
+    time.sleep(2)
+
+    results_number, res = search_client.query_datasets(None, 0, 20, {})
+    assert results_number == 4
+    results_number, res = search_client.query_datasets(None, 0, 20, {'organization_badges': 'public-service'})
+    assert results_number == 2
+    results_number, res = search_client.query_reuses(None, 0, 20, {})
+    assert results_number == 4
+    results_number, res = search_client.query_reuses(None, 0, 20, {'organization_badges': 'public-service'})
+    assert results_number == 2
+
+
 def test_search_with_owner_filter(app, client, search_client, faker):
     for i in range(4):
         search_client.index_dataset(DatasetFactory())

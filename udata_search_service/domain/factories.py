@@ -24,6 +24,7 @@ class DatasetFactory(factory.Factory):
     resources_count = factory.Faker('random_int', min=1, max=15)
     organization = factory.Faker('md5')
     organization_name = factory.Faker('company')
+    organization_badges = []
     format = ['pdf']
     frequency = 'unknown'
     concat_title_org = factory.LazyAttribute(lambda obj: f'{obj.title} {obj.acronym} {obj.organization_name}')
@@ -70,6 +71,7 @@ class ReuseFactory(factory.Factory):
     featured = factory.Faker('random_int')
     organization = factory.Faker('md5')
     organization_name = factory.Faker('company')
+    organization_badges = []
     type = factory.Faker('word')
     topic = factory.Faker('word')
     owner = factory.Faker('md5')

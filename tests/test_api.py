@@ -23,7 +23,8 @@ def test_api_dataset_index_unindex(app, client, faker):
             'id': faker.md5(),
             'name': faker.company(),
             'public_service': faker.random_int(min=0, max=1),
-            'followers': faker.random_int()
+            'followers': faker.random_int(),
+            'badges': [faker.word()]
         },
         'format': ['pdf'],
         'frequency': 'unknown',
@@ -109,7 +110,8 @@ def test_api_dataset_index_on_another_index(app, client, search_client, faker):
             'id': faker.md5(),
             'name': faker.company(),
             'public_service': faker.random_int(min=0, max=1),
-            'followers': faker.random_int()
+            'followers': faker.random_int(),
+            'badges': [faker.word()]
         },
         'format': ['pdf'],
         'frequency': 'unknown',
@@ -253,7 +255,8 @@ def test_api_reuse_index_unindex(app, client, faker):
             'id': faker.md5(),
             'name': faker.company(),
             'public_service': faker.random_int(min=0, max=1),
-            'followers': faker.random_int()
+            'followers': faker.random_int(),
+            'badges': [faker.word()]
         },
         'tags': [],
         'owner': None,
@@ -328,7 +331,8 @@ def test_api_reuse_index_on_another_index(app, client, search_client, faker):
             'id': faker.md5(),
             'name': faker.company(),
             'public_service': faker.random_int(min=0, max=1),
-            'followers': faker.random_int()
+            'followers': faker.random_int(),
+            'badges': [faker.word()]
         },
         'tags': [],
         'owner': None,

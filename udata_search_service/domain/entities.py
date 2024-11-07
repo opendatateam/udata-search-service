@@ -70,6 +70,7 @@ class Dataset(EntityBase):
     orga_followers: int = None
     organization: str = None
     organization_name: str = None
+    organization_badges: List[str] = None
     owner: str = None
 
     def __post_init__(self):
@@ -102,6 +103,7 @@ class Reuse(EntityBase):
     orga_followers: int = None
     organization: str = None
     organization_name: str = None
+    organization_badges: List[str] = None
     owner: str = None
 
     def __post_init__(self):
