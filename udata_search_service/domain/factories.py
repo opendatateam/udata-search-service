@@ -1,7 +1,7 @@
 import datetime
 import factory
 
-from udata_search_service.domain.entities import Dataset, Organization, Reuse
+from udata_search_service.domain.entities import Dataservice, Dataset, Organization, Reuse
 
 
 class DatasetFactory(factory.Factory):
@@ -74,4 +74,20 @@ class ReuseFactory(factory.Factory):
     organization_badges = []
     type = factory.Faker('word')
     topic = factory.Faker('word')
+    owner = factory.Faker('md5')
+
+
+class DataserviceFactory(factory.Factory):
+    class Meta:
+        model = Dataservice
+
+    id = factory.Faker('md5')
+    title = factory.Faker('sentence')
+    description = factory.Faker('text')
+    description_length = factory.Faker("random_int")
+    created_at = factory.LazyFunction(datetime.datetime.utcnow)
+    followers = factory.Faker("random_int")
+    is_restricted = factory.Faker("boolean")
+    organization = factory.Faker('md5')
+    organization_name = factory.Faker('company')
     owner = factory.Faker('md5')

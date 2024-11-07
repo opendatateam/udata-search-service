@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Tuple, Optional, List
-from udata_search_service.domain.entities import Dataset, Organization, Reuse
+from udata_search_service.domain.entities import Dataset, Organization, Reuse, Dataservice
 
 
 class SearchClient(ABC):
@@ -26,6 +26,10 @@ class SearchClient(ABC):
         pass
 
     @abstractmethod
+    def index_dataservice(self, to_index: Dataservice) -> None:
+        pass
+
+    @abstractmethod
     def query_organizations(self, query_text: str, offset: int, page_size: int) -> Tuple[int, List[Organization]]:
         pass
 
@@ -38,6 +42,10 @@ class SearchClient(ABC):
         pass
 
     @abstractmethod
+    def query_dataservices(self, query_text: str, offset: int, page_size: int) -> Tuple[int, List[Dataservice]]:
+        pass
+
+    @abstractmethod
     def find_one_organization(self, organization_id: str) -> Optional[Organization]:
         pass
 
@@ -47,4 +55,8 @@ class SearchClient(ABC):
 
     @abstractmethod
     def find_one_reuse(self, reuse_id: str) -> Optional[Reuse]:
+        pass
+
+    @abstractmethod
+    def find_one_dataservice(self, dataservice_id: str) -> Optional[Dataservice]:
         pass
