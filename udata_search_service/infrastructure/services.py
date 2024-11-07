@@ -88,6 +88,11 @@ class DatasetService:
 
     @staticmethod
     def format_filters(filters):
+        '''
+        Format search filters params to match the actual fields in ElasticSearch.
+        For example udata search params uses singular ?tag=<mytag>, even though
+        the field is plural since it's a list of tags.
+        '''
         if filters['temporal_coverage']:
             parts = filters.pop('temporal_coverage')
             filters['temporal_coverage_start'] = parts[:10]
