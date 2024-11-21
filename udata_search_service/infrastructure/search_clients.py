@@ -258,6 +258,12 @@ class ElasticClient:
                 search = search.filter('range', **{'temporal_coverage_start': {'lte': value}})
             elif key == 'temporal_coverage_end':
                 search = search.filter('range', **{'temporal_coverage_end': {'gte': value}})
+            elif key == 'tags':
+                # build an AND filter from tags list
+                tag_filters = [query.Q('term', tags=tag) for tag in value]
+                search = search.filter(
+                    query.Bool(must=tag_filters)
+                )
             else:
                 search = search.filter('term', **{key: value})
 
