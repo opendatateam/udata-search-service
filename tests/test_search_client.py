@@ -190,7 +190,7 @@ def test_search_datasets_with_temporal_filters(app, client, search_client, faker
 def test_search_with_tag_filter(app, client, search_client, faker):
     for i in range(4):
         search_client.index_dataset(DatasetFactory(
-            tags=['test-tag', 'test-tag-2'] if i % 2 else ['not-test-tag']
+            tags=['test-tag', f'test-tag-{i}'] if i % 2 else ['not-test-tag']
         ))
 
         search_client.index_reuse(ReuseFactory(
@@ -206,8 +206,8 @@ def test_search_with_tag_filter(app, client, search_client, faker):
 
     results_number, res = search_client.query_datasets(None, 0, 20, {})
     assert results_number == 4
-    results_number, res = search_client.query_datasets(None, 0, 20, {'tags': ['test-tag', 'test-tag-2']})
-    assert results_number == 2
+    results_number, res = search_client.query_datasets(None, 0, 20, {'tags': ['test-tag', 'test-tag-1']})
+    assert results_number == 1
     results_number, res = search_client.query_datasets(None, 0, 20, {'tags': ['not-test-tag']})
     assert results_number == 2
     results_number, res = search_client.query_reuses(None, 0, 20, {})
