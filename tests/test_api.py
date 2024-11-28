@@ -678,7 +678,7 @@ def test_api_dataset_search_with_temporal_filter(app, client, search_client, fak
 
 def test_api_search_with_tag_filter(app, client, search_client, faker):
     for i in range(4):
-        search_client.index_dataset(DatasetFactory(tags=['test-tag'] if i % 2 else ['not-test-tag']))
+        search_client.index_dataset(DatasetFactory(tags=['test-tag', 'test-tag-2'] if i % 2 else ['not-test-tag']))
         search_client.index_reuse(ReuseFactory(tags=['test-tag'] if i % 2 else ['not-test-tag']))
 
     # Without this, ElasticSearch does not seem to have the time to index.
@@ -688,7 +688,10 @@ def test_api_search_with_tag_filter(app, client, search_client, faker):
     resp = client.get(url_for('api.dataset_search'))
     assert resp.json['total'] == 4
 
-    resp = client.get(url_for('api.dataset_search', tag='test-tag'))
+    resp = client.get(url_for('api.dataset_search', tag=['test-tag', 'test-tag-2']))
+    assert resp.json['total'] == 2
+
+    resp = client.get(url_for('api.dataset_search', tag=['not-test-tag']))
     assert resp.json['total'] == 2
 
     resp = client.get(url_for('api.reuse_search'))

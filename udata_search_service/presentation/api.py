@@ -10,6 +10,7 @@ from udata_search_service.infrastructure.services import DatasetService, Organiz
 from udata_search_service.infrastructure.search_clients import ElasticClient
 from udata_search_service.infrastructure.consumers import DatasetConsumer, ReuseConsumer, OrganizationConsumer, DataserviceConsumer
 from udata_search_service.infrastructure.migrate import set_alias as set_alias_func
+from udata_search_service.presentation.utils import is_list_type
 
 
 bp = Blueprint('api', __name__, url_prefix='/api/1')
@@ -38,7 +39,7 @@ class DatasetArgs(BaseModel):
     page: Optional[int] = 1
     page_size: Optional[int] = 20
     sort: Optional[str] = None
-    tag: Optional[str] = None
+    tag: Optional[list[str]] = None
     badge: Optional[str] = None
     organization: Optional[str] = None
     organization_badge: Optional[str] = None
@@ -69,6 +70,22 @@ class DatasetArgs(BaseModel):
             raise ValueError('Temporal coverage does not match the right pattern.')
         return value
 
+    @classmethod
+    def from_request_args(cls, request_args) -> 'DatasetArgs':
+        def get_list_args() -> dict:
+            return {
+                key: value
+                for key, value in request_args.to_dict(flat=False).items()
+                if key in cls.__fields__
+                and is_list_type(cls.__fields__[key].outer_type_)
+            }
+
+        return cls(
+            **{
+                **request_args.to_dict(),
+                **get_list_args(),
+            }
+        )
 
 class ReuseArgs(BaseModel):
     q: Optional[str] = None
@@ -192,7 +209,7 @@ def dataset_unindex(dataset_id: str, dataset_service: DatasetService = Provide[C
 @inject
 def datasets_search(dataset_service: DatasetService = Provide[Container.dataset_service]):
     try:
-        request_args = DatasetArgs(**request.args)
+        request_args = DatasetArgs.from_request_args(request.args)
     except ValidationError as e:
         abort(400, e)
 
