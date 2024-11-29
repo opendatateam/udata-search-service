@@ -1,5 +1,9 @@
 # Changelog
 
+## Current (in progress)
+
+- Nothing yet
+
 ## 2.2.1 (2024-11-29)
 
 - feat: handle multiple tags filter on datasets [#50](https://github.com/opendatateam/udata-search-service/pull/50)
