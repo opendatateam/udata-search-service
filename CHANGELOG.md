@@ -2,7 +2,7 @@
 
 ## Current (in progress)
 
-- Nothing yet
+- Add Dataservices views metrics as field factor and sort [#52](https://github.com/opendatateam/udata-search-service/pull/52)
 
 ## 2.2.1 (2024-11-29)
 
