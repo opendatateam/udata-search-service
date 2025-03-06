@@ -362,6 +362,7 @@ def test_api_dataservice_index_unindex(app, client, faker):
         "description": faker.text(),
         "created_at": faker.past_datetime().isoformat(),
         "followers": faker.random_int(),
+        "views": faker.random_int(),
         'organization': {
             'id': faker.md5(),
             'name': faker.company(),
@@ -437,6 +438,7 @@ def test_api_dataservice_index_on_another_index(app, client, search_client, fake
         "description": faker.text(),
         "created_at": faker.past_datetime().isoformat(),
         "followers": faker.random_int(),
+        "views": faker.random_int(),
         'organization': {
             'id': faker.md5(),
             'name': faker.company(),
