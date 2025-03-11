@@ -86,6 +86,7 @@ class DataserviceFactory(factory.Factory):
     description = factory.Faker('text')
     description_length = factory.Faker("random_int")
     created_at = factory.LazyFunction(datetime.datetime.utcnow)
+    views = factory.Faker('random_int')
     followers = factory.Faker("random_int")
     is_restricted = factory.Faker("boolean")
     organization = factory.Faker('md5')

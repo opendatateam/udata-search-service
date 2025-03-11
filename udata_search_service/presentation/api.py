@@ -125,7 +125,7 @@ class DataserviceArgs(BaseModel):
     @validator('sort')
     def sort_validate(cls, value):
         sorts = [
-            'created',
+            'created', 'followers', 'views'
         ]
         choices = sorts + ['-' + k for k in sorts]
         if value not in choices:
@@ -419,7 +419,8 @@ class DataserviceToIndex(BaseModel):
     title: str
     description: str
     created_at: str
-    followers: int = None
+    views: int = 0
+    followers: int = 0
     organization: Optional[dict] = {}
     owner: Optional[str] = None
     tags: Optional[list] = []
