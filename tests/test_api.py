@@ -17,7 +17,7 @@ def test_api_dataset_index_unindex(app, client, faker):
         'views': faker.random_int(),
         'followers': faker.random_int(),
         'reuses': faker.random_int(),
-        'featured': faker.random_int(min=0, max=1),
+        'featured': faker.pybool(),
         'resources_count': faker.random_int(min=1, max=15),
         'organization': {
             'id': faker.md5(),
@@ -104,7 +104,7 @@ def test_api_dataset_index_on_another_index(app, client, search_client, faker):
         'views': faker.random_int(),
         'followers': faker.random_int(),
         'reuses': faker.random_int(),
-        'featured': faker.random_int(min=0, max=1),
+        'featured': faker.pybool(),
         'resources_count': faker.random_int(min=1, max=15),
         'organization': {
             'id': faker.md5(),

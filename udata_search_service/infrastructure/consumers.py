@@ -33,7 +33,6 @@ class DatasetConsumer(Dataset):
         data["reuses"] = log2p(data.get("reuses", 0))
         data["orga_followers"] = log2p(data.get("orga_followers", 0))
         data["orga_sp"] = 4 if data.get("orga_sp", 0) else 1
-        data["featured"] = 4 if data.get("featured", 0) else 1
 
         return super().load_from_dict(data)
 

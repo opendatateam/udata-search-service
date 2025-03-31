@@ -21,7 +21,7 @@ def test_parse_dataset_obj():
         'views': 7806,
         'followers': 72,
         'reuses': 45,
-        'featured': 0,
+        'featured': False,
         'resources_count': 10,
         'organization': {
             'id': '534fff8ea3a7292c64a77f02',

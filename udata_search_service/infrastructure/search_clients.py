@@ -7,7 +7,7 @@ from typing import Tuple, Optional, List
 
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError
-from elasticsearch_dsl import Date, Document, Float, Integer, Keyword, Text, tokenizer, token_filter, analyzer, query
+from elasticsearch_dsl import Boolean, Date, Document, Float, Integer, Keyword, Text, tokenizer, token_filter, analyzer, query
 from elasticsearch_dsl.connections import connections
 from udata_search_service.domain.entities import Dataset, Organization, Reuse, Dataservice
 from udata_search_service.config import Config
@@ -140,7 +140,7 @@ class SearchableDataset(IndexDocument):
     views = Float()
     followers = Float()
     reuses = Float()
-    featured = Integer()
+    featured = Boolean()
     resources_count = Integer()
     concat_title_org = Text(analyzer=dgv_analyzer)
     temporal_coverage_start = Date()
@@ -273,7 +273,15 @@ class ElasticClient:
             query.SF("field_value_factor", field="views", factor=4, modifier='sqrt', missing=1),
             query.SF("field_value_factor", field="followers", factor=4, modifier='sqrt', missing=1),
             query.SF("field_value_factor", field="orga_followers", factor=1, modifier='sqrt', missing=1),
-            query.SF("field_value_factor", field="featured", factor=1, modifier='sqrt', missing=1),
+            query.SF("script_score",
+                     script={
+                         "source": """
+                            if (doc['featured'].value) {
+                                return 2
+                            } else {
+                                return 1
+                            }
+                        """})
         ]
 
         if query_text:

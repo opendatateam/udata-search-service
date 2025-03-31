@@ -49,7 +49,7 @@ class Dataset(EntityBase):
     views: int
     followers: int
     reuses: int
-    featured: int
+    featured: bool
     resources_count: int
     concat_title_org: str
     description: str
