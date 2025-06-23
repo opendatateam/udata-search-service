@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   search:
-    image: udata/elasticsearch:7.16.2
+    image: elasticsearch:7.17.28
     container_name: es01
     environment:
       - node.name=es01
@@ -13,17 +13,22 @@ services:
       - "9200"
     ports:
       - "9200:9200"
+    command: >
+      bash -c "
+        elasticsearch-plugin install --batch analysis-icu &&
+        /usr/local/bin/docker-entrypoint.sh eswrapper
+      "
 
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfiles/Dockerfile.app
-    expose:
-      - "5000"
-    ports:
-      - "5000:5000"
-    environment:
-      ELASTICSEARCH_URL: search:9200
+  # web:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfiles/Dockerfile.app
+  #   expose:
+  #     - "5000"
+  #   ports:
+  #     - "5000:5000"
+  #   environment:
+  #     ELASTICSEARCH_URL: search:9200
 
 volumes:
   es_data_prod:
