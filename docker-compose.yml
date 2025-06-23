@@ -19,16 +19,16 @@ services:
         /usr/local/bin/docker-entrypoint.sh eswrapper
       "
 
-  # web:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfiles/Dockerfile.app
-  #   expose:
-  #     - "5000"
-  #   ports:
-  #     - "5000:5000"
-  #   environment:
-  #     ELASTICSEARCH_URL: search:9200
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfiles/Dockerfile.app
+    expose:
+      - "5000"
+    ports:
+      - "5000:5000"
+    environment:
+      ELASTICSEARCH_URL: search:9200
 
 volumes:
   es_data_prod:
