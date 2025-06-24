@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   search:
     image: elasticsearch:7.17.28
@@ -7,6 +6,8 @@ services:
       - node.name=es01
       - cluster.name=es-docker-cluster
       - cluster.initial_master_nodes=es01
+      # try this if you run into error 137
+      # - ES_JAVA_OPTS=-Xms750m -Xmx750m
     volumes:
       - es_data_prod:/usr/share/elasticsearch/data
     expose:
@@ -15,7 +16,9 @@ services:
       - "9200:9200"
     command: >
       bash -c "
-        elasticsearch-plugin install --batch analysis-icu &&
+        if ! elasticsearch-plugin list | grep -q analysis-icu; then
+          elasticsearch-plugin install --batch analysis-icu
+        fi &&
         /usr/local/bin/docker-entrypoint.sh eswrapper
       "
 
