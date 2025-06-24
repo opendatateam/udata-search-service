@@ -2,7 +2,7 @@ version: "3.8"
 services:
 
   search_test:
-    image: udata/elasticsearch:7.16.2
+    image: elasticsearch:7.17.28
     container_name: es01_test
     environment:
       - node.name=es01
@@ -13,3 +13,8 @@ services:
       - "9200"
     ports:
       - "9201:9200"
+    command: >
+      bash -c "
+        elasticsearch-plugin install --batch analysis-icu &&
+        /usr/local/bin/docker-entrypoint.sh eswrapper
+      "
