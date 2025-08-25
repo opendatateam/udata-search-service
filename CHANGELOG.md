@@ -2,7 +2,7 @@
 
 ## Current (in progress)
 
-- Nothing yet
+- Add malus score for archived reuses [#54](https://github.com/opendatateam/udata-search-service/pull/54)
 
 ## 2.2.2 (2025-03-14)
 
