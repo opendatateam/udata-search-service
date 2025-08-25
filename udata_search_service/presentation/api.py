@@ -343,6 +343,7 @@ class ReuseToIndex(BaseModel):
     url: Optional[str] = None
     badges: Optional[list] = []
     created_at: str
+    archived: Optional[str] = None
     datasets: int
     followers: int
     views: int

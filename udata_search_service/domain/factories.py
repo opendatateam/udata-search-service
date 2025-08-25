@@ -64,6 +64,7 @@ class ReuseFactory(factory.Factory):
     description = factory.Faker('text')
     url = factory.Faker('url')
     created_at = factory.LazyFunction(datetime.datetime.utcnow)
+    archived = factory.LazyFunction(datetime.datetime.utcnow)
     orga_followers = factory.Faker('random_int')
     views = factory.Faker('random_int')
     followers = factory.Faker('random_int')
