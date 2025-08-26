@@ -474,7 +474,7 @@ def create_index(search_client: ElasticClient = Provide[Container.search_client]
         logging.info(f'Initializing new index {index_name} for reindexation')
         search_client.es.indices.create(index=index_name)
         # Check whether template with analyzer was correctly assigned
-        if 'analysis' not in search_client.es.indices.get_settings(index_name)[index_name]['settings']['index']:
+        if 'analysis' not in search_client.es.indices.get_settings(index=index_name)[index_name]['settings']['index']:
             logging.error(f'Analyzer was not set using templates when initializing {index_name}')
         return jsonify({'data': f'Index {index_name} created'})
     return jsonify({'data': f'Index {index_name} already exists'})
