@@ -65,6 +65,8 @@ class Dataset(EntityBase):
     geozones: List[str] = None
     schema: List[str] = None
     topics: List[str] = None
+    resources_ids: List[str] = None
+    resources_titles: List[str] = None
 
     orga_sp: int = None
     orga_followers: int = None

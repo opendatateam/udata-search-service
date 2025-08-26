@@ -163,6 +163,7 @@ class DatasetToIndex(BaseModel):
     followers: int
     reuses: int
     resources_count: Optional[int] = 0
+    resources: Optional[list] = None
     featured: Optional[int] = 0
     format: Optional[list] = []
     schema_: Optional[list] = Field([], alias="schema")

@@ -441,3 +441,20 @@ def test_search_dataset_by_id(app, client, search_client, faker):
 
     results_number, res = search_client.query_datasets(str(dataset.id), 0, 20, {})
     assert results_number == 1
+
+
+def test_search_dataset_by_resource_title_and_id(app, client, search_client, faker):
+    dataset = DatasetFactory()
+    search_client.index_dataset(dataset)
+
+    for i in range(4):
+        search_client.index_dataset(DatasetFactory())
+
+    # Without this, ElasticSearch does not seem to have the time to index.
+    time.sleep(2)
+
+    results_number, res = search_client.query_datasets(str(dataset.resources_ids[0]), 0, 20, {})
+    assert results_number == 1
+
+    results_number, res = search_client.query_datasets(str(dataset.resources_titles[0]), 0, 20, {})
+    assert results_number == 1

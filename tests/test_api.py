@@ -19,6 +19,10 @@ def test_api_dataset_index_unindex(app, client, faker):
         'reuses': faker.random_int(),
         'featured': faker.random_int(min=0, max=1),
         'resources_count': faker.random_int(min=1, max=15),
+        'resources': [
+            {"id": faker.md5(), "title": faker.word()}
+            for _ in range(5)
+        ],
         'organization': {
             'id': faker.md5(),
             'name': faker.company(),
@@ -106,6 +110,10 @@ def test_api_dataset_index_on_another_index(app, client, search_client, faker):
         'reuses': faker.random_int(),
         'featured': faker.random_int(min=0, max=1),
         'resources_count': faker.random_int(min=1, max=15),
+        'resources': [
+            {"id": faker.md5(), "title": faker.word()}
+            for _ in range(5)
+        ],
         'organization': {
             'id': faker.md5(),
             'name': faker.company(),

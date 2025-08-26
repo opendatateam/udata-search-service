@@ -142,6 +142,8 @@ class SearchableDataset(IndexDocument):
     reuses = Float()
     featured = Integer()
     resources_count = Integer()
+    resources_ids = Keyword(multi=True)
+    resources_titles = Text(analyzer=dgv_analyzer)
     concat_title_org = Text(analyzer=dgv_analyzer)
     temporal_coverage_start = Date()
     temporal_coverage_end = Date()
@@ -282,7 +284,11 @@ class ElasticClient:
                 should=[
                     query.Q(
                         'function_score',
-                        query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['id^15', 'title^15', 'acronym^15', 'description^8', 'organization_name^8'])]),
+                        query=query.Bool(should=[query.MultiMatch(
+                            query=query_text,
+                            type='phrase',
+                            fields=['id^15', 'title^15', 'acronym^15', 'description^8', 'organization_name^8', 'resources_ids^8', 'resources_titles^5']
+                        )]),
                         functions=datasets_score_functions
                     ),
                     query.Q(
@@ -295,7 +301,7 @@ class ElasticClient:
                         query=query.Bool(should=[query.MultiMatch(
                             query=query_text,
                             type='cross_fields',
-                            fields=['id^7', 'title^7', 'acronym^7', 'description^4', 'organization_name^4'],
+                            fields=['id^7', 'title^7', 'acronym^7', 'description^4', 'organization_name^4', 'resources_ids^4', 'resources_titles^2'],
                             operator="and")]),
                         functions=datasets_score_functions
                     ),
