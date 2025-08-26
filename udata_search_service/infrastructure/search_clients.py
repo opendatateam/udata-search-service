@@ -219,7 +219,7 @@ class ElasticClient:
             search = search.query('bool', should=[
                     query.Q(
                         'function_score',
-                        query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['name^15', 'acronym^15', 'description^8'])]),
+                        query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['id^15', 'name^15', 'acronym^15', 'description^8'])]),
                         functions=organizations_score_functions
                     ),
                     query.Q(
@@ -227,7 +227,7 @@ class ElasticClient:
                         query=query.Bool(should=[query.MultiMatch(
                             query=query_text,
                             type='cross_fields',
-                            fields=['name^7', 'acronym^7', 'description^4'],
+                            fields=['id^15', 'name^7', 'acronym^7', 'description^4'],
                             operator="and")]),
                         functions=organizations_score_functions
                     ),
@@ -282,7 +282,7 @@ class ElasticClient:
                 should=[
                     query.Q(
                         'function_score',
-                        query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['title^15', 'acronym^15', 'description^8', 'organization_name^8'])]),
+                        query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['id^15', 'title^15', 'acronym^15', 'description^8', 'organization_name^8'])]),
                         functions=datasets_score_functions
                     ),
                     query.Q(
@@ -295,7 +295,7 @@ class ElasticClient:
                         query=query.Bool(should=[query.MultiMatch(
                             query=query_text,
                             type='cross_fields',
-                            fields=['title^7', 'acronym^7', 'description^4', 'organization_name^4'],
+                            fields=['id^7', 'title^7', 'acronym^7', 'description^4', 'organization_name^4'],
                             operator="and")]),
                         functions=datasets_score_functions
                     ),
@@ -336,7 +336,7 @@ class ElasticClient:
             search = search.query('bool', should=[
                     query.Q(
                         'function_score',
-                        query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['title^15', 'description^8', 'organization_name^8'])]),
+                        query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['id^15', 'title^15', 'description^8', 'organization_name^8'])]),
                         functions=reuses_score_functions
                     ),
                     query.Q(
@@ -344,7 +344,7 @@ class ElasticClient:
                         query=query.Bool(should=[query.MultiMatch(
                             query=query_text,
                             type='cross_fields',
-                            fields=['title^7', 'description^4', 'organization_name^4'],
+                            fields=['id^7', 'title^7', 'description^4', 'organization_name^4'],
                             operator="and")]),
                         functions=reuses_score_functions
                     ),
@@ -385,7 +385,7 @@ class ElasticClient:
             search = search.query('bool', should=[
                     query.Q(
                         'function_score',
-                        query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['title^15', 'description^8', 'organization_name^8'])]),
+                        query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['id^15', 'title^15', 'description^8', 'organization_name^8'])]),
                         functions=dataservices_score_functions
                     ),
                     query.Q(
@@ -393,7 +393,7 @@ class ElasticClient:
                         query=query.Bool(should=[query.MultiMatch(
                             query=query_text,
                             type='cross_fields',
-                            fields=['title^7', 'description^4', 'organization_name^4'],
+                            fields=['id^7', 'title^7', 'description^4', 'organization_name^4'],
                             operator="and")]),
                         functions=dataservices_score_functions
                     ),
