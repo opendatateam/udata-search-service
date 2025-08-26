@@ -430,3 +430,14 @@ def test_search_dataset_with_synonym(app, client, search_client, faker):
 
     results_number, res = search_client.query_datasets('recensement population', 0, 20, {})
     assert results_number == 1
+
+
+def test_search_dataset_by_id(app, client, search_client, faker):
+    dataset = DatasetFactory()
+    search_client.index_dataset(dataset)
+
+    # Without this, ElasticSearch does not seem to have the time to index.
+    time.sleep(2)
+
+    results_number, res = search_client.query_datasets(str(dataset.id), 0, 20, {})
+    assert results_number == 1

@@ -2,7 +2,7 @@
 
 ## Current (in progress)
 
-- Nothing yet
+- Add object id in search fields [#55](https://github.com/opendatateam/udata-search-service/pull/55)
 
 ## 2.2.2 (2025-03-14)
 
