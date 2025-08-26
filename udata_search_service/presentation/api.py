@@ -77,7 +77,7 @@ class DatasetArgs(BaseModel):
                 key: value
                 for key, value in request_args.to_dict(flat=False).items()
                 if key in cls.__fields__
-                and is_list_type(cls.__fields__[key].outer_type_)
+                and is_list_type(cls.__fields__[key].annotation)
             }
 
         return cls(
