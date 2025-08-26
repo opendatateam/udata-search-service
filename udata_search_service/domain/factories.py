@@ -22,8 +22,8 @@ class DatasetFactory(factory.Factory):
     reuses = factory.Faker('random_int')
     featured = factory.Faker('random_int')
     resources_count = factory.Faker('random_int', min=1, max=15)
-    resources_ids = [factory.Faker('md5') for _ in range(5)]
-    resources_titles = [factory.Faker('sentence') for _ in range(5)]
+    resources_ids = factory.List([factory.Faker('md5') for _ in range(5)])
+    resources_titles = factory.List([factory.Faker('sentence') for _ in range(5)])
     organization = factory.Faker('md5')
     organization_name = factory.Faker('company')
     organization_badges = []
