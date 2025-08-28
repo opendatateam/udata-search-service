@@ -399,15 +399,30 @@ def test_general_search_with_sorting(app, client, search_client, faker):
 
 def test_search_reuse_with_score_functions(app, client, search_client, faker):
     # Create generic reuses without bonus/malus
-    for i in range(8):
-        search_client.index_reuse(ReuseFactory(archived=None, views=0))
-    # Create specific reuse with script score malus field
+    for i in range(4):
+        search_client.index_reuse(ReuseFactory(
+            title=f"reuse {i}",
+            featured=1,
+            followers=1,
+            orga_followers=1,
+            archived=None,
+            views=9,
+        ))
+    # Create specific reuse with script score malus field (archived)
     search_client.index_reuse(ReuseFactory(
+        title="archived reuse",
+        featured=1,
+        followers=1,
+        orga_followers=1,
         archived=datetime.datetime.utcnow(),
-        views=0
+        views=10
     ))
-    # Create specific reuse with field value factor bonus field
+    # Create specific reuse with field value factor bonus field (views)
     search_client.index_reuse(ReuseFactory(
+        title="reuse with a lot of views",
+        featured=1,
+        followers=1,
+        orga_followers=1,
         archived=None,
         views=100000
     ))
@@ -416,9 +431,9 @@ def test_search_reuse_with_score_functions(app, client, search_client, faker):
     time.sleep(2)
 
     results_number, res = search_client.query_reuses(None, 0, 20, {})
-    assert results_number == 10
-    assert res[0]["views"] == 100000
-    assert res[-1]["archived"] is not None
+    assert results_number == 6
+    assert res[0]["title"] == "reuse with a lot of views"
+    assert res[-1]["title"] == "archived reuse"
 
 def test_general_search_with_sorting_last_update(app, client, search_client, faker):
     search_client.index_dataset(DatasetFactory(
