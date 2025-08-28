@@ -105,6 +105,7 @@ class SearchableReuse(IndexDocument):
     title = Text(analyzer=dgv_analyzer)
     url = Text()
     created_at = Date()
+    archived = Date()
     orga_followers = Float()
     views = Float()
     followers = Float()
@@ -336,6 +337,7 @@ class ElasticClient:
             query.SF("field_value_factor", field="followers", factor=4, modifier='sqrt', missing=1),
             query.SF("field_value_factor", field="orga_followers", factor=1, modifier='sqrt', missing=1),
             query.SF("field_value_factor", field="featured", factor=1, modifier='sqrt', missing=1),
+            query.SF("script_score", script={"source": "doc['archived'].size() == 0 ? 1 : 0.2"}),  # score is multiplied by 0.2 for a strong malus
         ]
 
         if query_text:

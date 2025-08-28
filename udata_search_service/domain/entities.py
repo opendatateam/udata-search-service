@@ -100,6 +100,7 @@ class Reuse(EntityBase):
     type: str
     topic: str
 
+    archived: datetime.date = None
     tags: List[str] = None
     badges: List[str] = None
     orga_followers: int = None
@@ -111,7 +112,8 @@ class Reuse(EntityBase):
     def __post_init__(self):
         if isinstance(self.created_at, str):
             self.created_at = isoparse(self.created_at)
-
+        if isinstance(self.archived, str):
+            self.archived = isoparse(self.archived)
 
 @dataclasses.dataclass
 class Dataservice(EntityBase):

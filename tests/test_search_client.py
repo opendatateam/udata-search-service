@@ -397,6 +397,28 @@ def test_general_search_with_sorting(app, client, search_client, faker):
     results_number, res = search_client.query_dataservices(None, 0, 20, {}, sort='-followers')
     assert res[0]['title'] == 'dataservice-test-2'
 
+def test_search_reuse_with_score_functions(app, client, search_client, faker):
+    # Create generic reuses without bonus/malus
+    for i in range(8):
+        search_client.index_reuse(ReuseFactory(archived=None, views=0))
+    # Create specific reuse with script score malus field
+    search_client.index_reuse(ReuseFactory(
+        archived=datetime.datetime.utcnow(),
+        views=0
+    ))
+    # Create specific reuse with field value factor bonus field
+    search_client.index_reuse(ReuseFactory(
+        archived=None,
+        views=100000
+    ))
+
+    # Without this, ElasticSearch does not seem to have the time to index.
+    time.sleep(2)
+
+    results_number, res = search_client.query_reuses(None, 0, 20, {})
+    assert results_number == 10
+    assert res[0]["views"] == 100000
+    assert res[-1]["archived"] is not None
 
 def test_general_search_with_sorting_last_update(app, client, search_client, faker):
     search_client.index_dataset(DatasetFactory(
@@ -458,3 +480,4 @@ def test_search_dataset_by_resource_title_and_id(app, client, search_client, fak
 
     results_number, res = search_client.query_datasets(str(dataset.resources_titles[0]), 0, 20, {})
     assert results_number == 1
+

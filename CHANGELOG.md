@@ -2,6 +2,7 @@
 
 ## Current (in progress)
 
+- Add malus score for archived reuses [#54](https://github.com/opendatateam/udata-search-service/pull/54)
 - Add object id in search fields [#55](https://github.com/opendatateam/udata-search-service/pull/55)
 - Add resources ids and titles in search fields [#56](https://github.com/opendatateam/udata-search-service/pull/56)
 
