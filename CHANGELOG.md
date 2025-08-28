@@ -1,6 +1,6 @@
 # Changelog
 
-## Current (in progress)
+## 2.2.3 (2025-08-28)
 
 - Add malus score for archived reuses [#54](https://github.com/opendatateam/udata-search-service/pull/54)
 - Add object id in search fields [#55](https://github.com/opendatateam/udata-search-service/pull/55)
