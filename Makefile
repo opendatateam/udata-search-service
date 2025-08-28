@@ -2,7 +2,7 @@
 
 deps:  ## Install dependencies
 	python -m pip install --upgrade pip
-	python -m pip install .
+	python -m pip install .[dev]
 
 install:  ## Install the package
 	python -m flit install

@@ -77,7 +77,7 @@ class DatasetArgs(BaseModel):
                 key: value
                 for key, value in request_args.to_dict(flat=False).items()
                 if key in cls.__fields__
-                and is_list_type(cls.__fields__[key].outer_type_)
+                and is_list_type(cls.__fields__[key].annotation)
             }
 
         return cls(
@@ -475,7 +475,7 @@ def create_index(search_client: ElasticClient = Provide[Container.search_client]
         logging.info(f'Initializing new index {index_name} for reindexation')
         search_client.es.indices.create(index=index_name)
         # Check whether template with analyzer was correctly assigned
-        if 'analysis' not in search_client.es.indices.get_settings(index_name)[index_name]['settings']['index']:
+        if 'analysis' not in search_client.es.indices.get_settings(index=index_name)[index_name]['settings']['index']:
             logging.error(f'Analyzer was not set using templates when initializing {index_name}')
         return jsonify({'data': f'Index {index_name} created'})
     return jsonify({'data': f'Index {index_name} already exists'})

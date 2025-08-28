@@ -8,22 +8,25 @@ authors = [{name = "Opendata Team", email = "opendatateam@data.gouv.fr"}]
 readme = "README.md"
 dynamic = ["version", "description"]
 dependencies = [
-    "dependency-injector==4.41.0",
-    "elasticsearch==7.15.0",
-    "elasticsearch_dsl==7.4.0",
-    "factory-boy==3.2.1",
-    "Faker==11.3.0",
-    "flake8==4.0.1",
-    "Flask==2.2.5",
-    "flit==3.6.0",
-    "gunicorn==20.1.0",
-    "pydantic==1.9.0",
-    "pytest==6.2.5",
-    "pytest-flask==1.2.0",
-    "markdown==3.3.3",
-    "beautifulsoup4==4.10.0",
-    # pinned to a known working version, since 3.1.3 will fail while running tests
-    "werkzeug==3.0.4",
+    "dependency-injector==4.48.1",
+    "elasticsearch==8.19.0",
+    "elasticsearch_dsl==8.18.0",
+    "factory-boy==3.3.3",
+    "Faker==37.5.3",
+    "Flask==3.1.2",
+    "pydantic==2.11.7",
+    "markdown==3.8.2",
+    "beautifulsoup4==4.13.5",
+    "werkzeug==3.1.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "flake8==7.3.0",
+    "flit==3.12.0",
+    "gunicorn==23.0.0",
+    "pytest==8.4.1",
+    "pytest-flask==1.3.0",
 ]
 
 [project.urls]
