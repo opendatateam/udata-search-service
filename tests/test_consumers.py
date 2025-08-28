@@ -23,6 +23,10 @@ def test_parse_dataset_obj():
         'reuses': 45,
         'featured': 0,
         'resources_count': 10,
+        'resources': [
+            {"id": "5ffa8553-0e8f-4622-add9-5c0b593ca1f8", "title": "Valeurs foncières 2024"},
+            {"id": "bc213c7c-c4d4-4385-bf1f-719573d39e90", "title": "Valeurs foncières 2023"},
+        ],
         'organization': {
             'id': '534fff8ea3a7292c64a77f02',
             'name': 'Ministère de l\'économie, des finances et de la relance',
@@ -69,6 +73,8 @@ def test_parse_dataset_obj():
     assert document['organization_name'] == obj['organization']['name']
     assert document['organization_badges'] == obj['organization']['badges']
     assert document['orga_followers'] == log2p(401)
+    assert document['resources_ids'] == [res["id"] for res in obj["resources"]]
+    assert document['resources_titles'] == [res["title"] for res in obj["resources"]]
 
 
 def test_parse_reuse_obj():
