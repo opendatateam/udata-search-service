@@ -99,6 +99,8 @@ class DatasetService:
             filters['temporal_coverage_end'] = parts[11:]
         if filters['tag']:
             filters['tags'] = filters.pop('tag')
+        if filters['badge']:
+            filters['badges'] = filters.pop('badge')
         if filters['topic']:
             filters['topics'] = filters.pop('topic')
         if filters['geozone']:
@@ -110,6 +112,7 @@ class DatasetService:
         filtered = {k: v for k, v in filters.items() if v is not None}
         filters.clear()
         filters.update(filtered)
+        print(filters)
 
     @staticmethod
     def format_sort(sort):
@@ -157,6 +160,8 @@ class ReuseService:
     def format_filters(filters):
         if filters['tag']:
             filters['tags'] = filters.pop('tag')
+        if filters['badge']:
+            filters['badges'] = filters.pop('badge')
         if filters['organization_badge']:
             filters['organization_badges'] = filters.pop('organization_badge')
         filtered = {k: v for k, v in filters.items() if v is not None}
