@@ -112,7 +112,6 @@ class DatasetService:
         filtered = {k: v for k, v in filters.items() if v is not None}
         filters.clear()
         filters.update(filtered)
-        print(filters)
 
     @staticmethod
     def format_sort(sort):
