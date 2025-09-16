@@ -686,6 +686,31 @@ def test_api_dataset_search_with_temporal_filter(app, client, search_client, fak
     assert resp.status_code == 400
 
 
+def test_api_search_with_badge_filter(app, client, search_client, faker):
+    for i in range(4):
+        search_client.index_dataset(DatasetFactory(badges=['test-badge', 'test-badge-2'] if i % 2 else ['not-test-badge']))
+        search_client.index_reuse(ReuseFactory(badges=['test-badge'] if i % 2 else ['not-test-badge']))
+
+    # Without this, ElasticSearch does not seem to have the time to index.
+    time.sleep(2)
+
+    # Filter is singular, we test the feature that maps it to the plural field of the entity.
+    resp = client.get(url_for('api.dataset_search'))
+    assert resp.json['total'] == 4
+
+    resp = client.get(url_for('api.dataset_search', badge=['test-badge', 'test-badge-2']))
+    assert resp.json['total'] == 2
+
+    resp = client.get(url_for('api.dataset_search', badge=['not-test-badge']))
+    assert resp.json['total'] == 2
+
+    resp = client.get(url_for('api.reuse_search'))
+    assert resp.json['total'] == 4
+
+    resp = client.get(url_for('api.reuse_search', badge='test-badge'))
+    assert resp.json['total'] == 2
+
+
 def test_api_search_with_tag_filter(app, client, search_client, faker):
     for i in range(4):
         search_client.index_dataset(DatasetFactory(tags=['test-tag', 'test-tag-2'] if i % 2 else ['not-test-tag']))
