@@ -70,6 +70,7 @@ class OrganizationConsumer(Organization):
 
         data["followers"] = log2p(data.get("followers", 0))
         data["views"] = log2p(data.get("views", 0))
+        data["orga_sp"] = 4 if data.get("orga_sp", 0) else 1
         return super().load_from_dict(data)
 
 
