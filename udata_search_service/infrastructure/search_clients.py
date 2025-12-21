@@ -159,6 +159,7 @@ class SearchableDataset(IndexDocument):
     schema = Keyword(multi=True)
     topics = Keyword(multi=True)
     access_type = Keyword()
+    format_family = Keyword(multi=True)
 
     class Index:
         name = f'{Config.UDATA_INSTANCE_NAME}-dataset'

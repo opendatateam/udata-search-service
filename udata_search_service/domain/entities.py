@@ -75,6 +75,7 @@ class Dataset(EntityBase):
     organization_badges: List[str] = None
     owner: str = None
     access_type: str = None
+    format_family: List[str] = None
 
     def __post_init__(self):
         if isinstance(self.created_at, str):
@@ -115,6 +116,7 @@ class Reuse(EntityBase):
             self.created_at = isoparse(self.created_at)
         if isinstance(self.archived, str):
             self.archived = isoparse(self.archived)
+
 
 @dataclasses.dataclass
 class Dataservice(EntityBase):

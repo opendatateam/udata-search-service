@@ -53,6 +53,7 @@ class DatasetArgs(BaseModel):
     schema_: Optional[str] = Field(None, alias="schema")
     topic: Optional[str] = None
     access_type: Optional[str] = None
+    format_family: Optional[str] = None
 
     @validator('temporal_coverage')
     def temporal_coverage_format(cls, value):
@@ -177,6 +178,7 @@ class DatasetToIndex(BaseModel):
     granularity: Optional[str] = None
     topics: Optional[list] = []
     access_type: Optional[str] = None
+    format_family: Optional[list] = []
 
 
 class RequestDatasetIndex(BaseModel):
