@@ -76,6 +76,7 @@ class Dataset(EntityBase):
     owner: str = None
     access_type: str = None
     format_family: List[str] = None
+    producer_type: List[str] = None
 
     def __post_init__(self):
         if isinstance(self.created_at, str):
@@ -110,6 +111,7 @@ class Reuse(EntityBase):
     organization_name: str = None
     organization_badges: List[str] = None
     owner: str = None
+    producer_type: List[str] = None
 
     def __post_init__(self):
         if isinstance(self.created_at, str):
@@ -135,6 +137,7 @@ class Dataservice(EntityBase):
     owner: str = None
     tags: List[str] = None
     access_type: str = None
+    producer_type: List[str] = None
 
     def __post_init__(self):
         if isinstance(self.created_at, str):

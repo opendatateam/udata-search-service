@@ -80,6 +80,7 @@ class SearchableDataservice(IndexDocument):
     followers = Float()
     description_length = Float()
     access_type = Keyword()
+    producer_type = Keyword(multi=True)
 
     class Index:
         name = f'{Config.UDATA_INSTANCE_NAME}-dataservice'
@@ -121,6 +122,7 @@ class SearchableReuse(IndexDocument):
     organization_name = Text(analyzer=dgv_analyzer)
     organization_badges = Keyword(multi=True)
     owner = Keyword()
+    producer_type = Keyword(multi=True)
 
     class Index:
         name = f'{Config.UDATA_INSTANCE_NAME}-reuse'
@@ -160,6 +162,7 @@ class SearchableDataset(IndexDocument):
     topics = Keyword(multi=True)
     access_type = Keyword()
     format_family = Keyword(multi=True)
+    producer_type = Keyword(multi=True)
 
     class Index:
         name = f'{Config.UDATA_INSTANCE_NAME}-dataset'

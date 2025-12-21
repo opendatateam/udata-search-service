@@ -54,6 +54,7 @@ class DatasetArgs(BaseModel):
     topic: Optional[str] = None
     access_type: Optional[str] = None
     format_family: Optional[str] = None
+    producer_type: Optional[str] = None
 
     @validator('temporal_coverage')
     def temporal_coverage_format(cls, value):
@@ -102,6 +103,7 @@ class ReuseArgs(BaseModel):
     type: Optional[str] = None
     featured: Optional[str] = None
     topic: Optional[str] = None
+    producer_type: Optional[str] = None
 
     @validator('sort')
     def sort_validate(cls, value):
@@ -124,6 +126,7 @@ class DataserviceArgs(BaseModel):
     owner: Optional[str] = None
     is_restricted: Optional[bool] = None
     access_type: Optional[str] = None
+    producer_type: Optional[str] = None
 
     @validator('sort')
     def sort_validate(cls, value):
@@ -179,6 +182,7 @@ class DatasetToIndex(BaseModel):
     topics: Optional[list] = []
     access_type: Optional[str] = None
     format_family: Optional[list] = []
+    producer_type: Optional[list] = []
 
 
 class RequestDatasetIndex(BaseModel):
@@ -360,6 +364,7 @@ class ReuseToIndex(BaseModel):
     topic: str
     tags: Optional[list] = []
     extras: Optional[dict] = {}
+    producer_type: Optional[list] = []
 
 
 class RequestReuseIndex(BaseModel):
@@ -434,6 +439,7 @@ class DataserviceToIndex(BaseModel):
     extras: Optional[dict] = {}
     is_restricted: Optional[bool] = None
     access_type: Optional[str] = None
+    producer_type: Optional[list] = []
 
 
 class RequestDataserviceIndex(BaseModel):
