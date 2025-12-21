@@ -74,6 +74,7 @@ class Dataset(EntityBase):
     organization_name: str = None
     organization_badges: List[str] = None
     owner: str = None
+    access_type: str = None
 
     def __post_init__(self):
         if isinstance(self.created_at, str):
@@ -131,6 +132,7 @@ class Dataservice(EntityBase):
     organization_name: str = None
     owner: str = None
     tags: List[str] = None
+    access_type: str = None
 
     def __post_init__(self):
         if isinstance(self.created_at, str):

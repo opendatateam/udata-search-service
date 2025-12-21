@@ -79,6 +79,7 @@ class SearchableDataservice(IndexDocument):
     views = Float()
     followers = Float()
     description_length = Float()
+    access_type = Keyword()
 
     class Index:
         name = f'{Config.UDATA_INSTANCE_NAME}-dataservice'
@@ -157,6 +158,7 @@ class SearchableDataset(IndexDocument):
     owner = Keyword()
     schema = Keyword(multi=True)
     topics = Keyword(multi=True)
+    access_type = Keyword()
 
     class Index:
         name = f'{Config.UDATA_INSTANCE_NAME}-dataset'

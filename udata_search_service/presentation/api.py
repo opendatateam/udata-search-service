@@ -52,6 +52,7 @@ class DatasetArgs(BaseModel):
     featured: Optional[str] = None
     schema_: Optional[str] = Field(None, alias="schema")
     topic: Optional[str] = None
+    access_type: Optional[str] = None
 
     @validator('temporal_coverage')
     def temporal_coverage_format(cls, value):
@@ -121,6 +122,7 @@ class DataserviceArgs(BaseModel):
     organization: Optional[str] = None
     owner: Optional[str] = None
     is_restricted: Optional[bool] = None
+    access_type: Optional[str] = None
 
     @validator('sort')
     def sort_validate(cls, value):
@@ -174,6 +176,7 @@ class DatasetToIndex(BaseModel):
     geozones: Optional[list] = []
     granularity: Optional[str] = None
     topics: Optional[list] = []
+    access_type: Optional[str] = None
 
 
 class RequestDatasetIndex(BaseModel):
@@ -428,6 +431,7 @@ class DataserviceToIndex(BaseModel):
     tags: Optional[list] = []
     extras: Optional[dict] = {}
     is_restricted: Optional[bool] = None
+    access_type: Optional[str] = None
 
 
 class RequestDataserviceIndex(BaseModel):
