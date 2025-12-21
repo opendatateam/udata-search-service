@@ -55,12 +55,20 @@ class DatasetArgs(BaseModel):
     access_type: Optional[str] = None
     format_family: Optional[str] = None
     producer_type: Optional[str] = None
+    last_update_range: Optional[str] = None
 
     @validator('temporal_coverage')
     def temporal_coverage_format(cls, value):
         pattern = re.compile("^([0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{4}-[0-9]{2}-[0-9]{2})$")
         if not pattern.match(value):
             raise ValueError('Temporal coverage does not match the right pattern.')
+        return value
+
+    @validator('last_update_range')
+    def last_update_range_validate(cls, value):
+        choices = ['last_30_days', 'last_12_months', 'last_3_years']
+        if value not in choices:
+            raise ValueError(f'last_update_range must be one of: {", ".join(choices)}')
         return value
 
     @validator('sort')
@@ -95,7 +103,7 @@ class ReuseArgs(BaseModel):
     page: Optional[int] = 1
     page_size: Optional[int] = 20
     sort: Optional[str] = None
-    tag: Optional[str] = None
+    tag: Optional[list[str]] = None
     badge: Optional[str] = None
     organization: Optional[str] = None
     organization_badge: Optional[str] = None
@@ -104,6 +112,14 @@ class ReuseArgs(BaseModel):
     featured: Optional[str] = None
     topic: Optional[str] = None
     producer_type: Optional[str] = None
+    last_update_range: Optional[str] = None
+
+    @validator('last_update_range')
+    def last_update_range_validate(cls, value):
+        choices = ['last_30_days', 'last_12_months', 'last_3_years']
+        if value not in choices:
+            raise ValueError(f'last_update_range must be one of: {", ".join(choices)}')
+        return value
 
     @validator('sort')
     def sort_validate(cls, value):
@@ -115,18 +131,43 @@ class ReuseArgs(BaseModel):
             raise ValueError('Temporal coverage does not match the right pattern.')
         return value
 
+    @classmethod
+    def from_request_args(cls, request_args) -> 'ReuseArgs':
+        def get_list_args() -> dict:
+            return {
+                key: value
+                for key, value in request_args.to_dict(flat=False).items()
+                if key in cls.__fields__
+                and is_list_type(cls.__fields__[key].annotation)
+            }
+
+        return cls(
+            **{
+                **request_args.to_dict(),
+                **get_list_args(),
+            }
+        )
+
 
 class DataserviceArgs(BaseModel):
     q: Optional[str] = None
     page: Optional[int] = 1
     page_size: Optional[int] = 20
     sort: Optional[str] = None
-    tag: Optional[str] = None
+    tag: Optional[list[str]] = None
     organization: Optional[str] = None
     owner: Optional[str] = None
     is_restricted: Optional[bool] = None
     access_type: Optional[str] = None
     producer_type: Optional[str] = None
+    last_update_range: Optional[str] = None
+
+    @validator('last_update_range')
+    def last_update_range_validate(cls, value):
+        choices = ['last_30_days', 'last_12_months', 'last_3_years']
+        if value not in choices:
+            raise ValueError(f'last_update_range must be one of: {", ".join(choices)}')
+        return value
 
     @validator('sort')
     def sort_validate(cls, value):
@@ -138,9 +179,26 @@ class DataserviceArgs(BaseModel):
             raise ValueError('Sort parameter is not in the sorts available choices.')
         return value
 
+    @classmethod
+    def from_request_args(cls, request_args) -> 'DataserviceArgs':
+        def get_list_args() -> dict:
+            return {
+                key: value
+                for key, value in request_args.to_dict(flat=False).items()
+                if key in cls.__fields__
+                and is_list_type(cls.__fields__[key].annotation)
+            }
 
-def make_response(results, total_pages, results_number, page, page_size, next_url, prev_url):
-    return jsonify({
+        return cls(
+            **{
+                **request_args.to_dict(),
+                **get_list_args(),
+            }
+        )
+
+
+def make_response(results, total_pages, results_number, page, page_size, next_url, prev_url, facets=None):
+    response = {
         "data": results,
         "next_page": next_url if page < total_pages else None,
         "page": page,
@@ -148,7 +206,10 @@ def make_response(results, total_pages, results_number, page, page_size, next_ur
         "page_size": page_size,
         "total_pages": total_pages,
         "total": results_number
-    })
+    }
+    if facets is not None:
+        response["facets"] = facets
+    return jsonify(response)
 
 
 class DatasetToIndex(BaseModel):
@@ -223,7 +284,7 @@ def datasets_search(dataset_service: DatasetService = Provide[Container.dataset_
     except ValidationError as e:
         abort(400, e)
 
-    results, results_number, total_pages = dataset_service.search(request_args.dict())
+    results, results_number, total_pages, facets = dataset_service.search(request_args.dict())
 
     next_url = url_for('api.dataset_search', q=request_args.q, page=request_args.page + 1,
                        page_size=request_args.page_size, _external=True)
@@ -231,7 +292,7 @@ def datasets_search(dataset_service: DatasetService = Provide[Container.dataset_
                        page_size=request_args.page_size, _external=True)
 
     return make_response(results, total_pages, results_number,
-                         request_args.page, request_args.page_size, next_url, prev_url)
+                         request_args.page, request_args.page_size, next_url, prev_url, facets)
 
 
 @bp.route("/datasets/<dataset_id>/", methods=["GET"], endpoint='dataset_get_specific')
@@ -322,11 +383,11 @@ def organization_unindex(organization_id: str, organization_service: Organizatio
 @inject
 def reuses_search(reuse_service: ReuseService = Provide[Container.reuse_service]):
     try:
-        request_args = ReuseArgs(**request.args)
+        request_args = ReuseArgs.from_request_args(request.args)
     except ValidationError as e:
         abort(400, e)
 
-    results, results_number, total_pages = reuse_service.search(request_args.dict())
+    results, results_number, total_pages, facets = reuse_service.search(request_args.dict())
 
     next_url = url_for('api.reuse_search', q=request_args.q, page=request_args.page + 1,
                        page_size=request_args.page_size, _external=True)
@@ -334,7 +395,7 @@ def reuses_search(reuse_service: ReuseService = Provide[Container.reuse_service]
                        page_size=request_args.page_size, _external=True)
 
     return make_response(results, total_pages, results_number, request_args.page,
-                         request_args.page_size, next_url, prev_url)
+                         request_args.page_size, next_url, prev_url, facets)
 
 
 @bp.route("/reuses/<reuse_id>/", methods=["GET"], endpoint='reuse_get_specific')
@@ -402,11 +463,11 @@ def reuse_unindex(reuse_id: str, reuse_service: ReuseService = Provide[Container
 @inject
 def dataservices_search(dataservice_service: DataserviceService = Provide[Container.dataservice_service]):
     try:
-        request_args = DataserviceArgs(**request.args)
+        request_args = DataserviceArgs.from_request_args(request.args)
     except ValidationError as e:
         abort(400, e)
 
-    results, results_number, total_pages = dataservice_service.search(request_args.dict())
+    results, results_number, total_pages, facets = dataservice_service.search(request_args.dict())
 
     next_url = url_for('api.dataservice_search', q=request_args.q, page=request_args.page + 1,
                        page_size=request_args.page_size, _external=True)
@@ -414,7 +475,7 @@ def dataservices_search(dataservice_service: DataserviceService = Provide[Contai
                        page_size=request_args.page_size, _external=True)
 
     return make_response(results, total_pages, results_number, request_args.page,
-                         request_args.page_size, next_url, prev_url)
+                         request_args.page_size, next_url, prev_url, facets)
 
 
 @bp.route("/dataservices/<dataservice_id>/", methods=["GET"], endpoint='dataservice_get_specific')

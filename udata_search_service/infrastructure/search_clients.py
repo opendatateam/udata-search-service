@@ -74,7 +74,7 @@ class SearchableDataservice(IndexDocument):
     tags = Keyword(multi=True)
     organization = Keyword()
     description = Text(analyzer=dgv_analyzer)
-    organization_name = Text(analyzer=dgv_analyzer)
+    organization_name = Text(analyzer=dgv_analyzer, fields={'keyword': Keyword()})
     owner = Keyword()
     views = Float()
     followers = Float()
@@ -119,7 +119,7 @@ class SearchableReuse(IndexDocument):
     badges = Keyword(multi=True)
     organization = Keyword()
     description = Text(analyzer=dgv_analyzer)
-    organization_name = Text(analyzer=dgv_analyzer)
+    organization_name = Text(analyzer=dgv_analyzer, fields={'keyword': Keyword()})
     organization_badges = Keyword(multi=True)
     owner = Keyword()
     producer_type = Keyword(multi=True)
@@ -155,7 +155,7 @@ class SearchableDataset(IndexDocument):
     geozones = Keyword(multi=True)
     description = Text(analyzer=dgv_analyzer)
     organization = Keyword()
-    organization_name = Text(analyzer=dgv_analyzer)
+    organization_name = Text(analyzer=dgv_analyzer, fields={'keyword': Keyword()})
     organization_badges = Keyword(multi=True)
     owner = Keyword()
     schema = Keyword(multi=True)
@@ -260,14 +260,23 @@ class ElasticClient:
         res = [hit.to_dict(skip_empty=False) for hit in response.hits]
         return results_number, res
 
-    def query_datasets(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict]]:
+    def query_datasets(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict], dict]:
         search = SearchableDataset.search()
+
+        last_update_range_mapping = {
+            'last_30_days': 'now-30d/d',
+            'last_12_months': 'now-12M/d',
+            'last_3_years': 'now-3y/d',
+        }
 
         for key, value in filters.items():
             if key == 'temporal_coverage_start':
                 search = search.filter('range', **{'temporal_coverage_start': {'lte': value}})
             elif key == 'temporal_coverage_end':
                 search = search.filter('range', **{'temporal_coverage_end': {'gte': value}})
+            elif key == 'last_update_range':
+                if value in last_update_range_mapping:
+                    search = search.filter('range', **{'last_update': {'gte': last_update_range_mapping[value]}})
             elif key == 'tags':
                 # build an AND filter from tags list
                 tag_filters = [query.Q('term', tags=tag) for tag in value]
@@ -317,6 +326,16 @@ class ElasticClient:
         else:
             search = search.query(query.Q('function_score', query=query.MatchAll(), functions=datasets_score_functions))
 
+        search.aggs.bucket('format_family', 'terms', field='format_family', size=50)
+        search.aggs.bucket('producer_type', 'terms', field='producer_type', size=50)
+        search.aggs.bucket('organization_name', 'terms', field='organization_name.keyword', size=50)
+        search.aggs.bucket('access_type', 'terms', field='access_type', size=50)
+        search.aggs.bucket('last_update', 'date_range', field='last_update', ranges=[
+            {'key': 'last_30_days', 'from': 'now-30d/d'},
+            {'key': 'last_12_months', 'from': 'now-12M/d'},
+            {'key': 'last_3_years', 'from': 'now-3y/d'},
+        ])
+
         if sort:
             search = search.sort(sort, {'_score': {'order': 'desc'}})
 
@@ -330,13 +349,38 @@ class ElasticClient:
                 'using template patterns on index initialization.'
             )
         res = [hit.to_dict(skip_empty=False) for hit in response.hits]
-        return results_number, res
 
-    def query_reuses(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict]]:
+        facets = {}
+        if hasattr(response, 'aggregations'):
+            for agg_name in ['format_family', 'producer_type', 'organization_name', 'access_type', 'last_update']:
+                if hasattr(response.aggregations, agg_name):
+                    facets[agg_name] = [
+                        {'name': bucket.key, 'count': bucket.doc_count}
+                        for bucket in response.aggregations[agg_name].buckets
+                    ]
+
+        return results_number, res, facets
+
+    def query_reuses(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict], dict]:
         search = SearchableReuse.search()
 
+        last_update_range_mapping = {
+            'last_30_days': 'now-30d/d',
+            'last_12_months': 'now-12M/d',
+            'last_3_years': 'now-3y/d',
+        }
+
         for key, value in filters.items():
-            search = search.filter('term', **{key: value})
+            if key == 'last_update_range':
+                if value in last_update_range_mapping:
+                    search = search.filter('range', **{'created_at': {'gte': last_update_range_mapping[value]}})
+            elif key == 'tags':
+                tag_filters = [query.Q('term', tags=tag) for tag in value]
+                search = search.filter(
+                    query.Bool(must=tag_filters)
+                )
+            else:
+                search = search.filter('term', **{key: value})
 
         reuses_score_functions = [
             query.SF("field_value_factor", field="views", factor=4, modifier='sqrt', missing=1),
@@ -367,6 +411,16 @@ class ElasticClient:
         else:
             search = search.query(query.Q('function_score', query=query.MatchAll(), functions=reuses_score_functions))
 
+        search.aggs.bucket('producer_type', 'terms', field='producer_type', size=50)
+        search.aggs.bucket('organization_name', 'terms', field='organization_name.keyword', size=50)
+        search.aggs.bucket('topic', 'terms', field='topic', size=50)
+        search.aggs.bucket('type', 'terms', field='type', size=50)
+        search.aggs.bucket('created_at', 'date_range', field='created_at', ranges=[
+            {'key': 'last_30_days', 'from': 'now-30d/d'},
+            {'key': 'last_12_months', 'from': 'now-12M/d'},
+            {'key': 'last_3_years', 'from': 'now-3y/d'},
+        ])
+
         if sort:
             search = search.sort(sort, {'_score': {'order': 'desc'}})
 
@@ -380,13 +434,38 @@ class ElasticClient:
                 'using template patterns on index initialization.'
             )
         res = [hit.to_dict(skip_empty=False) for hit in response.hits]
-        return results_number, res
 
-    def query_dataservices(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict]]:
+        facets = {}
+        if hasattr(response, 'aggregations'):
+            for agg_name in ['producer_type', 'organization_name', 'topic', 'type', 'created_at']:
+                if hasattr(response.aggregations, agg_name):
+                    facets[agg_name] = [
+                        {'name': bucket.key, 'count': bucket.doc_count}
+                        for bucket in response.aggregations[agg_name].buckets
+                    ]
+
+        return results_number, res, facets
+
+    def query_dataservices(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict], dict]:
         search = SearchableDataservice.search()
 
+        last_update_range_mapping = {
+            'last_30_days': 'now-30d/d',
+            'last_12_months': 'now-12M/d',
+            'last_3_years': 'now-3y/d',
+        }
+
         for key, value in filters.items():
-            search = search.filter('term', **{key: value})
+            if key == 'last_update_range':
+                if value in last_update_range_mapping:
+                    search = search.filter('range', **{'created_at': {'gte': last_update_range_mapping[value]}})
+            elif key == 'tags':
+                tag_filters = [query.Q('term', tags=tag) for tag in value]
+                search = search.filter(
+                    query.Bool(must=tag_filters)
+                )
+            else:
+                search = search.filter('term', **{key: value})
 
         dataservices_score_functions = [
             query.SF("field_value_factor", field="description_length", factor=1, modifier='sqrt', missing=1),
@@ -416,6 +495,15 @@ class ElasticClient:
         else:
             search = search.query(query.Q('function_score', query=query.MatchAll(), functions=dataservices_score_functions))
 
+        search.aggs.bucket('access_type', 'terms', field='access_type', size=50)
+        search.aggs.bucket('producer_type', 'terms', field='producer_type', size=50)
+        search.aggs.bucket('organization_name', 'terms', field='organization_name.keyword', size=50)
+        search.aggs.bucket('created_at', 'date_range', field='created_at', ranges=[
+            {'key': 'last_30_days', 'from': 'now-30d/d'},
+            {'key': 'last_12_months', 'from': 'now-12M/d'},
+            {'key': 'last_3_years', 'from': 'now-3y/d'},
+        ])
+
         if sort:
             search = search.sort(sort, {'_score': {'order': 'desc'}})
 
@@ -429,7 +517,17 @@ class ElasticClient:
                 'using template patterns on index initialization.'
             )
         res = [hit.to_dict(skip_empty=False) for hit in response.hits]
-        return results_number, res
+
+        facets = {}
+        if hasattr(response, 'aggregations'):
+            for agg_name in ['access_type', 'producer_type', 'organization_name', 'created_at']:
+                if hasattr(response.aggregations, agg_name):
+                    facets[agg_name] = [
+                        {'name': bucket.key, 'count': bucket.doc_count}
+                        for bucket in response.aggregations[agg_name].buckets
+                    ]
+
+        return results_number, res, facets
 
     def find_one_organization(self, organization_id: str) -> Optional[dict]:
         try:

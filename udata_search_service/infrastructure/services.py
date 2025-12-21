@@ -59,7 +59,7 @@ class DatasetService:
     def feed(self, dataset: Dataset, index: str = None) -> None:
         self.search_client.index_dataset(dataset, index)
 
-    def search(self, filters: dict) -> Tuple[List[Dataset], int, int]:
+    def search(self, filters: dict) -> Tuple[List[Dataset], int, int, dict]:
         page = filters.pop('page')
         page_size = filters.pop('page_size')
         search_text = filters.pop('q')
@@ -72,10 +72,10 @@ class DatasetService:
 
         self.format_filters(filters)
 
-        results_number, search_results = self.search_client.query_datasets(search_text, offset, page_size, filters, sort)
+        results_number, search_results, facets = self.search_client.query_datasets(search_text, offset, page_size, filters, sort)
         results = [Dataset.load_from_dict(hit) for hit in search_results]
         total_pages = round(results_number / page_size) or 1
-        return results, results_number, total_pages
+        return results, results_number, total_pages, facets
 
     def find_one(self, dataset_id: str) -> Optional[Dataset]:
         try:
@@ -128,7 +128,7 @@ class ReuseService:
     def feed(self, reuse: Reuse, index: str = None) -> None:
         self.search_client.index_reuse(reuse, index)
 
-    def search(self, filters: dict) -> Tuple[List[Reuse], int, int]:
+    def search(self, filters: dict) -> Tuple[List[Reuse], int, int, dict]:
         page = filters.pop('page')
         page_size = filters.pop('page_size')
         search_text = filters.pop('q')
@@ -141,10 +141,10 @@ class ReuseService:
 
         self.format_filters(filters)
 
-        results_number, search_results = self.search_client.query_reuses(search_text, offset, page_size, filters, sort)
+        results_number, search_results, facets = self.search_client.query_reuses(search_text, offset, page_size, filters, sort)
         results = [Reuse.load_from_dict(hit) for hit in search_results]
         total_pages = round(results_number / page_size) or 1
-        return results, results_number, total_pages
+        return results, results_number, total_pages, facets
 
     def find_one(self, reuse_id: str) -> Optional[Reuse]:
         try:
@@ -182,7 +182,7 @@ class DataserviceService:
     def feed(self, dataservice: Dataservice, index: str = None) -> None:
         self.search_client.index_dataservice(dataservice, index)
 
-    def search(self, filters: dict) -> Tuple[List[Dataservice], int, int]:
+    def search(self, filters: dict) -> Tuple[List[Dataservice], int, int, dict]:
         page = filters.pop('page')
         page_size = filters.pop('page_size')
         search_text = filters.pop('q')
@@ -195,10 +195,10 @@ class DataserviceService:
 
         self.format_filters(filters)
 
-        results_number, search_results = self.search_client.query_dataservices(search_text, offset, page_size, filters, sort)
+        results_number, search_results, facets = self.search_client.query_dataservices(search_text, offset, page_size, filters, sort)
         results = [Dataservice.load_from_dict(hit) for hit in search_results]
         total_pages = round(results_number / page_size) or 1
-        return results, results_number, total_pages
+        return results, results_number, total_pages, facets
 
     def find_one(self, dataservice_id: str) -> Optional[Dataservice]:
         try:
