@@ -81,6 +81,7 @@ class SearchableDataservice(IndexDocument):
     description_length = Float()
     access_type = Keyword()
     producer_type = Keyword(multi=True)
+    documentation_content = Text(analyzer=dgv_analyzer)
 
     class Index:
         name = f'{Config.UDATA_INSTANCE_NAME}-dataservice'
@@ -478,7 +479,7 @@ class ElasticClient:
             search = search.query('bool', should=[
                     query.Q(
                         'function_score',
-                        query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['id^15', 'title^15', 'description^8', 'organization_name^8'])]),
+                        query=query.Bool(should=[query.MultiMatch(query=query_text, type='phrase', fields=['id^15', 'title^15', 'description^8', 'organization_name^8', 'documentation_content^3'])]),
                         functions=dataservices_score_functions
                     ),
                     query.Q(
@@ -486,11 +487,11 @@ class ElasticClient:
                         query=query.Bool(should=[query.MultiMatch(
                             query=query_text,
                             type='cross_fields',
-                            fields=['id^7', 'title^7', 'description^4', 'organization_name^4'],
+                            fields=['id^7', 'title^7', 'description^4', 'organization_name^4', 'documentation_content^2'],
                             operator="and")]),
                         functions=dataservices_score_functions
                     ),
-                    query.MultiMatch(query=query_text, type='most_fields', operator="and", fields=['title', 'organization_name'], fuzziness='AUTO:4,6')
+                    query.MultiMatch(query=query_text, type='most_fields', operator="and", fields=['title', 'organization_name', 'documentation_content'], fuzziness='AUTO:4,6')
                 ])
         else:
             search = search.query(query.Q('function_score', query=query.MatchAll(), functions=dataservices_score_functions))

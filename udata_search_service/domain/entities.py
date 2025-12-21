@@ -138,6 +138,7 @@ class Dataservice(EntityBase):
     tags: List[str] = None
     access_type: str = None
     producer_type: List[str] = None
+    documentation_content: str = None
 
     def __post_init__(self):
         if isinstance(self.created_at, str):

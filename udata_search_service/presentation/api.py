@@ -501,6 +501,7 @@ class DataserviceToIndex(BaseModel):
     is_restricted: Optional[bool] = None
     access_type: Optional[str] = None
     producer_type: Optional[list] = []
+    documentation_content: Optional[str] = None
 
 
 class RequestDataserviceIndex(BaseModel):
