@@ -6,9 +6,9 @@ from flask import Blueprint, request, url_for, jsonify, abort
 from pydantic import BaseModel, Field, ValidationError, validator
 from udata_search_service.container import Container
 from udata_search_service.config import Config
-from udata_search_service.infrastructure.services import DatasetService, OrganizationService, ReuseService, DataserviceService, TopicService
+from udata_search_service.infrastructure.services import DatasetService, OrganizationService, ReuseService, DataserviceService, TopicService, DiscussionService
 from udata_search_service.infrastructure.search_clients import ElasticClient
-from udata_search_service.infrastructure.consumers import DatasetConsumer, ReuseConsumer, OrganizationConsumer, DataserviceConsumer, TopicConsumer
+from udata_search_service.infrastructure.consumers import DatasetConsumer, ReuseConsumer, OrganizationConsumer, DataserviceConsumer, TopicConsumer, DiscussionConsumer
 from udata_search_service.infrastructure.migrate import set_alias as set_alias_func
 from udata_search_service.presentation.utils import is_list_type
 
@@ -587,6 +587,57 @@ class RequestTopicIndex(BaseModel):
     index: Optional[str] = None
 
 
+class DiscussionArgs(BaseModel):
+    q: Optional[str] = None
+    page: Optional[int] = 1
+    page_size: Optional[int] = 20
+    sort: Optional[str] = None
+    closed: Optional[bool] = None
+
+    @validator('sort')
+    def sort_validate(cls, value):
+        sorts = [
+            'created', 'closed'
+        ]
+        choices = sorts + ['-' + k for k in sorts]
+        if value not in choices:
+            raise ValueError('Sort parameter is not in the sorts available choices.')
+        return value
+
+    @classmethod
+    def from_request_args(cls, request_args) -> 'DiscussionArgs':
+        def get_list_args() -> dict:
+            return {
+                key: value
+                for key, value in request_args.to_dict(flat=False).items()
+                if key in cls.__fields__
+                and is_list_type(cls.__fields__[key].annotation)
+            }
+
+        return cls(
+            **{
+                **request_args.to_dict(),
+                **get_list_args(),
+            }
+        )
+
+
+class DiscussionToIndex(BaseModel):
+    id: str
+    title: str
+    content: Optional[str] = ""
+    created_at: str
+    closed_at: Optional[str] = None
+    closed: Optional[bool] = False
+    subject_class: Optional[str] = None
+    subject_id: Optional[str] = None
+
+
+class RequestDiscussionIndex(BaseModel):
+    document: DiscussionToIndex
+    index: Optional[str] = None
+
+
 @bp.route("/topics/index", methods=["POST"], endpoint='topic_index')
 @inject
 def topic_index(topic_service: TopicService = Provide[Container.topic_service], search_client: ElasticClient = Provide[Container.search_client]):
@@ -639,6 +690,60 @@ def get_topic(topic_id: str, topic_service: TopicService = Provide[Container.top
     if result:
         return jsonify(result)
     abort(404, 'topic not found')
+
+
+@bp.route("/discussions/index", methods=["POST"], endpoint='discussion_index')
+@inject
+def discussion_index(discussion_service: DiscussionService = Provide[Container.discussion_service], search_client: ElasticClient = Provide[Container.search_client]):
+    try:
+        validated_obj = RequestDiscussionIndex(**request.json)
+    except ValidationError as e:
+        abort(400, e)
+
+    document = DiscussionConsumer.load_from_dict(validated_obj.document.dict())
+    index_name = f'{Config.UDATA_INSTANCE_NAME}-{validated_obj.index}' if validated_obj.index else None
+    if index_name and not search_client.es.indices.exists(index=index_name):
+        abort(404, 'Index does not exist')
+
+    discussion_service.feed(document, index_name)
+    return jsonify({'data': 'Discussion added to index'})
+
+
+@bp.route("/discussions/<discussion_id>/unindex", methods=["DELETE"], endpoint='discussion_unindex')
+@inject
+def discussion_unindex(discussion_id: str, discussion_service: DiscussionService = Provide[Container.discussion_service]):
+    result = discussion_service.delete_one(discussion_id)
+    if result:
+        return jsonify({'data': f'Discussion {result} removed from index'})
+    abort(404, 'discussion not found')
+
+
+@bp.route("/discussions/", methods=["GET"], endpoint='discussion_search')
+@inject
+def discussions_search(discussion_service: DiscussionService = Provide[Container.discussion_service]):
+    try:
+        request_args = DiscussionArgs.from_request_args(request.args)
+    except ValidationError as e:
+        abort(400, e)
+
+    results, results_number, total_pages = discussion_service.search(request_args.dict())
+
+    next_url = url_for('api.discussion_search', q=request_args.q, page=request_args.page + 1,
+                       page_size=request_args.page_size, _external=True)
+    prev_url = url_for('api.discussion_search', q=request_args.q, page=request_args.page - 1,
+                       page_size=request_args.page_size, _external=True)
+
+    return make_response(results, total_pages, results_number,
+                         request_args.page, request_args.page_size, next_url, prev_url)
+
+
+@bp.route("/discussions/<discussion_id>/", methods=["GET"], endpoint='discussion_get_specific')
+@inject
+def get_discussion(discussion_id: str, discussion_service: DiscussionService = Provide[Container.discussion_service]):
+    result = discussion_service.find_one(discussion_id)
+    if result:
+        return jsonify(result)
+    abort(404, 'discussion not found')
 
 
 @bp.route("/create-index", methods=["POST"], endpoint='create_index')

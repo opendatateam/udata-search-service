@@ -1,5 +1,5 @@
 from typing import Tuple, Optional, List
-from udata_search_service.domain.entities import Dataset, Organization, Reuse, Dataservice, Topic
+from udata_search_service.domain.entities import Dataset, Organization, Reuse, Dataservice, Topic, Discussion
 from udata_search_service.infrastructure.search_clients import ElasticClient
 
 
@@ -271,4 +271,54 @@ class TopicService:
             sort = sort.replace('created', 'created_at')
         if sort is not None and 'last_modified' in sort:
             sort = sort.replace('last_modified', 'last_modified')
+        return sort
+
+
+class DiscussionService:
+
+    def __init__(self, search_client: ElasticClient):
+        self.search_client = search_client
+
+    def feed(self, discussion: Discussion, index: str = None) -> None:
+        self.search_client.index_discussion(discussion, index)
+
+    def search(self, filters: dict) -> Tuple[List[Discussion], int, int]:
+        page = filters.pop('page')
+        page_size = filters.pop('page_size')
+        search_text = filters.pop('q')
+        sort = self.format_sort(filters.pop('sort', None))
+
+        if page > 1:
+            offset = page_size * (page - 1)
+        else:
+            offset = 0
+
+        self.format_filters(filters)
+
+        results_number, search_results = self.search_client.query_discussions(search_text, offset, page_size, filters, sort)
+        results = [Discussion.load_from_dict(hit) for hit in search_results]
+        total_pages = round(results_number / page_size) or 1
+        return results, results_number, total_pages
+
+    def find_one(self, discussion_id: str) -> Optional[Discussion]:
+        try:
+            return Discussion.load_from_dict(self.search_client.find_one_discussion(discussion_id))
+        except TypeError:
+            return None
+
+    def delete_one(self, discussion_id: str) -> Optional[str]:
+        return self.search_client.delete_one_discussion(discussion_id)
+
+    @staticmethod
+    def format_filters(filters):
+        filtered = {k: v for k, v in filters.items() if v is not None}
+        filters.clear()
+        filters.update(filtered)
+
+    @staticmethod
+    def format_sort(sort):
+        if sort is not None and 'created' in sort:
+            sort = sort.replace('created', 'created_at')
+        if sort is not None and 'closed' in sort:
+            sort = sort.replace('closed', 'closed_at')
         return sort

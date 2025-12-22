@@ -9,7 +9,7 @@ from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl import Date, Document, Float, Integer, Keyword, Text, tokenizer, token_filter, analyzer, query
 from elasticsearch_dsl.connections import connections
-from udata_search_service.domain.entities import Dataset, Organization, Reuse, Dataservice, Topic
+from udata_search_service.domain.entities import Dataset, Organization, Reuse, Dataservice, Topic, Discussion
 from udata_search_service.config import Config
 from udata_search_service.infrastructure.utils import IS_TTY
 
@@ -98,6 +98,19 @@ class SearchableTopic(IndexDocument):
 
     class Index:
         name = f'{Config.UDATA_INSTANCE_NAME}-topic'
+
+
+class SearchableDiscussion(IndexDocument):
+    title = Text(analyzer=dgv_analyzer)
+    content = Text(analyzer=dgv_analyzer)
+    created_at = Date()
+    closed_at = Date()
+    closed = Integer()
+    subject_class = Keyword()
+    subject_id = Keyword()
+
+    class Index:
+        name = f'{Config.UDATA_INSTANCE_NAME}-discussion'
 
 
 class SearchableOrganization(IndexDocument):
@@ -199,6 +212,7 @@ class ElasticClient:
         SearchableOrganization.init_index(self.es, suffix_name)
         SearchableDataservice.init_index(self.es, suffix_name)
         SearchableTopic.init_index(self.es, suffix_name)
+        SearchableDiscussion.init_index(self.es, suffix_name)
 
     def clean_indices(self) -> None:
         '''
@@ -213,6 +227,7 @@ class ElasticClient:
         SearchableOrganization.delete_indices(self.es)
         SearchableDataservice.delete_indices(self.es)
         SearchableTopic.delete_indices(self.es)
+        SearchableDiscussion.delete_indices(self.es)
 
         self.init_indices()
 
@@ -647,5 +662,58 @@ class ElasticClient:
         try:
             SearchableTopic.get(id=topic_id).delete()
             return topic_id
+        except NotFoundError:
+            return None
+
+    def index_discussion(self, to_index: Discussion, index: str = None) -> None:
+        SearchableDiscussion(meta={'id': to_index.id}, **to_index.to_dict()).save(skip_empty=False, index=index)
+
+    def query_discussions(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict]]:
+        search = SearchableDiscussion.search()
+
+        for key, value in filters.items():
+            search = search.filter('term', **{key: value})
+
+        if query_text:
+            search = search.query(
+                'bool',
+                should=[
+                    query.MultiMatch(
+                        query=query_text,
+                        type='most_fields',
+                        operator="and",
+                        fields=['id^5', 'title^10', 'content^4'],
+                        fuzziness='AUTO:4,6',
+                    )
+                ],
+            )
+        else:
+            search = search.query(query.MatchAll())
+
+        if sort:
+            search = search.sort(sort, {'_score': {'order': 'desc'}})
+
+        search = search[offset:(offset + page_size)]
+
+        response = search.execute()
+        results_number = response.hits.total.value
+        if response.hits and not isinstance(response.hits[0], SearchableDiscussion):
+            raise ValueError(
+                'Results are not of SearchableDiscussion type. It probably means that index analyzers were not correctly set '
+                'using template patterns on index initialization.'
+            )
+        res = [hit.to_dict(skip_empty=False) for hit in response.hits]
+        return results_number, res
+
+    def find_one_discussion(self, discussion_id: str) -> Optional[dict]:
+        try:
+            return SearchableDiscussion.get(id=discussion_id).to_dict()
+        except NotFoundError:
+            return None
+
+    def delete_one_discussion(self, discussion_id: str) -> Optional[str]:
+        try:
+            SearchableDiscussion.get(id=discussion_id).delete()
+            return discussion_id
         except NotFoundError:
             return None

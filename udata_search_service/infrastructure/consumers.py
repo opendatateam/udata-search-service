@@ -1,7 +1,7 @@
 import logging
 import os
 
-from udata_search_service.domain.entities import Dataset, Organization, Reuse, Dataservice, Topic
+from udata_search_service.domain.entities import Dataset, Organization, Reuse, Dataservice, Topic, Discussion
 from udata_search_service.infrastructure.utils import get_concat_title_org, log2p, mdstrip
 
 
@@ -100,4 +100,11 @@ class TopicConsumer(Topic):
         # Strip markdown from description if any
         if data.get("description"):
             data["description"] = mdstrip(data["description"])
+        return super().load_from_dict(data)
+
+
+class DiscussionConsumer(Discussion):
+    @classmethod
+    def load_from_dict(cls, data):
+        # No specific processing needed for discussions
         return super().load_from_dict(data)

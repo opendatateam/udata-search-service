@@ -162,3 +162,21 @@ class Topic(EntityBase):
             self.created_at = isoparse(self.created_at)
         if isinstance(self.last_modified, str):
             self.last_modified = isoparse(self.last_modified)
+
+
+@dataclasses.dataclass
+class Discussion(EntityBase):
+    id: str
+    title: str
+    content: str = None
+    created_at: datetime.date = None
+    closed_at: datetime.date = None
+    closed: bool = False
+    subject_class: str = None
+    subject_id: str = None
+
+    def __post_init__(self):
+        if isinstance(self.created_at, str):
+            self.created_at = isoparse(self.created_at)
+        if isinstance(self.closed_at, str):
+            self.closed_at = isoparse(self.closed_at)
