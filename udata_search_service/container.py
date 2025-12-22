@@ -1,5 +1,5 @@
 from dependency_injector import containers, providers
-from udata_search_service.infrastructure.services import DatasetService, OrganizationService, ReuseService, DataserviceService, TopicService, DiscussionService
+from udata_search_service.infrastructure.services import DatasetService, OrganizationService, ReuseService, DataserviceService, TopicService, DiscussionService, PostService
 from udata_search_service.infrastructure.search_clients import ElasticClient
 
 
@@ -38,5 +38,10 @@ class Container(containers.DeclarativeContainer):
 
     discussion_service = providers.Factory(
         DiscussionService,
+        search_client=search_client
+    )
+
+    post_service = providers.Factory(
+        PostService,
         search_client=search_client
     )

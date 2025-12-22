@@ -156,6 +156,8 @@ class Topic(EntityBase):
     featured: bool = False
     private: bool = False
     last_modified: datetime.date = None
+    organization: str = None
+    producer_type: str = None
 
     def __post_init__(self):
         if isinstance(self.created_at, str):
@@ -180,3 +182,23 @@ class Discussion(EntityBase):
             self.created_at = isoparse(self.created_at)
         if isinstance(self.closed_at, str):
             self.closed_at = isoparse(self.closed_at)
+
+
+@dataclasses.dataclass
+class Post(EntityBase):
+    id: str
+    name: str
+    headline: str = None
+    content: str = None
+    tags: List[str] = None
+    created_at: datetime.date = None
+    last_modified: datetime.date = None
+    published: datetime.date = None
+
+    def __post_init__(self):
+        if isinstance(self.created_at, str):
+            self.created_at = isoparse(self.created_at)
+        if isinstance(self.last_modified, str):
+            self.last_modified = isoparse(self.last_modified)
+        if isinstance(self.published, str):
+            self.published = isoparse(self.published)

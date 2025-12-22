@@ -9,7 +9,7 @@ from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl import Date, Document, Float, Integer, Keyword, Text, tokenizer, token_filter, analyzer, query
 from elasticsearch_dsl.connections import connections
-from udata_search_service.domain.entities import Dataset, Organization, Reuse, Dataservice, Topic, Discussion
+from udata_search_service.domain.entities import Dataset, Organization, Reuse, Dataservice, Topic, Discussion, Post
 from udata_search_service.config import Config
 from udata_search_service.infrastructure.utils import IS_TTY
 
@@ -95,6 +95,8 @@ class SearchableTopic(IndexDocument):
     private = Integer()
     created_at = Date()
     last_modified = Date()
+    organization = Keyword()
+    producer_type = Keyword()
 
     class Index:
         name = f'{Config.UDATA_INSTANCE_NAME}-topic'
@@ -111,6 +113,19 @@ class SearchableDiscussion(IndexDocument):
 
     class Index:
         name = f'{Config.UDATA_INSTANCE_NAME}-discussion'
+
+
+class SearchablePost(IndexDocument):
+    name = Text(analyzer=dgv_analyzer)
+    headline = Text(analyzer=dgv_analyzer)
+    content = Text(analyzer=dgv_analyzer)
+    tags = Keyword(multi=True)
+    created_at = Date()
+    last_modified = Date()
+    published = Date()
+
+    class Index:
+        name = f'{Config.UDATA_INSTANCE_NAME}-post'
 
 
 class SearchableOrganization(IndexDocument):
@@ -213,6 +228,7 @@ class ElasticClient:
         SearchableDataservice.init_index(self.es, suffix_name)
         SearchableTopic.init_index(self.es, suffix_name)
         SearchableDiscussion.init_index(self.es, suffix_name)
+        SearchablePost.init_index(self.es, suffix_name)
 
     def clean_indices(self) -> None:
         '''
@@ -228,6 +244,7 @@ class ElasticClient:
         SearchableDataservice.delete_indices(self.es)
         SearchableTopic.delete_indices(self.es)
         SearchableDiscussion.delete_indices(self.es)
+        SearchablePost.delete_indices(self.es)
 
         self.init_indices()
 
@@ -297,8 +314,18 @@ class ElasticClient:
     def query_topics(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict]]:
         search = SearchableTopic.search()
 
+        last_update_range_mapping = {
+            'last_30_days': 'now-30d/d',
+            'last_12_months': 'now-12M/d',
+            'last_3_years': 'now-3y/d',
+        }
+
         for key, value in filters.items():
-            search = search.filter('term', **{key: value})
+            if key == 'last_update_range':
+                if value in last_update_range_mapping:
+                    search = search.filter('range', last_modified={'gte': last_update_range_mapping[value]})
+            else:
+                search = search.filter('term', **{key: value})
 
         if query_text:
             search = search.query(
@@ -671,8 +698,18 @@ class ElasticClient:
     def query_discussions(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict]]:
         search = SearchableDiscussion.search()
 
+        last_update_range_mapping = {
+            'last_30_days': 'now-30d/d',
+            'last_12_months': 'now-12M/d',
+            'last_3_years': 'now-3y/d',
+        }
+
         for key, value in filters.items():
-            search = search.filter('term', **{key: value})
+            if key == 'last_update_range':
+                if value in last_update_range_mapping:
+                    search = search.filter('range', created_at={'gte': last_update_range_mapping[value]})
+            else:
+                search = search.filter('term', **{key: value})
 
         if query_text:
             search = search.query(
@@ -715,5 +752,74 @@ class ElasticClient:
         try:
             SearchableDiscussion.get(id=discussion_id).delete()
             return discussion_id
+        except NotFoundError:
+            return None
+
+    def index_post(self, to_index: Post, index: str = None) -> None:
+        SearchablePost(meta={'id': to_index.id}, **to_index.to_dict()).save(skip_empty=False, index=index)
+
+    def query_posts(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict]]:
+        search = SearchablePost.search()
+
+        last_modified_range_mapping = {
+            'last_30_days': 'now-30d/d',
+            'last_12_months': 'now-12M/d',
+            'last_3_years': 'now-3y/d',
+        }
+
+        for key, value in filters.items():
+            if key == 'last_update_range':
+                if value in last_modified_range_mapping:
+                    search = search.filter('range', last_modified={'gte': last_modified_range_mapping[value]})
+            elif key == 'tags':
+                if isinstance(value, list):
+                    for tag in value:
+                        search = search.filter('term', tags=tag)
+                else:
+                    search = search.filter('term', tags=value)
+            else:
+                search = search.filter('term', **{key: value})
+
+        if query_text:
+            search = search.query(
+                'bool',
+                should=[
+                    query.MultiMatch(
+                        query=query_text,
+                        type='most_fields',
+                        operator="and",
+                        fields=['id^5', 'name^10', 'headline^7', 'content^4', 'tags^3'],
+                        fuzziness='AUTO:4,6',
+                    )
+                ],
+            )
+        else:
+            search = search.query(query.MatchAll())
+
+        if sort:
+            search = search.sort(sort, {'_score': {'order': 'desc'}})
+
+        search = search[offset:(offset + page_size)]
+
+        response = search.execute()
+        results_number = response.hits.total.value
+        if response.hits and not isinstance(response.hits[0], SearchablePost):
+            raise ValueError(
+                'Results are not of SearchablePost type. It probably means that index analyzers were not correctly set '
+                'using template patterns on index initialization.'
+            )
+        res = [hit.to_dict(skip_empty=False) for hit in response.hits]
+        return results_number, res
+
+    def find_one_post(self, post_id: str) -> Optional[dict]:
+        try:
+            return SearchablePost.get(id=post_id).to_dict()
+        except NotFoundError:
+            return None
+
+    def delete_one_post(self, post_id: str) -> Optional[str]:
+        try:
+            SearchablePost.get(id=post_id).delete()
+            return post_id
         except NotFoundError:
             return None

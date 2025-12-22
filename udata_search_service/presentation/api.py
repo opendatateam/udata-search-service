@@ -6,9 +6,9 @@ from flask import Blueprint, request, url_for, jsonify, abort
 from pydantic import BaseModel, Field, ValidationError, validator
 from udata_search_service.container import Container
 from udata_search_service.config import Config
-from udata_search_service.infrastructure.services import DatasetService, OrganizationService, ReuseService, DataserviceService, TopicService, DiscussionService
+from udata_search_service.infrastructure.services import DatasetService, OrganizationService, ReuseService, DataserviceService, TopicService, DiscussionService, PostService
 from udata_search_service.infrastructure.search_clients import ElasticClient
-from udata_search_service.infrastructure.consumers import DatasetConsumer, ReuseConsumer, OrganizationConsumer, DataserviceConsumer, TopicConsumer, DiscussionConsumer
+from udata_search_service.infrastructure.consumers import DatasetConsumer, ReuseConsumer, OrganizationConsumer, DataserviceConsumer, TopicConsumer, DiscussionConsumer, PostConsumer
 from udata_search_service.infrastructure.migrate import set_alias as set_alias_func
 from udata_search_service.presentation.utils import is_list_type
 
@@ -542,6 +542,9 @@ class TopicArgs(BaseModel):
     sort: Optional[str] = None
     tag: Optional[list[str]] = None
     featured: Optional[bool] = None
+    last_update_range: Optional[str] = None
+    organization: Optional[str] = None
+    producer_type: Optional[str] = None
 
     @validator('sort')
     def sort_validate(cls, value):
@@ -551,6 +554,12 @@ class TopicArgs(BaseModel):
         choices = sorts + ['-' + k for k in sorts]
         if value not in choices:
             raise ValueError('Sort parameter is not in the sorts available choices.')
+        return value
+
+    @validator('last_update_range')
+    def last_update_range_validate(cls, value):
+        if value is not None and value not in ['last_30_days', 'last_12_months', 'last_3_years']:
+            raise ValueError('last_update_range must be one of: last_30_days, last_12_months, last_3_years')
         return value
 
     @classmethod
@@ -580,6 +589,8 @@ class TopicToIndex(BaseModel):
     featured: Optional[bool] = False
     private: Optional[bool] = False
     last_modified: Optional[str] = None
+    organization: Optional[str] = None
+    producer_type: Optional[str] = None
 
 
 class RequestTopicIndex(BaseModel):
@@ -593,6 +604,7 @@ class DiscussionArgs(BaseModel):
     page_size: Optional[int] = 20
     sort: Optional[str] = None
     closed: Optional[bool] = None
+    last_update_range: Optional[str] = None
 
     @validator('sort')
     def sort_validate(cls, value):
@@ -602,6 +614,12 @@ class DiscussionArgs(BaseModel):
         choices = sorts + ['-' + k for k in sorts]
         if value not in choices:
             raise ValueError('Sort parameter is not in the sorts available choices.')
+        return value
+
+    @validator('last_update_range')
+    def last_update_range_validate(cls, value):
+        if value is not None and value not in ['last_30_days', 'last_12_months', 'last_3_years']:
+            raise ValueError('last_update_range must be one of: last_30_days, last_12_months, last_3_years')
         return value
 
     @classmethod
@@ -635,6 +653,64 @@ class DiscussionToIndex(BaseModel):
 
 class RequestDiscussionIndex(BaseModel):
     document: DiscussionToIndex
+    index: Optional[str] = None
+
+
+class PostArgs(BaseModel):
+    q: Optional[str] = None
+    page: Optional[int] = 1
+    page_size: Optional[int] = 20
+    sort: Optional[str] = None
+    tag: Optional[list[str]] = None
+    last_update_range: Optional[str] = None
+
+    @validator('sort')
+    def sort_validate(cls, value):
+        sorts = [
+            'created', 'last_modified', 'published'
+        ]
+        choices = sorts + ['-' + k for k in sorts]
+        if value not in choices:
+            raise ValueError('Sort parameter is not in the sorts available choices.')
+        return value
+
+    @validator('last_update_range')
+    def last_update_range_validate(cls, value):
+        if value is not None and value not in ['last_30_days', 'last_12_months', 'last_3_years']:
+            raise ValueError('last_update_range must be one of: last_30_days, last_12_months, last_3_years')
+        return value
+
+    @classmethod
+    def from_request_args(cls, request_args) -> 'PostArgs':
+        def get_list_args() -> dict:
+            return {
+                key: value
+                for key, value in request_args.to_dict(flat=False).items()
+                if key in cls.__fields__
+                and is_list_type(cls.__fields__[key].annotation)
+            }
+
+        return cls(
+            **{
+                **request_args.to_dict(),
+                **get_list_args(),
+            }
+        )
+
+
+class PostToIndex(BaseModel):
+    id: str
+    name: str
+    headline: Optional[str] = ""
+    content: Optional[str] = ""
+    tags: Optional[list] = []
+    created_at: str
+    last_modified: Optional[str] = None
+    published: Optional[str] = None
+
+
+class RequestPostIndex(BaseModel):
+    document: PostToIndex
     index: Optional[str] = None
 
 
@@ -744,6 +820,60 @@ def get_discussion(discussion_id: str, discussion_service: DiscussionService = P
     if result:
         return jsonify(result)
     abort(404, 'discussion not found')
+
+
+@bp.route("/posts/index", methods=["POST"], endpoint='post_index')
+@inject
+def post_index(post_service: PostService = Provide[Container.post_service], search_client: ElasticClient = Provide[Container.search_client]):
+    try:
+        validated_obj = RequestPostIndex(**request.json)
+    except ValidationError as e:
+        abort(400, e)
+
+    document = PostConsumer.load_from_dict(validated_obj.document.dict())
+    index_name = f'{Config.UDATA_INSTANCE_NAME}-{validated_obj.index}' if validated_obj.index else None
+    if index_name and not search_client.es.indices.exists(index=index_name):
+        abort(404, 'Index does not exist')
+
+    post_service.feed(document, index_name)
+    return jsonify({'data': 'Post added to index'})
+
+
+@bp.route("/posts/<post_id>/unindex", methods=["DELETE"], endpoint='post_unindex')
+@inject
+def post_unindex(post_id: str, post_service: PostService = Provide[Container.post_service]):
+    result = post_service.delete_one(post_id)
+    if result:
+        return jsonify({'data': f'Post {result} removed from index'})
+    abort(404, 'post not found')
+
+
+@bp.route("/posts/", methods=["GET"], endpoint='post_search')
+@inject
+def posts_search(post_service: PostService = Provide[Container.post_service]):
+    try:
+        request_args = PostArgs.from_request_args(request.args)
+    except ValidationError as e:
+        abort(400, e)
+
+    results, results_number, total_pages = post_service.search(request_args.dict())
+
+    next_url = url_for('api.post_search', q=request_args.q, page=request_args.page + 1,
+                       page_size=request_args.page_size, _external=True)
+    prev_url = url_for('api.post_search', q=request_args.q, page=request_args.page - 1,
+                       page_size=request_args.page_size, _external=True)
+
+    return make_response(results, total_pages, results_number,
+                         request_args.page, request_args.page_size, next_url, prev_url)
+
+
+@bp.route("/posts/<post_id>/", methods=["GET"], endpoint='post_get_specific')
+@inject
+def get_post(post_id: str, post_service: PostService = Provide[Container.post_service]):
+    result = post_service.find_one(post_id)
+    if result:
+        return jsonify(result)
+    abort(404, 'post not found')
 
 
 @bp.route("/create-index", methods=["POST"], endpoint='create_index')
