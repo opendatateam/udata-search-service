@@ -9,7 +9,7 @@ from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl import Date, Document, Float, Integer, Keyword, Text, tokenizer, token_filter, analyzer, query
 from elasticsearch_dsl.connections import connections
-from udata_search_service.domain.entities import Dataset, Organization, Reuse, Dataservice
+from udata_search_service.domain.entities import Dataset, Organization, Reuse, Dataservice, Topic
 from udata_search_service.config import Config
 from udata_search_service.infrastructure.utils import IS_TTY
 
@@ -85,6 +85,19 @@ class SearchableDataservice(IndexDocument):
 
     class Index:
         name = f'{Config.UDATA_INSTANCE_NAME}-dataservice'
+
+
+class SearchableTopic(IndexDocument):
+    name = Text(analyzer=dgv_analyzer)
+    description = Text(analyzer=dgv_analyzer)
+    tags = Keyword(multi=True)
+    featured = Integer()
+    private = Integer()
+    created_at = Date()
+    last_modified = Date()
+
+    class Index:
+        name = f'{Config.UDATA_INSTANCE_NAME}-topic'
 
 
 class SearchableOrganization(IndexDocument):
@@ -185,6 +198,7 @@ class ElasticClient:
         SearchableReuse.init_index(self.es, suffix_name)
         SearchableOrganization.init_index(self.es, suffix_name)
         SearchableDataservice.init_index(self.es, suffix_name)
+        SearchableTopic.init_index(self.es, suffix_name)
 
     def clean_indices(self) -> None:
         '''
@@ -198,6 +212,7 @@ class ElasticClient:
         SearchableReuse.delete_indices(self.es)
         SearchableOrganization.delete_indices(self.es)
         SearchableDataservice.delete_indices(self.es)
+        SearchableTopic.delete_indices(self.es)
 
         self.init_indices()
 
@@ -212,6 +227,9 @@ class ElasticClient:
 
     def index_dataservice(self, to_index: Dataservice, index: str = None) -> None:
         SearchableDataservice(meta={'id': to_index.id}, **to_index.to_dict()).save(skip_empty=False, index=index)
+
+    def index_topic(self, to_index: Topic, index: str = None) -> None:
+        SearchableTopic(meta={'id': to_index.id}, **to_index.to_dict()).save(skip_empty=False, index=index)
 
     def query_organizations(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict]]:
         search = SearchableOrganization.search()
@@ -257,6 +275,43 @@ class ElasticClient:
             raise ValueError(
                 'Results are not of SearchableOrganization type. It probably means that index analyzers '
                 'were not correctly set using template patterns on index initialization.'
+            )
+        res = [hit.to_dict(skip_empty=False) for hit in response.hits]
+        return results_number, res
+
+    def query_topics(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict]]:
+        search = SearchableTopic.search()
+
+        for key, value in filters.items():
+            search = search.filter('term', **{key: value})
+
+        if query_text:
+            search = search.query(
+                'bool',
+                should=[
+                    query.MultiMatch(
+                        query=query_text,
+                        type='most_fields',
+                        operator="and",
+                        fields=['id^5', 'name^10', 'description^4', 'tags^3'],
+                        fuzziness='AUTO:4,6',
+                    )
+                ],
+            )
+        else:
+            search = search.query(query.MatchAll())
+
+        if sort:
+            search = search.sort(sort, {'_score': {'order': 'desc'}})
+
+        search = search[offset:(offset + page_size)]
+
+        response = search.execute()
+        results_number = response.hits.total.value
+        if response.hits and not isinstance(response.hits[0], SearchableTopic):
+            raise ValueError(
+                'Results are not of SearchableTopic type. It probably means that index analyzers were not correctly set '
+                'using template patterns on index initialization.'
             )
         res = [hit.to_dict(skip_empty=False) for hit in response.hits]
         return results_number, res
@@ -554,6 +609,12 @@ class ElasticClient:
         except NotFoundError:
             return None
 
+    def find_one_topic(self, topic_id: str) -> Optional[dict]:
+        try:
+            return SearchableTopic.get(id=topic_id).to_dict()
+        except NotFoundError:
+            return None
+
     def delete_one_organization(self, organization_id: str) -> Optional[str]:
         try:
             SearchableOrganization.get(id=organization_id).delete()
@@ -579,5 +640,12 @@ class ElasticClient:
         try:
             SearchableDataservice.get(id=dataservice_id).delete()
             return dataservice_id
+        except NotFoundError:
+            return None
+
+    def delete_one_topic(self, topic_id: str) -> Optional[str]:
+        try:
+            SearchableTopic.get(id=topic_id).delete()
+            return topic_id
         except NotFoundError:
             return None

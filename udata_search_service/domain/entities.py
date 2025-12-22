@@ -143,3 +143,22 @@ class Dataservice(EntityBase):
     def __post_init__(self):
         if isinstance(self.created_at, str):
             self.created_at = isoparse(self.created_at)
+
+
+@dataclasses.dataclass
+class Topic(EntityBase):
+    id: str
+    name: str
+    description: str
+    created_at: datetime.date
+
+    tags: List[str] = None
+    featured: bool = False
+    private: bool = False
+    last_modified: datetime.date = None
+
+    def __post_init__(self):
+        if isinstance(self.created_at, str):
+            self.created_at = isoparse(self.created_at)
+        if isinstance(self.last_modified, str):
+            self.last_modified = isoparse(self.last_modified)

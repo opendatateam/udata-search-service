@@ -6,9 +6,9 @@ from flask import Blueprint, request, url_for, jsonify, abort
 from pydantic import BaseModel, Field, ValidationError, validator
 from udata_search_service.container import Container
 from udata_search_service.config import Config
-from udata_search_service.infrastructure.services import DatasetService, OrganizationService, ReuseService, DataserviceService
+from udata_search_service.infrastructure.services import DatasetService, OrganizationService, ReuseService, DataserviceService, TopicService
 from udata_search_service.infrastructure.search_clients import ElasticClient
-from udata_search_service.infrastructure.consumers import DatasetConsumer, ReuseConsumer, OrganizationConsumer, DataserviceConsumer
+from udata_search_service.infrastructure.consumers import DatasetConsumer, ReuseConsumer, OrganizationConsumer, DataserviceConsumer, TopicConsumer
 from udata_search_service.infrastructure.migrate import set_alias as set_alias_func
 from udata_search_service.presentation.utils import is_list_type
 
@@ -533,6 +533,112 @@ def dataservice_unindex(dataservice_id: str, dataservice_service: DataserviceSer
     if result:
         return jsonify({'data': f'Dataservice {result} removed from index'})
     abort(404, 'dataservice not found')
+
+
+class TopicArgs(BaseModel):
+    q: Optional[str] = None
+    page: Optional[int] = 1
+    page_size: Optional[int] = 20
+    sort: Optional[str] = None
+    tag: Optional[list[str]] = None
+    featured: Optional[bool] = None
+
+    @validator('sort')
+    def sort_validate(cls, value):
+        sorts = [
+            'name', 'created', 'last_modified'
+        ]
+        choices = sorts + ['-' + k for k in sorts]
+        if value not in choices:
+            raise ValueError('Sort parameter is not in the sorts available choices.')
+        return value
+
+    @classmethod
+    def from_request_args(cls, request_args) -> 'TopicArgs':
+        def get_list_args() -> dict:
+            return {
+                key: value
+                for key, value in request_args.to_dict(flat=False).items()
+                if key in cls.__fields__
+                and is_list_type(cls.__fields__[key].annotation)
+            }
+
+        return cls(
+            **{
+                **request_args.to_dict(),
+                **get_list_args(),
+            }
+        )
+
+
+class TopicToIndex(BaseModel):
+    id: str
+    name: str
+    description: Optional[str] = ""
+    created_at: str
+    tags: Optional[list] = []
+    featured: Optional[bool] = False
+    private: Optional[bool] = False
+    last_modified: Optional[str] = None
+
+
+class RequestTopicIndex(BaseModel):
+    document: TopicToIndex
+    index: Optional[str] = None
+
+
+@bp.route("/topics/index", methods=["POST"], endpoint='topic_index')
+@inject
+def topic_index(topic_service: TopicService = Provide[Container.topic_service], search_client: ElasticClient = Provide[Container.search_client]):
+    try:
+        validated_obj = RequestTopicIndex(**request.json)
+    except ValidationError as e:
+        abort(400, e)
+
+    document = TopicConsumer.load_from_dict(validated_obj.document.dict())
+    index_name = f'{Config.UDATA_INSTANCE_NAME}-{validated_obj.index}' if validated_obj.index else None
+    if index_name and not search_client.es.indices.exists(index=index_name):
+        abort(404, 'Index does not exist')
+
+    topic_service.feed(document, index_name)
+    return jsonify({'data': 'Topic added to index'})
+
+
+@bp.route("/topics/<topic_id>/unindex", methods=["DELETE"], endpoint='topic_unindex')
+@inject
+def topic_unindex(topic_id: str, topic_service: TopicService = Provide[Container.topic_service]):
+    result = topic_service.delete_one(topic_id)
+    if result:
+        return jsonify({'data': f'Topic {result} removed from index'})
+    abort(404, 'topic not found')
+
+
+@bp.route("/topics/", methods=["GET"], endpoint='topic_search')
+@inject
+def topics_search(topic_service: TopicService = Provide[Container.topic_service]):
+    try:
+        request_args = TopicArgs.from_request_args(request.args)
+    except ValidationError as e:
+        abort(400, e)
+
+    results, results_number, total_pages = topic_service.search(request_args.dict())
+
+    next_url = url_for('api.topic_search', q=request_args.q, page=request_args.page + 1,
+                       page_size=request_args.page_size, _external=True)
+    prev_url = url_for('api.topic_search', q=request_args.q, page=request_args.page - 1,
+                       page_size=request_args.page_size, _external=True)
+
+    return make_response(results, total_pages, results_number,
+                         request_args.page, request_args.page_size, next_url, prev_url)
+
+
+@bp.route("/topics/<topic_id>/", methods=["GET"], endpoint='topic_get_specific')
+@inject
+def get_topic(topic_id: str, topic_service: TopicService = Provide[Container.topic_service]):
+    result = topic_service.find_one(topic_id)
+    if result:
+        return jsonify(result)
+    abort(404, 'topic not found')
 
 
 @bp.route("/create-index", methods=["POST"], endpoint='create_index')
