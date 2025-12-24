@@ -11,7 +11,7 @@ class OrganizationService:
     def feed(self, organization: Organization, index: str = None) -> None:
         self.search_client.index_organization(organization, index)
 
-    def search(self, filters: dict) -> Tuple[List[Organization], int, int]:
+    def search(self, filters: dict) -> Tuple[List[Organization], int, int, dict]:
         page = filters.pop('page')
         page_size = filters.pop('page_size')
         search_text = filters.pop('q')
@@ -24,10 +24,10 @@ class OrganizationService:
 
         self.format_filters(filters)
 
-        results_number, search_results = self.search_client.query_organizations(search_text, offset, page_size, filters, sort)
+        results_number, search_results, facets = self.search_client.query_organizations(search_text, offset, page_size, filters, sort)
         results = [Organization.load_from_dict(hit) for hit in search_results]
         total_pages = round(results_number / page_size) or 1
-        return results, results_number, total_pages
+        return results, results_number, total_pages, facets
 
     def find_one(self, organization_id: str) -> Optional[Organization]:
         try:
@@ -93,22 +93,24 @@ class DatasetService:
         For example udata search params uses singular ?tag=<mytag>, even though
         the field is plural since it's a list of tags.
         '''
-        if filters['temporal_coverage']:
+        if filters.get('temporal_coverage'):
             parts = filters.pop('temporal_coverage')
             filters['temporal_coverage_start'] = parts[:10]
             filters['temporal_coverage_end'] = parts[11:]
-        if filters['tag']:
+        if filters.get('tag'):
             filters['tags'] = filters.pop('tag')
-        if filters['badge']:
+        if filters.get('badge'):
             filters['badges'] = filters.pop('badge')
-        if filters['topic']:
+        if filters.get('topic'):
             filters['topics'] = filters.pop('topic')
-        if filters['geozone']:
+        if filters.get('geozone'):
             filters['geozones'] = filters.pop('geozone')
-        if filters['schema_']:
+        if filters.get('schema_'):
             filters['schema'] = filters.pop('schema_')
-        if filters['organization_badge']:
+        if filters.get('organization_badge'):
             filters['organization_badges'] = filters.pop('organization_badge')
+        if filters.get('organization'):
+            filters['organization_id_with_name'] = filters.pop('organization')
         filtered = {k: v for k, v in filters.items() if v is not None}
         filters.clear()
         filters.update(filtered)
@@ -157,12 +159,15 @@ class ReuseService:
 
     @staticmethod
     def format_filters(filters):
-        if filters['tag']:
+        if filters.get('tag'):
             filters['tags'] = filters.pop('tag')
-        if filters['badge']:
+        if filters.get('badge'):
             filters['badges'] = filters.pop('badge')
-        if filters['organization_badge']:
+        # topic_object stays as is (no pluralization needed)
+        if filters.get('organization_badge'):
             filters['organization_badges'] = filters.pop('organization_badge')
+        if filters.get('organization'):
+            filters['organization_id_with_name'] = filters.pop('organization')
         filtered = {k: v for k, v in filters.items() if v is not None}
         filters.clear()
         filters.update(filtered)
@@ -211,8 +216,14 @@ class DataserviceService:
 
     @staticmethod
     def format_filters(filters):
-        if filters['tag']:
+        if filters.get('tag'):
             filters['tags'] = filters.pop('tag')
+        if filters.get('badge'):
+            filters['badges'] = filters.pop('badge')
+        if filters.get('topic'):
+            filters['topics'] = filters.pop('topic')
+        if filters.get('organization'):
+            filters['organization_id_with_name'] = filters.pop('organization')
         filtered = {k: v for k, v in filters.items() if v is not None}
         filters.clear()
         filters.update(filtered)
@@ -232,7 +243,7 @@ class TopicService:
     def feed(self, topic: Topic, index: str = None) -> None:
         self.search_client.index_topic(topic, index)
 
-    def search(self, filters: dict) -> Tuple[List[Topic], int, int]:
+    def search(self, filters: dict) -> Tuple[List[Topic], int, int, dict]:
         page = filters.pop('page')
         page_size = filters.pop('page_size')
         search_text = filters.pop('q')
@@ -245,10 +256,10 @@ class TopicService:
 
         self.format_filters(filters)
 
-        results_number, search_results = self.search_client.query_topics(search_text, offset, page_size, filters, sort)
+        results_number, search_results, facets = self.search_client.query_topics(search_text, offset, page_size, filters, sort)
         results = [Topic.load_from_dict(hit) for hit in search_results]
         total_pages = round(results_number / page_size) or 1
-        return results, results_number, total_pages
+        return results, results_number, total_pages, facets
 
     def find_one(self, topic_id: str) -> Optional[Topic]:
         try:
@@ -282,7 +293,7 @@ class DiscussionService:
     def feed(self, discussion: Discussion, index: str = None) -> None:
         self.search_client.index_discussion(discussion, index)
 
-    def search(self, filters: dict) -> Tuple[List[Discussion], int, int]:
+    def search(self, filters: dict) -> Tuple[List[Discussion], int, int, dict]:
         page = filters.pop('page')
         page_size = filters.pop('page_size')
         search_text = filters.pop('q')
@@ -295,10 +306,10 @@ class DiscussionService:
 
         self.format_filters(filters)
 
-        results_number, search_results = self.search_client.query_discussions(search_text, offset, page_size, filters, sort)
+        results_number, search_results, facets = self.search_client.query_discussions(search_text, offset, page_size, filters, sort)
         results = [Discussion.load_from_dict(hit) for hit in search_results]
         total_pages = round(results_number / page_size) or 1
-        return results, results_number, total_pages
+        return results, results_number, total_pages, facets
 
     def find_one(self, discussion_id: str) -> Optional[Discussion]:
         try:
@@ -332,7 +343,7 @@ class PostService:
     def feed(self, post: Post, index: str = None) -> None:
         self.search_client.index_post(post, index)
 
-    def search(self, filters: dict) -> Tuple[List[Post], int, int]:
+    def search(self, filters: dict) -> Tuple[List[Post], int, int, dict]:
         page = filters.pop('page')
         page_size = filters.pop('page_size')
         search_text = filters.pop('q')
@@ -345,10 +356,10 @@ class PostService:
 
         self.format_filters(filters)
 
-        results_number, search_results = self.search_client.query_posts(search_text, offset, page_size, filters, sort)
+        results_number, search_results, facets = self.search_client.query_posts(search_text, offset, page_size, filters, sort)
         results = [Post.load_from_dict(hit) for hit in search_results]
         total_pages = round(results_number / page_size) or 1
-        return results, results_number, total_pages
+        return results, results_number, total_pages, facets
 
     def find_one(self, post_id: str) -> Optional[Post]:
         try:

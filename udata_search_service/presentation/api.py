@@ -22,6 +22,7 @@ class OrganizationArgs(BaseModel):
     page_size: Optional[int] = 20
     sort: Optional[str] = None
     badge: Optional[str] = None
+    producer_type: Optional[str] = None
 
     @validator('sort')
     def sort_validate(cls, value):
@@ -40,18 +41,18 @@ class DatasetArgs(BaseModel):
     page_size: Optional[int] = 20
     sort: Optional[str] = None
     tag: Optional[list[str]] = None
-    badge: Optional[str] = None
-    organization: Optional[str] = None
+    badge: Optional[list[str]] = None
+    organization: Optional[list[str]] = None
     organization_badge: Optional[str] = None
     owner: Optional[str] = None
-    license: Optional[str] = None
-    geozone: Optional[str] = None
-    granularity: Optional[str] = None
-    format: Optional[str] = None
+    license: Optional[list[str]] = None
+    geozone: Optional[list[str]] = None
+    granularity: Optional[list[str]] = None
+    format: Optional[list[str]] = None
     temporal_coverage: Optional[str] = None
     featured: Optional[str] = None
-    schema_: Optional[str] = Field(None, alias="schema")
-    topic: Optional[str] = None
+    schema_: Optional[list[str]] = Field(None, alias="schema")
+    topic: Optional[list[str]] = None
     access_type: Optional[str] = None
     format_family: Optional[str] = None
     producer_type: Optional[str] = None
@@ -84,12 +85,21 @@ class DatasetArgs(BaseModel):
     @classmethod
     def from_request_args(cls, request_args) -> 'DatasetArgs':
         def get_list_args() -> dict:
-            return {
-                key: value
-                for key, value in request_args.to_dict(flat=False).items()
-                if key in cls.__fields__
-                and is_list_type(cls.__fields__[key].annotation)
-            }
+            # modification for schema which is reserved word in python
+            result = {}
+            for key, value in request_args.to_dict(flat=False).items():
+                field_name = None
+                if key in cls.__fields__:
+                    field_name = key
+                else:
+                    for fname, field in cls.__fields__.items():
+                        if field.alias == key:
+                            field_name = fname
+                            break
+                
+                if field_name and is_list_type(cls.__fields__[field_name].annotation):
+                    result[key] = value
+            return result
 
         return cls(
             **{
@@ -104,13 +114,14 @@ class ReuseArgs(BaseModel):
     page_size: Optional[int] = 20
     sort: Optional[str] = None
     tag: Optional[list[str]] = None
-    badge: Optional[str] = None
-    organization: Optional[str] = None
+    badge: Optional[list[str]] = None
+    organization: Optional[list[str]] = None
     organization_badge: Optional[str] = None
     owner: Optional[str] = None
     type: Optional[str] = None
     featured: Optional[str] = None
-    topic: Optional[str] = None
+    topic: Optional[str] = None  # Metadata topic (health, transport, etc.)
+    topic_object: Optional[list[str]] = None  # Topic objects from TopicElement
     producer_type: Optional[str] = None
     last_update_range: Optional[str] = None
 
@@ -155,7 +166,9 @@ class DataserviceArgs(BaseModel):
     page_size: Optional[int] = 20
     sort: Optional[str] = None
     tag: Optional[list[str]] = None
-    organization: Optional[str] = None
+    topic: Optional[list[str]] = None
+    badge: Optional[list[str]] = None
+    organization: Optional[list[str]] = None
     owner: Optional[str] = None
     is_restricted: Optional[bool] = None
     access_type: Optional[str] = None
@@ -172,7 +185,7 @@ class DataserviceArgs(BaseModel):
     @validator('sort')
     def sort_validate(cls, value):
         sorts = [
-            'created', 'followers', 'views'
+            'created', 'last_update', 'followers', 'views'
         ]
         choices = sorts + ['-' + k for k in sorts]
         if value not in choices:
@@ -312,7 +325,7 @@ def organizations_search(organization_service: OrganizationService = Provide[Con
     except ValidationError as e:
         abort(400, e)
 
-    results, results_number, total_pages = organization_service.search(request_args.dict())
+    results, results_number, total_pages, facets = organization_service.search(request_args.dict())
 
     next_url = url_for('api.organization_search', q=request_args.q, page=request_args.page + 1,
                        page_size=request_args.page_size, _external=True)
@@ -320,7 +333,7 @@ def organizations_search(organization_service: OrganizationService = Provide[Con
                        page_size=request_args.page_size, _external=True)
 
     return make_response(results, total_pages, results_number, request_args.page,
-                         request_args.page_size, next_url, prev_url)
+                         request_args.page_size, next_url, prev_url, facets)
 
 
 @bp.route("/organizations/<organization_id>/", methods=["GET"], endpoint='organization_get_specific')
@@ -340,6 +353,7 @@ class OrganizationToIndex(BaseModel):
     acronym: Optional[str] = None
     url: Optional[str] = None
     badges: Optional[list] = []
+    producer_type: Optional[list] = []
     created_at: str
     orga_sp: int
     datasets: int
@@ -422,7 +436,8 @@ class ReuseToIndex(BaseModel):
     organization: Optional[dict] = {}
     owner: Optional[str] = None
     type: str
-    topic: str
+    topic: str  # Metadata topic (health, transport, etc.)
+    topic_object: Optional[list] = []  # Topic objects linked via TopicElement
     tags: Optional[list] = []
     extras: Optional[dict] = {}
     producer_type: Optional[list] = []
@@ -492,11 +507,13 @@ class DataserviceToIndex(BaseModel):
     title: str
     description: str
     created_at: str
+    last_update: Optional[str] = None
     views: int = 0
     followers: int = 0
     organization: Optional[dict] = {}
     owner: Optional[str] = None
     tags: Optional[list] = []
+    topics: Optional[list] = []
     extras: Optional[dict] = {}
     is_restricted: Optional[bool] = None
     access_type: Optional[str] = None
@@ -543,13 +560,14 @@ class TopicArgs(BaseModel):
     tag: Optional[list[str]] = None
     featured: Optional[bool] = None
     last_update_range: Optional[str] = None
-    organization: Optional[str] = None
+    organization: Optional[list[str]] = None
+    organization_id_with_name: Optional[list[str]] = None
     producer_type: Optional[str] = None
 
     @validator('sort')
     def sort_validate(cls, value):
         sorts = [
-            'name', 'created', 'last_modified'
+            'name', 'created', 'last_modified', 'last_update'
         ]
         choices = sorts + ['-' + k for k in sorts]
         if value not in choices:
@@ -590,7 +608,11 @@ class TopicToIndex(BaseModel):
     private: Optional[bool] = False
     last_modified: Optional[str] = None
     organization: Optional[str] = None
-    producer_type: Optional[str] = None
+    organization_name: Optional[str] = None
+    producer_type: Optional[list] = []
+    nb_datasets: Optional[int] = 0
+    nb_reuses: Optional[int] = 0
+    nb_dataservices: Optional[int] = 0
 
 
 class RequestTopicIndex(BaseModel):
@@ -605,6 +627,7 @@ class DiscussionArgs(BaseModel):
     sort: Optional[str] = None
     closed: Optional[bool] = None
     last_update_range: Optional[str] = None
+    object_type: Optional[str] = None
 
     @validator('sort')
     def sort_validate(cls, value):
@@ -620,6 +643,12 @@ class DiscussionArgs(BaseModel):
     def last_update_range_validate(cls, value):
         if value is not None and value not in ['last_30_days', 'last_12_months', 'last_3_years']:
             raise ValueError('last_update_range must be one of: last_30_days, last_12_months, last_3_years')
+        return value
+    
+    @validator('object_type')
+    def object_type_validate(cls, value):
+        if value is not None and value not in ['Dataset', 'Reuse', 'Dataservice', 'Organization']:
+            raise ValueError('object_type must be one of: Dataset, Reuse, Dataservice, Organization')
         return value
 
     @classmethod
@@ -748,7 +777,7 @@ def topics_search(topic_service: TopicService = Provide[Container.topic_service]
     except ValidationError as e:
         abort(400, e)
 
-    results, results_number, total_pages = topic_service.search(request_args.dict())
+    results, results_number, total_pages, facets = topic_service.search(request_args.dict())
 
     next_url = url_for('api.topic_search', q=request_args.q, page=request_args.page + 1,
                        page_size=request_args.page_size, _external=True)
@@ -756,7 +785,7 @@ def topics_search(topic_service: TopicService = Provide[Container.topic_service]
                        page_size=request_args.page_size, _external=True)
 
     return make_response(results, total_pages, results_number,
-                         request_args.page, request_args.page_size, next_url, prev_url)
+                         request_args.page, request_args.page_size, next_url, prev_url, facets)
 
 
 @bp.route("/topics/<topic_id>/", methods=["GET"], endpoint='topic_get_specific')
@@ -802,7 +831,7 @@ def discussions_search(discussion_service: DiscussionService = Provide[Container
     except ValidationError as e:
         abort(400, e)
 
-    results, results_number, total_pages = discussion_service.search(request_args.dict())
+    results, results_number, total_pages, facets = discussion_service.search(request_args.dict())
 
     next_url = url_for('api.discussion_search', q=request_args.q, page=request_args.page + 1,
                        page_size=request_args.page_size, _external=True)
@@ -810,7 +839,7 @@ def discussions_search(discussion_service: DiscussionService = Provide[Container
                        page_size=request_args.page_size, _external=True)
 
     return make_response(results, total_pages, results_number,
-                         request_args.page, request_args.page_size, next_url, prev_url)
+                         request_args.page, request_args.page_size, next_url, prev_url, facets)
 
 
 @bp.route("/discussions/<discussion_id>/", methods=["GET"], endpoint='discussion_get_specific')
@@ -856,7 +885,7 @@ def posts_search(post_service: PostService = Provide[Container.post_service]):
     except ValidationError as e:
         abort(400, e)
 
-    results, results_number, total_pages = post_service.search(request_args.dict())
+    results, results_number, total_pages, facets = post_service.search(request_args.dict())
 
     next_url = url_for('api.post_search', q=request_args.q, page=request_args.page + 1,
                        page_size=request_args.page_size, _external=True)
@@ -864,7 +893,7 @@ def posts_search(post_service: PostService = Provide[Container.post_service]):
                        page_size=request_args.page_size, _external=True)
 
     return make_response(results, total_pages, results_number,
-                         request_args.page, request_args.page_size, next_url, prev_url)
+                         request_args.page, request_args.page_size, next_url, prev_url, facets)
 
 
 @bp.route("/posts/<post_id>/", methods=["GET"], endpoint='post_get_specific')

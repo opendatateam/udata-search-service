@@ -31,6 +31,7 @@ class Organization(EntityBase):
     reuses: int
 
     badges: List[str] = None
+    producer_type: List[str] = None
     acronym: str = None
 
     def __post_init__(self):
@@ -106,6 +107,7 @@ class Reuse(EntityBase):
     archived: datetime.date = None
     tags: List[str] = None
     badges: List[str] = None
+    topic_object: List[str] = None
     orga_followers: int = None
     organization: str = None
     organization_name: str = None
@@ -127,6 +129,7 @@ class Dataservice(EntityBase):
     description: str
     description_length: float
     created_at: datetime.date
+    last_update: datetime.date = None
 
     views: int = 0
     followers: int = 0
@@ -136,6 +139,7 @@ class Dataservice(EntityBase):
     organization_name: str = None
     owner: str = None
     tags: List[str] = None
+    topics: List[str] = None
     access_type: str = None
     producer_type: List[str] = None
     documentation_content: str = None
@@ -143,6 +147,8 @@ class Dataservice(EntityBase):
     def __post_init__(self):
         if isinstance(self.created_at, str):
             self.created_at = isoparse(self.created_at)
+        if isinstance(self.last_update, str):
+            self.last_update = isoparse(self.last_update)
 
 
 @dataclasses.dataclass
@@ -157,7 +163,11 @@ class Topic(EntityBase):
     private: bool = False
     last_modified: datetime.date = None
     organization: str = None
-    producer_type: str = None
+    organization_name: str = None
+    producer_type: List[str] = None
+    nb_datasets: int = 0
+    nb_reuses: int = 0
+    nb_dataservices: int = 0
 
     def __post_init__(self):
         if isinstance(self.created_at, str):
