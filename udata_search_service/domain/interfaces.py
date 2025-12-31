@@ -30,19 +30,19 @@ class SearchClient(ABC):
         pass
 
     @abstractmethod
-    def query_organizations(self, query_text: str, offset: int, page_size: int) -> Tuple[int, List[Organization]]:
+    def query_organizations(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict], dict]:
         pass
 
     @abstractmethod
-    def query_datasets(self, query_text: str, offset: int, page_size: int) -> Tuple[int, List[Dataset]]:
+    def query_datasets(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict], dict]:
         pass
 
     @abstractmethod
-    def query_reuses(self, query_text: str, offset: int, page_size: int) -> Tuple[int, List[Reuse]]:
+    def query_reuses(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict], dict]:
         pass
 
     @abstractmethod
-    def query_dataservices(self, query_text: str, offset: int, page_size: int) -> Tuple[int, List[Dataservice]]:
+    def query_dataservices(self, query_text: str, offset: int, page_size: int, filters: dict, sort: Optional[str] = None) -> Tuple[int, List[dict], dict]:
         pass
 
     @abstractmethod

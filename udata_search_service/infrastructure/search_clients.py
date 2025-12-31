@@ -557,12 +557,13 @@ class ElasticClient:
             elif key == 'tags':
                 tag_filters = [query.Q('term', tags=tag) for tag in value]
                 filter_dict['other'].append(query.Bool(must=tag_filters))
-            elif key in ['license', 'format', 'schema', 'geozone', 'granularity', 'badge']:
+            elif key in ['license', 'format', 'schema', 'geozones', 'granularity', 'badges']:
+                filter_key = {'geozones': 'geozone', 'badges': 'badge'}.get(key, key)
                 if isinstance(value, list):
                     list_filters = [query.Q('term', **{key: v}) for v in value]
-                    filter_dict[key] = query.Bool(should=list_filters, minimum_should_match=1)
+                    filter_dict[filter_key] = query.Bool(should=list_filters, minimum_should_match=1)
                 else:
-                    filter_dict[key] = query.Q('term', **{key: value})
+                    filter_dict[filter_key] = query.Q('term', **{key: value})
             elif key == 'topics':
                 if isinstance(value, list):
                     topic_filters = [query.Q('term', topics=topic) for topic in value]

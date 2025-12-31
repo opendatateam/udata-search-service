@@ -28,33 +28,33 @@ def test_general_search_with_and_without_query(app, client, search_client, faker
     time.sleep(2)
 
     # Should return only the object with string 'test' in their titles/names
-    results_number, res = search_client.query_datasets('test', 0, 20, {})
+    results_number, res, _ = search_client.query_datasets('test', 0, 20, {})
     assert results_number == 2
-    results_number, res = search_client.query_organizations('test', 0, 20, {})
+    results_number, res, _ = search_client.query_organizations('test', 0, 20, {})
     assert results_number == 2
-    results_number, res = search_client.query_reuses('test', 0, 20, {})
+    results_number, res, _ = search_client.query_reuses('test', 0, 20, {})
     assert results_number == 2
-    results_number, res = search_client.query_dataservices('test', 0, 20, {})
+    results_number, res, _ = search_client.query_dataservices('test', 0, 20, {})
     assert results_number == 2
 
     # Should return only the object with string 'test' and 'udata' in their titles/names or desc
-    results_number, res = search_client.query_datasets('test udata', 0, 20, {})
+    results_number, res, _ = search_client.query_datasets('test udata', 0, 20, {})
     assert results_number == 1
-    results_number, res = search_client.query_organizations('test udata', 0, 20, {})
+    results_number, res, _ = search_client.query_organizations('test udata', 0, 20, {})
     assert results_number == 1
-    results_number, res = search_client.query_reuses('test udata', 0, 20, {})
+    results_number, res, _ = search_client.query_reuses('test udata', 0, 20, {})
     assert results_number == 1
-    results_number, res = search_client.query_dataservices('test udata', 0, 20, {})
+    results_number, res, _ = search_client.query_dataservices('test udata', 0, 20, {})
     assert results_number == 1
 
     # Should return all objects, as query text is none
-    results_number, res = search_client.query_datasets(None, 0, 20, {})
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {})
     assert results_number == 4
-    results_number, res = search_client.query_organizations(None, 0, 20, {})
+    results_number, res, _ = search_client.query_organizations(None, 0, 20, {})
     assert results_number == 4
-    results_number, res = search_client.query_reuses(None, 0, 20, {})
+    results_number, res, _ = search_client.query_reuses(None, 0, 20, {})
     assert results_number == 4
-    results_number, res = search_client.query_dataservices(None, 0, 20, {})
+    results_number, res, _ = search_client.query_dataservices(None, 0, 20, {})
     assert results_number == 4
 
 
@@ -70,13 +70,13 @@ def test_search_with_orga_sp_filter(app, client, search_client, faker):
     # Without this, ElasticSearch does not seem to have the time to index.
     time.sleep(2)
 
-    results_number, res = search_client.query_datasets(None, 0, 20, {})
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {})
     assert results_number == 4
-    results_number, res = search_client.query_datasets(None, 0, 20, {'orga_sp': 4})
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {'orga_sp': 4})
     assert results_number == 2
-    results_number, res = search_client.query_organizations(None, 0, 20, {})
+    results_number, res, _ = search_client.query_organizations(None, 0, 20, {})
     assert results_number == 4
-    results_number, res = search_client.query_organizations(None, 0, 20, {'orga_sp': 4})
+    results_number, res, _ = search_client.query_organizations(None, 0, 20, {'orga_sp': 4})
     assert results_number == 2
 
 
@@ -98,15 +98,15 @@ def test_search_with_orga_id_filter(app, client, search_client, faker):
     # Without this, ElasticSearch does not seem to have the time to index.
     time.sleep(2)
 
-    results_number, res = search_client.query_datasets(None, 0, 20, {})
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {})
     assert results_number == 5
-    results_number, res = search_client.query_datasets(None, 0, 20, {'organization': '64f01c248bf99eab7c197717'})
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {'organization': '64f01c248bf99eab7c197717'})
     assert results_number == 1
-    results_number, res = search_client.query_reuses(None, 0, 20, {})
+    results_number, res, _ = search_client.query_reuses(None, 0, 20, {})
     assert results_number == 5
-    results_number, res = search_client.query_reuses(None, 0, 20, {'organization': '77f01c346bf99eab7c198891'})
+    results_number, res, _ = search_client.query_reuses(None, 0, 20, {'organization': '77f01c346bf99eab7c198891'})
     assert results_number == 1
-    results_number, res = search_client.query_dataservices(None, 0, 20, {'organization': '77f01c346bf99eab7c198891'})
+    results_number, res, _ = search_client.query_dataservices(None, 0, 20, {'organization': '77f01c346bf99eab7c198891'})
     assert results_number == 1
 
 
@@ -122,13 +122,13 @@ def test_search_with_orga_badge_filter(app, client, search_client, faker):
     # Without this, ElasticSearch does not seem to have the time to index.
     time.sleep(2)
 
-    results_number, res = search_client.query_datasets(None, 0, 20, {})
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {})
     assert results_number == 4
-    results_number, res = search_client.query_datasets(None, 0, 20, {'organization_badges': 'public-service'})
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {'organization_badges': 'public-service'})
     assert results_number == 2
-    results_number, res = search_client.query_reuses(None, 0, 20, {})
+    results_number, res, _ = search_client.query_reuses(None, 0, 20, {})
     assert results_number == 4
-    results_number, res = search_client.query_reuses(None, 0, 20, {'organization_badges': 'public-service'})
+    results_number, res, _ = search_client.query_reuses(None, 0, 20, {'organization_badges': 'public-service'})
     assert results_number == 2
 
 
@@ -152,15 +152,15 @@ def test_search_with_owner_filter(app, client, search_client, faker):
     # Without this, ElasticSearch does not seem to have the time to index.
     time.sleep(2)
 
-    results_number, res = search_client.query_datasets(None, 0, 20, {})
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {})
     assert results_number == 5
-    results_number, res = search_client.query_datasets(None, 0, 20, {'owner': '64f01c248bf99eab7c197717'})
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {'owner': '64f01c248bf99eab7c197717'})
     assert results_number == 1
-    results_number, res = search_client.query_reuses(None, 0, 20, {})
+    results_number, res, _ = search_client.query_reuses(None, 0, 20, {})
     assert results_number == 5
-    results_number, res = search_client.query_reuses(None, 0, 20, {'owner': '77f01c346bf99eab7c198891'})
+    results_number, res, _ = search_client.query_reuses(None, 0, 20, {'owner': '77f01c346bf99eab7c198891'})
     assert results_number == 1
-    results_number, res = search_client.query_dataservices(None, 0, 20, {'owner': '77f01c346bf99eab7c198891'})
+    results_number, res, _ = search_client.query_dataservices(None, 0, 20, {'owner': '77f01c346bf99eab7c198891'})
     assert results_number == 1
 
 
@@ -173,14 +173,14 @@ def test_search_datasets_with_temporal_filters(app, client, search_client, faker
     # Without this, ElasticSearch does not seem to have the time to index.
     time.sleep(2)
 
-    results_number, res = search_client.query_datasets(None, 0, 20, {})
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {})
     assert results_number == 4
-    results_number, res = search_client.query_datasets(None, 0, 20, {
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {
         'temporal_coverage_start': datetime.date(2020, 2, 25),
         'temporal_coverage_end': datetime.date(2020, 3, 10)
     })
     assert results_number == 2
-    results_number, res = search_client.query_datasets(None, 0, 20, {
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {
         'temporal_coverage_start': datetime.date(2019, 2, 25),
         'temporal_coverage_end': datetime.date(2020, 3, 10)
     })
@@ -204,17 +204,17 @@ def test_search_with_tag_filter(app, client, search_client, faker):
     # Without this, ElasticSearch does not seem to have the time to index.
     time.sleep(2)
 
-    results_number, res = search_client.query_datasets(None, 0, 20, {})
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {})
     assert results_number == 4
-    results_number, res = search_client.query_datasets(None, 0, 20, {'tags': ['test-tag', 'test-tag-1']})
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {'tags': ['test-tag', 'test-tag-1']})
     assert results_number == 1
-    results_number, res = search_client.query_datasets(None, 0, 20, {'tags': ['not-test-tag']})
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {'tags': ['not-test-tag']})
     assert results_number == 2
-    results_number, res = search_client.query_reuses(None, 0, 20, {})
+    results_number, res, _ = search_client.query_reuses(None, 0, 20, {})
     assert results_number == 4
-    results_number, res = search_client.query_reuses(None, 0, 20, {'tags': 'test-tag'})
+    results_number, res, _ = search_client.query_reuses(None, 0, 20, {'tags': 'test-tag'})
     assert results_number == 2
-    results_number, res = search_client.query_dataservices(None, 0, 20, {'tags': 'test-tag'})
+    results_number, res, _ = search_client.query_dataservices(None, 0, 20, {'tags': 'test-tag'})
     assert results_number == 2
 
 
@@ -227,9 +227,9 @@ def test_search_dataset_with_format_filter(app, client, search_client, faker):
     # Without this, ElasticSearch does not seem to have the time to index.
     time.sleep(2)
 
-    results_number, res = search_client.query_datasets(None, 0, 20, {})
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {})
     assert results_number == 4
-    results_number, res = search_client.query_datasets(None, 0, 20, {'format': 'pdf'})
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {'format': 'pdf'})
     assert results_number == 2
 
 
@@ -242,9 +242,9 @@ def test_search_dataset_with_license_filter(app, client, search_client, faker):
     # Without this, ElasticSearch does not seem to have the time to index.
     time.sleep(2)
 
-    results_number, res = search_client.query_datasets(None, 0, 20, {})
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {})
     assert results_number == 4
-    results_number, res = search_client.query_datasets(None, 0, 20, {'license': 'cc-by'})
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {'license': 'cc-by'})
     assert results_number == 2
 
 
@@ -257,9 +257,9 @@ def test_search_dataset_with_geozone_filter(app, client, search_client, faker):
     # Without this, ElasticSearch does not seem to have the time to index.
     time.sleep(2)
 
-    results_number, res = search_client.query_datasets(None, 0, 20, {})
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {})
     assert results_number == 4
-    results_number, res = search_client.query_datasets(None, 0, 20, {'geozones': 'country:fr'})
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {'geozones': 'country:fr'})
     assert results_number == 2
 
 
@@ -272,9 +272,9 @@ def test_search_dataset_with_granularity_filter(app, client, search_client, fake
     # Without this, ElasticSearch does not seem to have the time to index.
     time.sleep(2)
 
-    results_number, res = search_client.query_datasets(None, 0, 20, {})
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {})
     assert results_number == 4
-    results_number, res = search_client.query_datasets(None, 0, 20, {'granularity': 'country'})
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {'granularity': 'country'})
     assert results_number == 2
 
 
@@ -288,9 +288,9 @@ def test_search_dataset_with_schema_filter(app, client, search_client, faker):
     # Without this, ElasticSearch does not seem to have the time to index.
     time.sleep(2)
 
-    results_number, res = search_client.query_datasets('test', 0, 20, {})
+    results_number, res, _ = search_client.query_datasets('test', 0, 20, {})
     assert results_number == 4
-    results_number, res = search_client.query_datasets('test', 0, 20, {'schema': 'etalab/schema-irve'})
+    results_number, res, _ = search_client.query_datasets('test', 0, 20, {'schema': 'etalab/schema-irve'})
     assert results_number == 2
 
 
@@ -303,9 +303,9 @@ def test_search_reuse_with_type_filter(app, client, search_client, faker):
     # Without this, ElasticSearch does not seem to have the time to index.
     time.sleep(2)
 
-    results_number, res = search_client.query_reuses(None, 0, 20, {})
+    results_number, res, _ = search_client.query_reuses(None, 0, 20, {})
     assert results_number == 4
-    results_number, res = search_client.query_reuses(None, 0, 20, {'type': 'api'})
+    results_number, res, _ = search_client.query_reuses(None, 0, 20, {'type': 'api'})
     assert results_number == 2
 
 
@@ -318,9 +318,9 @@ def test_search_reuse_with_topic_filter(app, client, search_client, faker):
     # Without this, ElasticSearch does not seem to have the time to index.
     time.sleep(2)
 
-    results_number, res = search_client.query_reuses(None, 0, 20, {})
+    results_number, res, _ = search_client.query_reuses(None, 0, 20, {})
     assert results_number == 4
-    results_number, res = search_client.query_reuses(None, 0, 20, {'topic': 'transport_and_mobility'})
+    results_number, res, _ = search_client.query_reuses(None, 0, 20, {'topic': 'transport_and_mobility'})
     assert results_number == 2
 
 
@@ -333,11 +333,11 @@ def test_search_dataservice_with_is_restricted_filter(app, client, search_client
     # Without this, ElasticSearch does not seem to have the time to index.
     time.sleep(2)
 
-    results_number, res = search_client.query_dataservices(None, 0, 20, {})
+    results_number, res, _ = search_client.query_dataservices(None, 0, 20, {})
     assert results_number == 4
-    results_number, res = search_client.query_dataservices(None, 0, 20, {'is_restricted': True})
+    results_number, res, _ = search_client.query_dataservices(None, 0, 20, {'is_restricted': True})
     assert results_number == 2
-    results_number, res = search_client.query_dataservices(None, 0, 20, {'is_restricted': False})
+    results_number, res, _ = search_client.query_dataservices(None, 0, 20, {'is_restricted': False})
     assert results_number == 2
 
 
@@ -378,23 +378,23 @@ def test_general_search_with_sorting(app, client, search_client, faker):
     time.sleep(2)
 
     # Sort ascending
-    results_number, res = search_client.query_datasets(None, 0, 20, {}, sort='followers')
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {}, sort='followers')
     assert res[0]['title'] == 'data-test-1'
-    results_number, res = search_client.query_organizations(None, 0, 20, {}, sort='followers')
+    results_number, res, _ = search_client.query_organizations(None, 0, 20, {}, sort='followers')
     assert res[0]['name'] == 'org-test-1'
-    results_number, res = search_client.query_reuses(None, 0, 20, {}, sort='followers')
+    results_number, res, _ = search_client.query_reuses(None, 0, 20, {}, sort='followers')
     assert res[0]['title'] == 'reuse-test-1'
-    results_number, res = search_client.query_dataservices(None, 0, 20, {}, sort='followers')
+    results_number, res, _ = search_client.query_dataservices(None, 0, 20, {}, sort='followers')
     assert res[0]['title'] == 'dataservice-test-1'
 
     # Sort descending
-    results_number, res = search_client.query_datasets(None, 0, 20, {}, sort='-followers')
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {}, sort='-followers')
     assert res[0]['title'] == 'data-test-2'
-    results_number, res = search_client.query_organizations(None, 0, 20, {}, sort='-followers')
+    results_number, res, _ = search_client.query_organizations(None, 0, 20, {}, sort='-followers')
     assert res[0]['name'] == 'org-test-2'
-    results_number, res = search_client.query_reuses(None, 0, 20, {}, sort='-followers')
+    results_number, res, _ = search_client.query_reuses(None, 0, 20, {}, sort='-followers')
     assert res[0]['title'] == 'reuse-test-2'
-    results_number, res = search_client.query_dataservices(None, 0, 20, {}, sort='-followers')
+    results_number, res, _ = search_client.query_dataservices(None, 0, 20, {}, sort='-followers')
     assert res[0]['title'] == 'dataservice-test-2'
 
 def test_search_reuse_with_score_functions(app, client, search_client, faker):
@@ -430,7 +430,7 @@ def test_search_reuse_with_score_functions(app, client, search_client, faker):
     # Without this, ElasticSearch does not seem to have the time to index.
     time.sleep(2)
 
-    results_number, res = search_client.query_reuses(None, 0, 20, {})
+    results_number, res, _ = search_client.query_reuses(None, 0, 20, {})
     assert results_number == 6
     assert res[0]["title"] == "reuse with a lot of views"
     assert res[-1]["title"] == "archived reuse"
@@ -451,9 +451,9 @@ def test_general_search_with_sorting_last_update(app, client, search_client, fak
     # Without this, ElasticSearch does not seem to have the time to index.
     time.sleep(2)
 
-    results_number, res = search_client.query_datasets(None, 0, 20, {}, sort='-last_update')
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {}, sort='-last_update')
     assert res[0]['title'] == 'data-test-3'
-    results_number, res = search_client.query_datasets(None, 0, 20, {}, sort='last_update')
+    results_number, res, _ = search_client.query_datasets(None, 0, 20, {}, sort='last_update')
     assert res[0]['title'] == 'data-test-1'
 
 
@@ -465,7 +465,7 @@ def test_search_dataset_with_synonym(app, client, search_client, faker):
     # Without this, ElasticSearch does not seem to have the time to index.
     time.sleep(2)
 
-    results_number, res = search_client.query_datasets('recensement population', 0, 20, {})
+    results_number, res, _ = search_client.query_datasets('recensement population', 0, 20, {})
     assert results_number == 1
 
 
@@ -476,7 +476,7 @@ def test_search_dataset_by_id(app, client, search_client, faker):
     # Without this, ElasticSearch does not seem to have the time to index.
     time.sleep(2)
 
-    results_number, res = search_client.query_datasets(str(dataset.id), 0, 20, {})
+    results_number, res, _ = search_client.query_datasets(str(dataset.id), 0, 20, {})
     assert results_number == 1
 
 
@@ -490,9 +490,9 @@ def test_search_dataset_by_resource_title_and_id(app, client, search_client, fak
     # Without this, ElasticSearch does not seem to have the time to index.
     time.sleep(2)
 
-    results_number, res = search_client.query_datasets(str(dataset.resources_ids[0]), 0, 20, {})
+    results_number, res, _ = search_client.query_datasets(str(dataset.resources_ids[0]), 0, 20, {})
     assert results_number == 1
 
-    results_number, res = search_client.query_datasets(str(dataset.resources_titles[0]), 0, 20, {})
+    results_number, res, _ = search_client.query_datasets(str(dataset.resources_titles[0]), 0, 20, {})
     assert results_number == 1
 
