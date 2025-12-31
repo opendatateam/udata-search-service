@@ -435,6 +435,38 @@ def test_search_reuse_with_score_functions(app, client, search_client, faker):
     assert res[0]["title"] == "reuse with a lot of views"
     assert res[-1]["title"] == "archived reuse"
 
+def test_search_organization_with_score_functions(app, client, search_client, faker):
+    # Create generic organizations with fixed bonus/malus field (views, followers, orga_sp)
+    for i in range(4):
+        search_client.index_organization(OrganizationFactory(
+            name=f"organization {i}",
+            followers=10,
+            views=9,
+            orga_sp=1,
+        ))
+    # Create specific organization with field value factor malus field (views, followers)
+    search_client.index_organization(OrganizationFactory(
+        name="organization without much views & followers",
+        followers=1,
+        views=1,
+        orga_sp=1,
+    ))
+    # Create specific organization with field value factor bonus field (orga_sp)
+    search_client.index_organization(OrganizationFactory(
+        name="service public organization with default views",
+        followers=10,
+        views=9,
+        orga_sp=4
+    ))
+
+    # Without this, ElasticSearch does not seem to have the time to index.
+    time.sleep(2)
+
+    results_number, res = search_client.query_organizations(None, 0, 20, {})
+    assert results_number == 6
+    assert res[0]["name"] == "service public organization with default views"
+    assert res[-1]["name"] == "organization without much views & followers"
+
 def test_general_search_with_sorting_last_update(app, client, search_client, faker):
     search_client.index_dataset(DatasetFactory(
         title='data-test-1',

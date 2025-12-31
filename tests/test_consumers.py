@@ -75,7 +75,9 @@ def test_parse_dataset_obj():
     assert document['orga_followers'] == log2p(401)
     assert document['resources_ids'] == [res["id"] for res in obj["resources"]]
     assert document['resources_titles'] == [res["title"] for res in obj["resources"]]
-
+    # boolean values are normalized as 1 or 4 for score functions
+    assert document['orga_sp'] == 4
+    assert document['featured'] == 1
 
 def test_parse_reuse_obj():
     obj = {
@@ -195,7 +197,7 @@ def test_parse_organization_obj():
     document = OrganizationConsumer.load_from_dict(copy.deepcopy(obj)).to_dict()
 
     # Make sure that these fields are loaded as is
-    for key in ['id', 'name', 'acronym', 'url', 'badges', 'orga_sp', 'datasets', 'reuses']:
+    for key in ['id', 'name', 'acronym', 'url', 'badges', 'datasets', 'reuses']:
         assert document[key] == obj[key]
 
     # Make sure that markdown fields are stripped
@@ -207,3 +209,4 @@ def test_parse_organization_obj():
 
     # Make sure that all other particular fields are treated accordingly
     assert document['created_at'].date() == datetime.date(2014, 4, 17)
+    assert document['orga_sp'] == 4  # boolean values are normalized as 1 or 4 for score functions
