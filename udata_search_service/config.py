@@ -20,4 +20,4 @@ class Config:
 
 class Testing(Config):
     TESTING = True
-    ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL_TEST') or 'http://localhost:9200'
+    ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL_TEST') or 'http://localhost:9201'
