@@ -31,6 +31,7 @@ class Organization(EntityBase):
     reuses: int
 
     badges: List[str] = None
+    producer_type: List[str] = None
     acronym: str = None
 
     def __post_init__(self):
@@ -74,6 +75,9 @@ class Dataset(EntityBase):
     organization_name: str = None
     organization_badges: List[str] = None
     owner: str = None
+    access_type: str = None
+    format_family: List[str] = None
+    producer_type: List[str] = None
 
     def __post_init__(self):
         if isinstance(self.created_at, str):
@@ -103,17 +107,20 @@ class Reuse(EntityBase):
     archived: datetime.date = None
     tags: List[str] = None
     badges: List[str] = None
+    topic_object: List[str] = None
     orga_followers: int = None
     organization: str = None
     organization_name: str = None
     organization_badges: List[str] = None
     owner: str = None
+    producer_type: List[str] = None
 
     def __post_init__(self):
         if isinstance(self.created_at, str):
             self.created_at = isoparse(self.created_at)
         if isinstance(self.archived, str):
             self.archived = isoparse(self.archived)
+
 
 @dataclasses.dataclass
 class Dataservice(EntityBase):
@@ -122,6 +129,7 @@ class Dataservice(EntityBase):
     description: str
     description_length: float
     created_at: datetime.date
+    last_update: datetime.date = None
 
     views: int = 0
     followers: int = 0
@@ -131,7 +139,76 @@ class Dataservice(EntityBase):
     organization_name: str = None
     owner: str = None
     tags: List[str] = None
+    topics: List[str] = None
+    access_type: str = None
+    producer_type: List[str] = None
+    documentation_content: str = None
 
     def __post_init__(self):
         if isinstance(self.created_at, str):
             self.created_at = isoparse(self.created_at)
+        if isinstance(self.last_update, str):
+            self.last_update = isoparse(self.last_update)
+
+
+@dataclasses.dataclass
+class Topic(EntityBase):
+    id: str
+    name: str
+    description: str
+    created_at: datetime.date
+
+    tags: List[str] = None
+    featured: bool = False
+    private: bool = False
+    last_modified: datetime.date = None
+    organization: str = None
+    organization_name: str = None
+    producer_type: List[str] = None
+    nb_datasets: int = 0
+    nb_reuses: int = 0
+    nb_dataservices: int = 0
+
+    def __post_init__(self):
+        if isinstance(self.created_at, str):
+            self.created_at = isoparse(self.created_at)
+        if isinstance(self.last_modified, str):
+            self.last_modified = isoparse(self.last_modified)
+
+
+@dataclasses.dataclass
+class Discussion(EntityBase):
+    id: str
+    title: str
+    content: str = None
+    created_at: datetime.date = None
+    closed_at: datetime.date = None
+    closed: bool = False
+    subject_class: str = None
+    subject_id: str = None
+
+    def __post_init__(self):
+        if isinstance(self.created_at, str):
+            self.created_at = isoparse(self.created_at)
+        if isinstance(self.closed_at, str):
+            self.closed_at = isoparse(self.closed_at)
+
+
+@dataclasses.dataclass
+class Post(EntityBase):
+    id: str
+    name: str
+    headline: str = None
+    content: str = None
+    tags: List[str] = None
+    created_at: datetime.date = None
+    last_modified: datetime.date = None
+    published: datetime.date = None
+
+    def __post_init__(self):
+        if isinstance(self.created_at, str):
+            self.created_at = isoparse(self.created_at)
+        if isinstance(self.last_modified, str):
+            self.last_modified = isoparse(self.last_modified)
+        if isinstance(self.published, str):
+            self.published = isoparse(self.published)
