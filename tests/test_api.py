@@ -689,7 +689,7 @@ def test_api_dataset_search_with_temporal_filter(app, client, search_client, fak
 def test_api_search_with_badge_filter(app, client, search_client, faker):
     for i in range(4):
         search_client.index_dataset(DatasetFactory(badges=['test-badge', 'test-badge-2'] if i % 2 else ['not-test-badge']))
-        search_client.index_reuse(ReuseFactory(badges=['test-badge'] if i % 2 else ['not-test-badge']))
+        search_client.index_reuse(ReuseFactory(badges=['test-badge', 'test-badge-2'] if i % 2 else ['not-test-badge']))
         search_client.index_organization(OrganizationFactory(badges=['test-badge', 'test-badge-2'] if i % 2 else ['not-test-badge']))
 
     # Without this, ElasticSearch does not seem to have the time to index.
@@ -708,7 +708,19 @@ def test_api_search_with_badge_filter(app, client, search_client, faker):
     resp = client.get(url_for('api.reuse_search'))
     assert resp.json['total'] == 4
 
-    resp = client.get(url_for('api.reuse_search', badge='test-badge'))
+    resp = client.get(url_for('api.reuse_search', badge=['test-badge', 'test-badge-2']))
+    assert resp.json['total'] == 2
+
+    resp = client.get(url_for('api.reuse_search', badge=['not-test-badge']))
+    assert resp.json['total'] == 2
+
+    resp = client.get(url_for('api.organization_search'))
+    assert resp.json['total'] == 4
+
+    resp = client.get(url_for('api.organization_search', badge=['test-badge', 'test-badge-2']))
+    assert resp.json['total'] == 2
+
+    resp = client.get(url_for('api.organization_search', badge=['not-test-badge']))
     assert resp.json['total'] == 2
 
     resp = client.get(url_for('api.organization_search'))
