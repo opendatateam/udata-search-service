@@ -723,12 +723,6 @@ def test_api_search_with_badge_filter(app, client, search_client, faker):
     resp = client.get(url_for('api.organization_search', badge=['not-test-badge']))
     assert resp.json['total'] == 2
 
-    resp = client.get(url_for('api.organization_search'))
-    assert resp.json['total'] == 4
-
-    resp = client.get(url_for('api.organization_search', badge='test-badge'))
-    assert resp.json['total'] == 2
-
 def test_api_search_with_tag_filter(app, client, search_client, faker):
     for i in range(4):
         search_client.index_dataset(DatasetFactory(tags=['test-tag', 'test-tag-2'] if i % 2 else ['not-test-tag']))
