@@ -1,6 +1,6 @@
 # Changelog
 
-## Current (in progress)
+## 2.3.2 (2026-01-21)
 
 - Fix flaky tests [#67](https://github.com/opendatateam/udata-search-service/pull/67)
 
