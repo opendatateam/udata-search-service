@@ -10,19 +10,19 @@ def test_general_search_with_and_without_query(app, client, search_client, faker
     for i in range(4):
         search_client.index_dataset(DatasetFactory(
             title='test-{0}'.format(i) if i % 2 else faker.word(ext_word_list=ext_word_list),
-            description='udata' if i == 1 else faker.word()
+            description='udata' if i == 1 else faker.word(ext_word_list=ext_word_list)
         ))
         search_client.index_organization(OrganizationFactory(
             name='test-{0}'.format(faker.company()) if i % 2 else faker.company(),
-            description='udata' if i == 1 else faker.word()
+            description='udata' if i == 1 else faker.word(ext_word_list=ext_word_list)
         ))
         search_client.index_reuse(ReuseFactory(
             title='test-{0}'.format(i) if i % 2 else faker.word(ext_word_list=ext_word_list),
-            description='udata' if i == 1 else faker.word()
+            description='udata' if i == 1 else faker.word(ext_word_list=ext_word_list)
         ))
         search_client.index_dataservice(DataserviceFactory(
             title='test-{0}'.format(i) if i % 2 else faker.word(ext_word_list=ext_word_list),
-            description='udata' if i == 1 else faker.word()
+            description='udata' if i == 1 else faker.word(ext_word_list=ext_word_list)
         ))
     # Without this, ElasticSearch does not seem to have the time to index.
     time.sleep(2)
@@ -462,7 +462,7 @@ def test_search_organization_with_score_functions(app, client, search_client, fa
     # Without this, ElasticSearch does not seem to have the time to index.
     time.sleep(2)
 
-    results_number, res = search_client.query_organizations(None, 0, 20, {})
+    results_number, res, _ = search_client.query_organizations(None, 0, 20, {})
     assert results_number == 6
     assert res[0]["name"] == "service public organization with default views"
     assert res[-1]["name"] == "organization without much views & followers"
