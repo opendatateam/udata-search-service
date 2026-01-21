@@ -872,14 +872,10 @@ class ElasticClient:
 
             elif key == 'organization_id_with_name':
                 if isinstance(value, list):
-                    org_filters = [query.Q('term', organization_with_id=v) for v in value]
-                    filter_dict['organization_id_with_name'] = query.Bool(
-                        should=org_filters, minimum_should_match=1
-                    )
+                    org_filters = [query.Q('term', organization=v) for v in value]
+                    filter_dict[key] = query.Bool(should=org_filters, minimum_should_match=1)
                 else:
-                    filter_dict['organization_id_with_name'] = query.Q(
-                        'term', organization_with_id=value
-                    )
+                    filter_dict[key] = query.Q('term', organization=value)
 
             elif key == 'organization':
                 if isinstance(value, list):
@@ -1073,10 +1069,10 @@ class ElasticClient:
 
             elif key == 'organization_id_with_name':
                 if isinstance(value, list):
-                    org_filters = [query.Q('term', organization_with_id=v) for v in value]
-                    filter_dict['organization_id_with_name'] = query.Bool(should=org_filters, minimum_should_match=1)
+                    org_filters = [query.Q('term', organization=v) for v in value]
+                    filter_dict[key] = query.Bool(should=org_filters, minimum_should_match=1)
                 else:
-                    filter_dict['organization_id_with_name'] = query.Q('term', organization_with_id=value)
+                    filter_dict[key] = query.Q('term', organization=value)
 
             elif key == 'producer_type':
                 filter_dict['producer_type'] = query.Q('term', producer_type=value)
