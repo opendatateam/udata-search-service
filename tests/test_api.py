@@ -2,7 +2,7 @@ import datetime
 import time
 from flask import url_for
 
-from udata_search_service.domain.factories import DatasetFactory, OrganizationFactory, ReuseFactory
+from udata_search_service.domain.factories import DataserviceFactory, DatasetFactory, OrganizationFactory, ReuseFactory
 
 
 def test_api_dataset_index_unindex(app, client, faker):
@@ -780,6 +780,34 @@ def test_api_dataset_search_with_geozone_filter(app, client, search_client, fake
     resp = client.get(url_for('api.dataset_search', geozone='country:fr'))
     assert resp.json['total'] == 2
 
+def test_api_search_with_orga_id_filter(app, client, search_client, faker):
+    for i in range(4):
+        search_client.index_dataset(DatasetFactory())
+        search_client.index_reuse(ReuseFactory())
+
+    search_client.index_dataset(DatasetFactory(
+        organization='64f01c248bf99eab7c197717'
+    ))
+    search_client.index_reuse(ReuseFactory(
+        organization='77f01c346bf99eab7c198891'
+    ))
+    search_client.index_dataservice(DataserviceFactory(
+        organization='77f01c346bf99eab7c198891'
+    ))
+
+    # Without this, ElasticSearch does not seem to have the time to index.
+    time.sleep(2)
+
+    resp = client.get(url_for('api.dataset_search'))
+    assert resp.json["total"] == 5
+    resp = client.get(url_for('api.dataset_search', organization='64f01c248bf99eab7c197717'))
+    assert resp.json["total"] == 1
+    resp = client.get(url_for('api.reuse_search'))
+    assert resp.json["total"] == 5
+    resp = client.get(url_for('api.reuse_search', organization='77f01c346bf99eab7c198891'))
+    assert resp.json["total"] == 1
+    resp = client.get(url_for('api.dataservice_search', organization='77f01c346bf99eab7c198891'))
+    assert resp.json["total"] == 1
 
 def test_api_search_with_followers_sorting(app, client, search_client, faker):
     search_client.index_dataset(DatasetFactory(
