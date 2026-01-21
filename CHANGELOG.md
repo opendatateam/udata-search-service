@@ -1,6 +1,6 @@
 # Changelog
 
-## Current (in progress)
+## 2.3.0 (2026-01-21)
 
 - add access_type to document for dataset and dataservice [#63](https://github.com/opendatateam/udata-search-service/pull/63)
 - add format_family metadata to search [#63](https://github.com/opendatateam/udata-search-service/pull/63)
