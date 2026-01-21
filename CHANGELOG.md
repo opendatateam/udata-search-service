@@ -2,7 +2,7 @@
 
 ## Current (in progress)
 
-- Nothing yet
+- Fix flaky tests [#67](https://github.com/opendatateam/udata-search-service/pull/67)
 
 ## 2.3.0 (2026-01-21)
 
