@@ -2,7 +2,7 @@
 
 ## Current (in progress)
 
-- Nothing yet
+- fix: organization filter [#68](https://github.com/opendatateam/udata-search-service/pull/68)
 
 ## 2.3.2 (2026-01-21)
 
