@@ -1,5 +1,9 @@
 # Changelog
 
+## Current (in progress)
+
+- Nothing yet
+
 ## 2.3.3 (2026-01-21)
 
 - fix: organization filter [#68](https://github.com/opendatateam/udata-search-service/pull/68)
