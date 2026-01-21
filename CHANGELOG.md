@@ -2,7 +2,15 @@
 
 ## Current (in progress)
 
-- Nothing yet
+- add access_type to document for dataset and dataservice [#63](https://github.com/opendatateam/udata-search-service/pull/63)
+- add format_family metadata to search [#63](https://github.com/opendatateam/udata-search-service/pull/63)
+- add producer_type metadata to search [#63](https://github.com/opendatateam/udata-search-service/pull/63)
+- add facet mechanism to es queries [#63](https://github.com/opendatateam/udata-search-service/pull/63)
+- index machine_documentation_url in es [#63](https://github.com/opendatateam/udata-search-service/pull/63)
+- add topic into indexation [#63](https://github.com/opendatateam/udata-search-service/pull/63)
+- index discussions into search [#63](https://github.com/opendatateam/udata-search-service/pull/63)
+- index posts into search [#63](https://github.com/opendatateam/udata-search-service/pull/63)
+- ameliorate search for every objects with facets [#63](https://github.com/opendatateam/udata-search-service/pull/63)
 
 ## 2.2.4 (2025-09-30)
 
