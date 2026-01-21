@@ -6,9 +6,9 @@ from flask import Blueprint, request, url_for, jsonify, abort
 from pydantic import BaseModel, Field, ValidationError, validator
 from udata_search_service.container import Container
 from udata_search_service.config import Config
-from udata_search_service.infrastructure.services import DatasetService, OrganizationService, ReuseService, DataserviceService
+from udata_search_service.infrastructure.services import DatasetService, OrganizationService, ReuseService, DataserviceService, TopicService, DiscussionService, PostService
 from udata_search_service.infrastructure.search_clients import ElasticClient
-from udata_search_service.infrastructure.consumers import DatasetConsumer, ReuseConsumer, OrganizationConsumer, DataserviceConsumer
+from udata_search_service.infrastructure.consumers import DatasetConsumer, ReuseConsumer, OrganizationConsumer, DataserviceConsumer, TopicConsumer, DiscussionConsumer, PostConsumer
 from udata_search_service.infrastructure.migrate import set_alias as set_alias_func
 from udata_search_service.presentation.utils import is_list_type
 
@@ -22,6 +22,7 @@ class OrganizationArgs(BaseModel):
     page_size: Optional[int] = 20
     sort: Optional[str] = None
     badge: Optional[str] = None
+    producer_type: Optional[str] = None
 
     @validator('sort')
     def sort_validate(cls, value):
@@ -40,24 +41,35 @@ class DatasetArgs(BaseModel):
     page_size: Optional[int] = 20
     sort: Optional[str] = None
     tag: Optional[list[str]] = None
-    badge: Optional[str] = None
-    organization: Optional[str] = None
+    badge: Optional[list[str]] = None
+    organization: Optional[list[str]] = None
     organization_badge: Optional[str] = None
     owner: Optional[str] = None
-    license: Optional[str] = None
-    geozone: Optional[str] = None
-    granularity: Optional[str] = None
-    format: Optional[str] = None
+    license: Optional[list[str]] = None
+    geozone: Optional[list[str]] = None
+    granularity: Optional[list[str]] = None
+    format: Optional[list[str]] = None
     temporal_coverage: Optional[str] = None
     featured: Optional[str] = None
-    schema_: Optional[str] = Field(None, alias="schema")
-    topic: Optional[str] = None
+    schema_: Optional[list[str]] = Field(None, alias="schema")
+    topic: Optional[list[str]] = None
+    access_type: Optional[str] = None
+    format_family: Optional[str] = None
+    producer_type: Optional[str] = None
+    last_update_range: Optional[str] = None
 
     @validator('temporal_coverage')
     def temporal_coverage_format(cls, value):
         pattern = re.compile("^([0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{4}-[0-9]{2}-[0-9]{2})$")
         if not pattern.match(value):
             raise ValueError('Temporal coverage does not match the right pattern.')
+        return value
+
+    @validator('last_update_range')
+    def last_update_range_validate(cls, value):
+        choices = ['last_30_days', 'last_12_months', 'last_3_years']
+        if value not in choices:
+            raise ValueError(f'last_update_range must be one of: {", ".join(choices)}')
         return value
 
     @validator('sort')
@@ -73,6 +85,66 @@ class DatasetArgs(BaseModel):
     @classmethod
     def from_request_args(cls, request_args) -> 'DatasetArgs':
         def get_list_args() -> dict:
+            # modification for schema which is reserved word in python
+            result = {}
+            for key, value in request_args.to_dict(flat=False).items():
+                field_name = None
+                if key in cls.__fields__:
+                    field_name = key
+                else:
+                    for fname, field in cls.__fields__.items():
+                        if field.alias == key:
+                            field_name = fname
+                            break
+                
+                if field_name and is_list_type(cls.__fields__[field_name].annotation):
+                    result[key] = value
+            return result
+
+        return cls(
+            **{
+                **request_args.to_dict(),
+                **get_list_args(),
+            }
+        )
+
+class ReuseArgs(BaseModel):
+    q: Optional[str] = None
+    page: Optional[int] = 1
+    page_size: Optional[int] = 20
+    sort: Optional[str] = None
+    tag: Optional[list[str]] = None
+    badge: Optional[list[str]] = None
+    organization: Optional[list[str]] = None
+    organization_badge: Optional[str] = None
+    owner: Optional[str] = None
+    type: Optional[str] = None
+    featured: Optional[str] = None
+    topic: Optional[str] = None  # Metadata topic (health, transport, etc.)
+    topic_object: Optional[list[str]] = None  # Topic objects from TopicElement
+    producer_type: Optional[str] = None
+    last_update_range: Optional[str] = None
+
+    @validator('last_update_range')
+    def last_update_range_validate(cls, value):
+        choices = ['last_30_days', 'last_12_months', 'last_3_years']
+        if value not in choices:
+            raise ValueError(f'last_update_range must be one of: {", ".join(choices)}')
+        return value
+
+    @validator('sort')
+    def sort_validate(cls, value):
+        sorts = [
+            'created', 'datasets', 'followers', 'views'
+        ]
+        choices = sorts + ['-' + k for k in sorts]
+        if value not in choices:
+            raise ValueError('Temporal coverage does not match the right pattern.')
+        return value
+
+    @classmethod
+    def from_request_args(cls, request_args) -> 'ReuseArgs':
+        def get_list_args() -> dict:
             return {
                 key: value
                 for key, value in request_args.to_dict(flat=False).items()
@@ -87,54 +159,59 @@ class DatasetArgs(BaseModel):
             }
         )
 
-class ReuseArgs(BaseModel):
-    q: Optional[str] = None
-    page: Optional[int] = 1
-    page_size: Optional[int] = 20
-    sort: Optional[str] = None
-    tag: Optional[str] = None
-    badge: Optional[str] = None
-    organization: Optional[str] = None
-    organization_badge: Optional[str] = None
-    owner: Optional[str] = None
-    type: Optional[str] = None
-    featured: Optional[str] = None
-    topic: Optional[str] = None
-
-    @validator('sort')
-    def sort_validate(cls, value):
-        sorts = [
-            'created', 'datasets', 'followers', 'views'
-        ]
-        choices = sorts + ['-' + k for k in sorts]
-        if value not in choices:
-            raise ValueError('Temporal coverage does not match the right pattern.')
-        return value
-
 
 class DataserviceArgs(BaseModel):
     q: Optional[str] = None
     page: Optional[int] = 1
     page_size: Optional[int] = 20
     sort: Optional[str] = None
-    tag: Optional[str] = None
-    organization: Optional[str] = None
+    tag: Optional[list[str]] = None
+    topic: Optional[list[str]] = None
+    badge: Optional[list[str]] = None
+    organization: Optional[list[str]] = None
     owner: Optional[str] = None
     is_restricted: Optional[bool] = None
+    access_type: Optional[str] = None
+    producer_type: Optional[str] = None
+    last_update_range: Optional[str] = None
+
+    @validator('last_update_range')
+    def last_update_range_validate(cls, value):
+        choices = ['last_30_days', 'last_12_months', 'last_3_years']
+        if value not in choices:
+            raise ValueError(f'last_update_range must be one of: {", ".join(choices)}')
+        return value
 
     @validator('sort')
     def sort_validate(cls, value):
         sorts = [
-            'created', 'followers', 'views'
+            'created', 'last_update', 'followers', 'views'
         ]
         choices = sorts + ['-' + k for k in sorts]
         if value not in choices:
             raise ValueError('Sort parameter is not in the sorts available choices.')
         return value
 
+    @classmethod
+    def from_request_args(cls, request_args) -> 'DataserviceArgs':
+        def get_list_args() -> dict:
+            return {
+                key: value
+                for key, value in request_args.to_dict(flat=False).items()
+                if key in cls.__fields__
+                and is_list_type(cls.__fields__[key].annotation)
+            }
 
-def make_response(results, total_pages, results_number, page, page_size, next_url, prev_url):
-    return jsonify({
+        return cls(
+            **{
+                **request_args.to_dict(),
+                **get_list_args(),
+            }
+        )
+
+
+def make_response(results, total_pages, results_number, page, page_size, next_url, prev_url, facets=None):
+    response = {
         "data": results,
         "next_page": next_url if page < total_pages else None,
         "page": page,
@@ -142,7 +219,10 @@ def make_response(results, total_pages, results_number, page, page_size, next_ur
         "page_size": page_size,
         "total_pages": total_pages,
         "total": results_number
-    })
+    }
+    if facets is not None:
+        response["facets"] = facets
+    return jsonify(response)
 
 
 class DatasetToIndex(BaseModel):
@@ -174,6 +254,9 @@ class DatasetToIndex(BaseModel):
     geozones: Optional[list] = []
     granularity: Optional[str] = None
     topics: Optional[list] = []
+    access_type: Optional[str] = None
+    format_family: Optional[list] = []
+    producer_type: Optional[list] = []
 
 
 class RequestDatasetIndex(BaseModel):
@@ -214,7 +297,7 @@ def datasets_search(dataset_service: DatasetService = Provide[Container.dataset_
     except ValidationError as e:
         abort(400, e)
 
-    results, results_number, total_pages = dataset_service.search(request_args.dict())
+    results, results_number, total_pages, facets = dataset_service.search(request_args.dict())
 
     next_url = url_for('api.dataset_search', q=request_args.q, page=request_args.page + 1,
                        page_size=request_args.page_size, _external=True)
@@ -222,7 +305,7 @@ def datasets_search(dataset_service: DatasetService = Provide[Container.dataset_
                        page_size=request_args.page_size, _external=True)
 
     return make_response(results, total_pages, results_number,
-                         request_args.page, request_args.page_size, next_url, prev_url)
+                         request_args.page, request_args.page_size, next_url, prev_url, facets)
 
 
 @bp.route("/datasets/<dataset_id>/", methods=["GET"], endpoint='dataset_get_specific')
@@ -242,7 +325,7 @@ def organizations_search(organization_service: OrganizationService = Provide[Con
     except ValidationError as e:
         abort(400, e)
 
-    results, results_number, total_pages = organization_service.search(request_args.dict())
+    results, results_number, total_pages, facets = organization_service.search(request_args.dict())
 
     next_url = url_for('api.organization_search', q=request_args.q, page=request_args.page + 1,
                        page_size=request_args.page_size, _external=True)
@@ -250,7 +333,7 @@ def organizations_search(organization_service: OrganizationService = Provide[Con
                        page_size=request_args.page_size, _external=True)
 
     return make_response(results, total_pages, results_number, request_args.page,
-                         request_args.page_size, next_url, prev_url)
+                         request_args.page_size, next_url, prev_url, facets)
 
 
 @bp.route("/organizations/<organization_id>/", methods=["GET"], endpoint='organization_get_specific')
@@ -270,6 +353,7 @@ class OrganizationToIndex(BaseModel):
     acronym: Optional[str] = None
     url: Optional[str] = None
     badges: Optional[list] = []
+    producer_type: Optional[list] = []
     created_at: str
     orga_sp: int
     datasets: int
@@ -313,11 +397,11 @@ def organization_unindex(organization_id: str, organization_service: Organizatio
 @inject
 def reuses_search(reuse_service: ReuseService = Provide[Container.reuse_service]):
     try:
-        request_args = ReuseArgs(**request.args)
+        request_args = ReuseArgs.from_request_args(request.args)
     except ValidationError as e:
         abort(400, e)
 
-    results, results_number, total_pages = reuse_service.search(request_args.dict())
+    results, results_number, total_pages, facets = reuse_service.search(request_args.dict())
 
     next_url = url_for('api.reuse_search', q=request_args.q, page=request_args.page + 1,
                        page_size=request_args.page_size, _external=True)
@@ -325,7 +409,7 @@ def reuses_search(reuse_service: ReuseService = Provide[Container.reuse_service]
                        page_size=request_args.page_size, _external=True)
 
     return make_response(results, total_pages, results_number, request_args.page,
-                         request_args.page_size, next_url, prev_url)
+                         request_args.page_size, next_url, prev_url, facets)
 
 
 @bp.route("/reuses/<reuse_id>/", methods=["GET"], endpoint='reuse_get_specific')
@@ -352,9 +436,11 @@ class ReuseToIndex(BaseModel):
     organization: Optional[dict] = {}
     owner: Optional[str] = None
     type: str
-    topic: str
+    topic: str  # Metadata topic (health, transport, etc.)
+    topic_object: Optional[list] = []  # Topic objects linked via TopicElement
     tags: Optional[list] = []
     extras: Optional[dict] = {}
+    producer_type: Optional[list] = []
 
 
 class RequestReuseIndex(BaseModel):
@@ -392,11 +478,11 @@ def reuse_unindex(reuse_id: str, reuse_service: ReuseService = Provide[Container
 @inject
 def dataservices_search(dataservice_service: DataserviceService = Provide[Container.dataservice_service]):
     try:
-        request_args = DataserviceArgs(**request.args)
+        request_args = DataserviceArgs.from_request_args(request.args)
     except ValidationError as e:
         abort(400, e)
 
-    results, results_number, total_pages = dataservice_service.search(request_args.dict())
+    results, results_number, total_pages, facets = dataservice_service.search(request_args.dict())
 
     next_url = url_for('api.dataservice_search', q=request_args.q, page=request_args.page + 1,
                        page_size=request_args.page_size, _external=True)
@@ -404,7 +490,7 @@ def dataservices_search(dataservice_service: DataserviceService = Provide[Contai
                        page_size=request_args.page_size, _external=True)
 
     return make_response(results, total_pages, results_number, request_args.page,
-                         request_args.page_size, next_url, prev_url)
+                         request_args.page_size, next_url, prev_url, facets)
 
 
 @bp.route("/dataservices/<dataservice_id>/", methods=["GET"], endpoint='dataservice_get_specific')
@@ -421,13 +507,18 @@ class DataserviceToIndex(BaseModel):
     title: str
     description: str
     created_at: str
+    last_update: Optional[str] = None
     views: int = 0
     followers: int = 0
     organization: Optional[dict] = {}
     owner: Optional[str] = None
     tags: Optional[list] = []
+    topics: Optional[list] = []
     extras: Optional[dict] = {}
     is_restricted: Optional[bool] = None
+    access_type: Optional[str] = None
+    producer_type: Optional[list] = []
+    documentation_content: Optional[str] = None
 
 
 class RequestDataserviceIndex(BaseModel):
@@ -459,6 +550,359 @@ def dataservice_unindex(dataservice_id: str, dataservice_service: DataserviceSer
     if result:
         return jsonify({'data': f'Dataservice {result} removed from index'})
     abort(404, 'dataservice not found')
+
+
+class TopicArgs(BaseModel):
+    q: Optional[str] = None
+    page: Optional[int] = 1
+    page_size: Optional[int] = 20
+    sort: Optional[str] = None
+    tag: Optional[list[str]] = None
+    featured: Optional[bool] = None
+    last_update_range: Optional[str] = None
+    organization: Optional[list[str]] = None
+    organization_id_with_name: Optional[list[str]] = None
+    producer_type: Optional[str] = None
+
+    @validator('sort')
+    def sort_validate(cls, value):
+        sorts = [
+            'name', 'created', 'last_modified', 'last_update'
+        ]
+        choices = sorts + ['-' + k for k in sorts]
+        if value not in choices:
+            raise ValueError('Sort parameter is not in the sorts available choices.')
+        return value
+
+    @validator('last_update_range')
+    def last_update_range_validate(cls, value):
+        if value is not None and value not in ['last_30_days', 'last_12_months', 'last_3_years']:
+            raise ValueError('last_update_range must be one of: last_30_days, last_12_months, last_3_years')
+        return value
+
+    @classmethod
+    def from_request_args(cls, request_args) -> 'TopicArgs':
+        def get_list_args() -> dict:
+            return {
+                key: value
+                for key, value in request_args.to_dict(flat=False).items()
+                if key in cls.__fields__
+                and is_list_type(cls.__fields__[key].annotation)
+            }
+
+        return cls(
+            **{
+                **request_args.to_dict(),
+                **get_list_args(),
+            }
+        )
+
+
+class TopicToIndex(BaseModel):
+    id: str
+    name: str
+    description: Optional[str] = ""
+    created_at: str
+    tags: Optional[list] = []
+    featured: Optional[bool] = False
+    private: Optional[bool] = False
+    last_modified: Optional[str] = None
+    organization: Optional[str] = None
+    organization_name: Optional[str] = None
+    producer_type: Optional[list] = []
+    nb_datasets: Optional[int] = 0
+    nb_reuses: Optional[int] = 0
+    nb_dataservices: Optional[int] = 0
+
+
+class RequestTopicIndex(BaseModel):
+    document: TopicToIndex
+    index: Optional[str] = None
+
+
+class DiscussionArgs(BaseModel):
+    q: Optional[str] = None
+    page: Optional[int] = 1
+    page_size: Optional[int] = 20
+    sort: Optional[str] = None
+    closed: Optional[bool] = None
+    last_update_range: Optional[str] = None
+    object_type: Optional[str] = None
+
+    @validator('sort')
+    def sort_validate(cls, value):
+        sorts = [
+            'created', 'closed'
+        ]
+        choices = sorts + ['-' + k for k in sorts]
+        if value not in choices:
+            raise ValueError('Sort parameter is not in the sorts available choices.')
+        return value
+
+    @validator('last_update_range')
+    def last_update_range_validate(cls, value):
+        if value is not None and value not in ['last_30_days', 'last_12_months', 'last_3_years']:
+            raise ValueError('last_update_range must be one of: last_30_days, last_12_months, last_3_years')
+        return value
+    
+    @validator('object_type')
+    def object_type_validate(cls, value):
+        if value is not None and value not in ['Dataset', 'Reuse', 'Dataservice', 'Organization']:
+            raise ValueError('object_type must be one of: Dataset, Reuse, Dataservice, Organization')
+        return value
+
+    @classmethod
+    def from_request_args(cls, request_args) -> 'DiscussionArgs':
+        def get_list_args() -> dict:
+            return {
+                key: value
+                for key, value in request_args.to_dict(flat=False).items()
+                if key in cls.__fields__
+                and is_list_type(cls.__fields__[key].annotation)
+            }
+
+        return cls(
+            **{
+                **request_args.to_dict(),
+                **get_list_args(),
+            }
+        )
+
+
+class DiscussionToIndex(BaseModel):
+    id: str
+    title: str
+    content: Optional[str] = ""
+    created_at: str
+    closed_at: Optional[str] = None
+    closed: Optional[bool] = False
+    subject_class: Optional[str] = None
+    subject_id: Optional[str] = None
+
+
+class RequestDiscussionIndex(BaseModel):
+    document: DiscussionToIndex
+    index: Optional[str] = None
+
+
+class PostArgs(BaseModel):
+    q: Optional[str] = None
+    page: Optional[int] = 1
+    page_size: Optional[int] = 20
+    sort: Optional[str] = None
+    tag: Optional[list[str]] = None
+    last_update_range: Optional[str] = None
+
+    @validator('sort')
+    def sort_validate(cls, value):
+        sorts = [
+            'created', 'last_modified', 'published'
+        ]
+        choices = sorts + ['-' + k for k in sorts]
+        if value not in choices:
+            raise ValueError('Sort parameter is not in the sorts available choices.')
+        return value
+
+    @validator('last_update_range')
+    def last_update_range_validate(cls, value):
+        if value is not None and value not in ['last_30_days', 'last_12_months', 'last_3_years']:
+            raise ValueError('last_update_range must be one of: last_30_days, last_12_months, last_3_years')
+        return value
+
+    @classmethod
+    def from_request_args(cls, request_args) -> 'PostArgs':
+        def get_list_args() -> dict:
+            return {
+                key: value
+                for key, value in request_args.to_dict(flat=False).items()
+                if key in cls.__fields__
+                and is_list_type(cls.__fields__[key].annotation)
+            }
+
+        return cls(
+            **{
+                **request_args.to_dict(),
+                **get_list_args(),
+            }
+        )
+
+
+class PostToIndex(BaseModel):
+    id: str
+    name: str
+    headline: Optional[str] = ""
+    content: Optional[str] = ""
+    tags: Optional[list] = []
+    created_at: str
+    last_modified: Optional[str] = None
+    published: Optional[str] = None
+
+
+class RequestPostIndex(BaseModel):
+    document: PostToIndex
+    index: Optional[str] = None
+
+
+@bp.route("/topics/index", methods=["POST"], endpoint='topic_index')
+@inject
+def topic_index(topic_service: TopicService = Provide[Container.topic_service], search_client: ElasticClient = Provide[Container.search_client]):
+    try:
+        validated_obj = RequestTopicIndex(**request.json)
+    except ValidationError as e:
+        abort(400, e)
+
+    document = TopicConsumer.load_from_dict(validated_obj.document.dict())
+    index_name = f'{Config.UDATA_INSTANCE_NAME}-{validated_obj.index}' if validated_obj.index else None
+    if index_name and not search_client.es.indices.exists(index=index_name):
+        abort(404, 'Index does not exist')
+
+    topic_service.feed(document, index_name)
+    return jsonify({'data': 'Topic added to index'})
+
+
+@bp.route("/topics/<topic_id>/unindex", methods=["DELETE"], endpoint='topic_unindex')
+@inject
+def topic_unindex(topic_id: str, topic_service: TopicService = Provide[Container.topic_service]):
+    result = topic_service.delete_one(topic_id)
+    if result:
+        return jsonify({'data': f'Topic {result} removed from index'})
+    abort(404, 'topic not found')
+
+
+@bp.route("/topics/", methods=["GET"], endpoint='topic_search')
+@inject
+def topics_search(topic_service: TopicService = Provide[Container.topic_service]):
+    try:
+        request_args = TopicArgs.from_request_args(request.args)
+    except ValidationError as e:
+        abort(400, e)
+
+    results, results_number, total_pages, facets = topic_service.search(request_args.dict())
+
+    next_url = url_for('api.topic_search', q=request_args.q, page=request_args.page + 1,
+                       page_size=request_args.page_size, _external=True)
+    prev_url = url_for('api.topic_search', q=request_args.q, page=request_args.page - 1,
+                       page_size=request_args.page_size, _external=True)
+
+    return make_response(results, total_pages, results_number,
+                         request_args.page, request_args.page_size, next_url, prev_url, facets)
+
+
+@bp.route("/topics/<topic_id>/", methods=["GET"], endpoint='topic_get_specific')
+@inject
+def get_topic(topic_id: str, topic_service: TopicService = Provide[Container.topic_service]):
+    result = topic_service.find_one(topic_id)
+    if result:
+        return jsonify(result)
+    abort(404, 'topic not found')
+
+
+@bp.route("/discussions/index", methods=["POST"], endpoint='discussion_index')
+@inject
+def discussion_index(discussion_service: DiscussionService = Provide[Container.discussion_service], search_client: ElasticClient = Provide[Container.search_client]):
+    try:
+        validated_obj = RequestDiscussionIndex(**request.json)
+    except ValidationError as e:
+        abort(400, e)
+
+    document = DiscussionConsumer.load_from_dict(validated_obj.document.dict())
+    index_name = f'{Config.UDATA_INSTANCE_NAME}-{validated_obj.index}' if validated_obj.index else None
+    if index_name and not search_client.es.indices.exists(index=index_name):
+        abort(404, 'Index does not exist')
+
+    discussion_service.feed(document, index_name)
+    return jsonify({'data': 'Discussion added to index'})
+
+
+@bp.route("/discussions/<discussion_id>/unindex", methods=["DELETE"], endpoint='discussion_unindex')
+@inject
+def discussion_unindex(discussion_id: str, discussion_service: DiscussionService = Provide[Container.discussion_service]):
+    result = discussion_service.delete_one(discussion_id)
+    if result:
+        return jsonify({'data': f'Discussion {result} removed from index'})
+    abort(404, 'discussion not found')
+
+
+@bp.route("/discussions/", methods=["GET"], endpoint='discussion_search')
+@inject
+def discussions_search(discussion_service: DiscussionService = Provide[Container.discussion_service]):
+    try:
+        request_args = DiscussionArgs.from_request_args(request.args)
+    except ValidationError as e:
+        abort(400, e)
+
+    results, results_number, total_pages, facets = discussion_service.search(request_args.dict())
+
+    next_url = url_for('api.discussion_search', q=request_args.q, page=request_args.page + 1,
+                       page_size=request_args.page_size, _external=True)
+    prev_url = url_for('api.discussion_search', q=request_args.q, page=request_args.page - 1,
+                       page_size=request_args.page_size, _external=True)
+
+    return make_response(results, total_pages, results_number,
+                         request_args.page, request_args.page_size, next_url, prev_url, facets)
+
+
+@bp.route("/discussions/<discussion_id>/", methods=["GET"], endpoint='discussion_get_specific')
+@inject
+def get_discussion(discussion_id: str, discussion_service: DiscussionService = Provide[Container.discussion_service]):
+    result = discussion_service.find_one(discussion_id)
+    if result:
+        return jsonify(result)
+    abort(404, 'discussion not found')
+
+
+@bp.route("/posts/index", methods=["POST"], endpoint='post_index')
+@inject
+def post_index(post_service: PostService = Provide[Container.post_service], search_client: ElasticClient = Provide[Container.search_client]):
+    try:
+        validated_obj = RequestPostIndex(**request.json)
+    except ValidationError as e:
+        abort(400, e)
+
+    document = PostConsumer.load_from_dict(validated_obj.document.dict())
+    index_name = f'{Config.UDATA_INSTANCE_NAME}-{validated_obj.index}' if validated_obj.index else None
+    if index_name and not search_client.es.indices.exists(index=index_name):
+        abort(404, 'Index does not exist')
+
+    post_service.feed(document, index_name)
+    return jsonify({'data': 'Post added to index'})
+
+
+@bp.route("/posts/<post_id>/unindex", methods=["DELETE"], endpoint='post_unindex')
+@inject
+def post_unindex(post_id: str, post_service: PostService = Provide[Container.post_service]):
+    result = post_service.delete_one(post_id)
+    if result:
+        return jsonify({'data': f'Post {result} removed from index'})
+    abort(404, 'post not found')
+
+
+@bp.route("/posts/", methods=["GET"], endpoint='post_search')
+@inject
+def posts_search(post_service: PostService = Provide[Container.post_service]):
+    try:
+        request_args = PostArgs.from_request_args(request.args)
+    except ValidationError as e:
+        abort(400, e)
+
+    results, results_number, total_pages, facets = post_service.search(request_args.dict())
+
+    next_url = url_for('api.post_search', q=request_args.q, page=request_args.page + 1,
+                       page_size=request_args.page_size, _external=True)
+    prev_url = url_for('api.post_search', q=request_args.q, page=request_args.page - 1,
+                       page_size=request_args.page_size, _external=True)
+
+    return make_response(results, total_pages, results_number,
+                         request_args.page, request_args.page_size, next_url, prev_url, facets)
+
+
+@bp.route("/posts/<post_id>/", methods=["GET"], endpoint='post_get_specific')
+@inject
+def get_post(post_id: str, post_service: PostService = Provide[Container.post_service]):
+    result = post_service.find_one(post_id)
+    if result:
+        return jsonify(result)
+    abort(404, 'post not found')
 
 
 @bp.route("/create-index", methods=["POST"], endpoint='create_index')

@@ -1,7 +1,7 @@
 import logging
 import os
 
-from udata_search_service.domain.entities import Dataset, Organization, Reuse, Dataservice
+from udata_search_service.domain.entities import Dataset, Organization, Reuse, Dataservice, Topic, Discussion, Post
 from udata_search_service.infrastructure.utils import get_concat_title_org, log2p, mdstrip
 
 
@@ -92,4 +92,31 @@ class DataserviceConsumer(Dataservice):
         data["orga_followers"] = log2p(data.get("orga_followers", 0))
         data["description_length"] = log2p(data["description_length"])
 
+        return super().load_from_dict(data)
+
+
+class TopicConsumer(Topic):
+    @classmethod
+    def load_from_dict(cls, data):
+        # Strip markdown from description if any
+        if data.get("description"):
+            data["description"] = mdstrip(data["description"])
+        return super().load_from_dict(data)
+
+
+class DiscussionConsumer(Discussion):
+    @classmethod
+    def load_from_dict(cls, data):
+        # No specific processing needed for discussions
+        return super().load_from_dict(data)
+
+
+class PostConsumer(Post):
+    @classmethod
+    def load_from_dict(cls, data):
+        # Strip markdown from content if any
+        if data.get("content"):
+            data["content"] = mdstrip(data["content"])
+        if data.get("headline"):
+            data["headline"] = mdstrip(data["headline"])
         return super().load_from_dict(data)
