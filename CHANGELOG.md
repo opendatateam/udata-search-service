@@ -1,5 +1,9 @@
 # Changelog
 
+## Current (in progress)
+
+- Nothing yet
+
 ## 2.3.0 (2026-01-21)
 
 - add access_type to document for dataset and dataservice [#63](https://github.com/opendatateam/udata-search-service/pull/63)
