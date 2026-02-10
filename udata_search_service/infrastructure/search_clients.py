@@ -71,7 +71,7 @@ class IndexDocument(Document):
 class SearchableDataservice(IndexDocument):
     title = Text(analyzer=dgv_analyzer)
     created_at = Date()
-    last_update = Date()
+    metadata_modified_at = Date()
     tags = Keyword(multi=True)
     topics = Keyword(multi=True)
     badges = Keyword(multi=True)
@@ -159,6 +159,7 @@ class SearchableReuse(IndexDocument):
     title = Text(analyzer=dgv_analyzer)
     url = Text()
     created_at = Date()
+    last_modified = Date()
     archived = Date()
     orga_followers = Float()
     views = Float()
@@ -840,7 +841,7 @@ class ElasticClient:
         for key, value in filters.items():
             if key == 'last_update_range' and value in last_update_range_mapping:
                 filter_dict['last_update_range'] = query.Q(
-                    'range', created_at={'gte': last_update_range_mapping[value]}
+                    'range', last_modified={'gte': last_update_range_mapping[value]}
                 )
 
             elif key == 'tags':
@@ -959,14 +960,14 @@ class ElasticClient:
         f = get_filters_except('last_update_range')
         if f:
             agg = search.aggs.bucket('last_update_filtered', 'filter', filter=query.Bool(must=f))
-            agg.bucket('last_update', 'date_range', field='created_at', ranges=[
+            agg.bucket('last_update', 'date_range', field='last_modified', ranges=[
                 {'key': 'last_30_days', 'from': 'now-30d/d'},
                 {'key': 'last_12_months', 'from': 'now-12M/d'},
                 {'key': 'last_3_years', 'from': 'now-3y/d'},
             ])
             agg.metric('total', 'cardinality', field='_id')
         else:
-            search.aggs.bucket('last_update', 'date_range', field='created_at', ranges=[
+            search.aggs.bucket('last_update', 'date_range', field='last_modified', ranges=[
                 {'key': 'last_30_days', 'from': 'now-30d/d'},
                 {'key': 'last_12_months', 'from': 'now-12M/d'},
                 {'key': 'last_3_years', 'from': 'now-3y/d'},
@@ -1048,9 +1049,9 @@ class ElasticClient:
 
         for key, value in filters.items():
             if key == 'last_update_range' and value in last_update_range_mapping:
-                filter_dict['last_update_range'] = query.Q('range', last_update={'gte': last_update_range_mapping[value]})
+                filter_dict['last_update_range'] = query.Q('range', metadata_modified_at={'gte': last_update_range_mapping[value]})
 
-            elif key == 'tags': 
+            elif key == 'tags':
                 if isinstance(value, list):
                     tag_filters = [query.Q('term', tags=v) for v in value]
                     filter_dict['other'].append(query.Bool(must=tag_filters))
@@ -1158,14 +1159,14 @@ class ElasticClient:
         f = get_filters_except('last_update_range')
         if f:
             agg = search.aggs.bucket('last_update_filtered', 'filter', filter=query.Bool(must=f))
-            agg.bucket('last_update', 'date_range', field='last_update', ranges=[
+            agg.bucket('last_update', 'date_range', field='metadata_modified_at', ranges=[
                 {'key': 'last_30_days', 'from': 'now-30d/d'},
                 {'key': 'last_12_months', 'from': 'now-12M/d'},
                 {'key': 'last_3_years', 'from': 'now-3y/d'},
             ])
             agg.metric('total', 'cardinality', field='_id')
         else:
-            search.aggs.bucket('last_update', 'date_range', field='last_update', ranges=[
+            search.aggs.bucket('last_update', 'date_range', field='metadata_modified_at', ranges=[
                 {'key': 'last_30_days', 'from': 'now-30d/d'},
                 {'key': 'last_12_months', 'from': 'now-12M/d'},
                 {'key': 'last_3_years', 'from': 'now-3y/d'},
