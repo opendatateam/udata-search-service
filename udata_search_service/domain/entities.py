@@ -104,6 +104,7 @@ class Reuse(EntityBase):
     type: str
     topic: str
 
+    last_modified: datetime.date = None
     archived: datetime.date = None
     tags: List[str] = None
     badges: List[str] = None
@@ -118,6 +119,8 @@ class Reuse(EntityBase):
     def __post_init__(self):
         if isinstance(self.created_at, str):
             self.created_at = isoparse(self.created_at)
+        if isinstance(self.last_modified, str):
+            self.last_modified = isoparse(self.last_modified)
         if isinstance(self.archived, str):
             self.archived = isoparse(self.archived)
 
@@ -129,7 +132,7 @@ class Dataservice(EntityBase):
     description: str
     description_length: float
     created_at: datetime.date
-    last_update: datetime.date = None
+    metadata_modified_at: datetime.date = None
 
     views: int = 0
     followers: int = 0
@@ -147,8 +150,8 @@ class Dataservice(EntityBase):
     def __post_init__(self):
         if isinstance(self.created_at, str):
             self.created_at = isoparse(self.created_at)
-        if isinstance(self.last_update, str):
-            self.last_update = isoparse(self.last_update)
+        if isinstance(self.metadata_modified_at, str):
+            self.metadata_modified_at = isoparse(self.metadata_modified_at)
 
 
 @dataclasses.dataclass

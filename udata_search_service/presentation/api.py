@@ -428,6 +428,7 @@ class ReuseToIndex(BaseModel):
     url: Optional[str] = None
     badges: Optional[list] = []
     created_at: str
+    last_modified: Optional[str] = None
     archived: Optional[str] = None
     datasets: int
     followers: int
@@ -507,7 +508,7 @@ class DataserviceToIndex(BaseModel):
     title: str
     description: str
     created_at: str
-    last_update: Optional[str] = None
+    metadata_modified_at: Optional[str] = None
     views: int = 0
     followers: int = 0
     organization: Optional[dict] = {}
