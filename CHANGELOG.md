@@ -1,5 +1,9 @@
 # Changelog
 
+## Current (in progress)
+
+- Nothing yet
+
 ## 2.3.4 (2026-02-10)
 
 - fix: wrong dates for `last_update_at` [#69](https://github.com/opendatateam/udata-search-service/pull/69)
