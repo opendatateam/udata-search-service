@@ -2,7 +2,7 @@
 
 ## Current (in progress)
 
-- Nothing yet
+- fix: wrong dates for `last_update_at` [#69](https://github.com/opendatateam/udata-search-service/pull/69)
 
 ## 2.3.3 (2026-01-21)
 
