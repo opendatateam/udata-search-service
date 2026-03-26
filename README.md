@@ -1,3 +1,7 @@
+> [!IMPORTANT]  
+> This repository is archived.
+> You can use elasticsearch directly in udata >= 15.3.0 (see https://github.com/opendatateam/udata/pull/3679).
+
 # udata-search-service
 
 A search service for udata.
