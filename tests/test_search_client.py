@@ -1,7 +1,7 @@
 import datetime
 import time
 
-from udata_search_service.domain.factories import DataserviceFactory, DatasetFactory, OrganizationFactory, ReuseFactory
+from udata_search_service.domain.factories import DataserviceFactory, DatasetFactory, OrganizationFactory, ReuseFactory, TopicFactory
 
 ext_word_list = ['abc', 'def', 'hij', 'klm', 'nop', 'qrs', 'tuv']
 
@@ -527,4 +527,54 @@ def test_search_dataset_by_resource_title_and_id(app, client, search_client, fak
 
     results_number, res, _ = search_client.query_datasets(str(dataset.resources_titles[0]), 0, 20, {})
     assert results_number == 1
+
+
+def test_topic_sort_by_name(app, client, search_client, faker):
+    search_client.index_topic(TopicFactory(name='aaa topic'))
+    search_client.index_topic(TopicFactory(name='zzz topic'))
+
+    # Without this, ElasticSearch does not seem to have the time to index.
+    time.sleep(2)
+
+    _, res, _ = search_client.query_topics(None, 0, 20, {}, sort='name')
+    assert res[0]['name'] == 'aaa topic'
+    assert res[1]['name'] == 'zzz topic'
+
+    _, res, _ = search_client.query_topics(None, 0, 20, {}, sort='-name')
+    assert res[0]['name'] == 'zzz topic'
+    assert res[1]['name'] == 'aaa topic'
+
+
+def test_topic_sort_by_created(app, client, search_client, faker):
+    old = datetime.datetime(2020, 1, 1)
+    new = datetime.datetime(2024, 1, 1)
+    search_client.index_topic(TopicFactory(name='old topic', created_at=old))
+    search_client.index_topic(TopicFactory(name='new topic', created_at=new))
+
+    time.sleep(2)
+
+    _, res, _ = search_client.query_topics(None, 0, 20, {}, sort='created_at')
+    assert res[0]['name'] == 'old topic'
+    assert res[1]['name'] == 'new topic'
+
+    _, res, _ = search_client.query_topics(None, 0, 20, {}, sort='-created_at')
+    assert res[0]['name'] == 'new topic'
+    assert res[1]['name'] == 'old topic'
+
+
+def test_topic_sort_by_last_modified(app, client, search_client, faker):
+    old = datetime.datetime(2020, 1, 1)
+    new = datetime.datetime(2024, 1, 1)
+    search_client.index_topic(TopicFactory(name='old topic', last_modified=old))
+    search_client.index_topic(TopicFactory(name='new topic', last_modified=new))
+
+    time.sleep(2)
+
+    _, res, _ = search_client.query_topics(None, 0, 20, {}, sort='last_modified')
+    assert res[0]['name'] == 'old topic'
+    assert res[1]['name'] == 'new topic'
+
+    _, res, _ = search_client.query_topics(None, 0, 20, {}, sort='-last_modified')
+    assert res[0]['name'] == 'new topic'
+    assert res[1]['name'] == 'old topic'
 

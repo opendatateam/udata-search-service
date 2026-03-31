@@ -14,6 +14,7 @@ ALL_INDICES = [
     'reuse',
     'organization',
     'dataservice',
+    'topic',
 ]
 
 
